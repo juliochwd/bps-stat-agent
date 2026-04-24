@@ -1,344 +1,251 @@
-# Mini Agent
+# Mini-Agent-BPS
 
-English | [中文](./README_CN.md)
+Mini-Agent specialized for BPS (Badan Pusat Statistik / Statistics Indonesia) statistical data queries. Provides **55+ MCP tools** for complete access to BPS WebAPI and AllStats Search Engine.
 
-**Mini Agent** is a minimal yet professional demo project that showcases the best practices for building agents with the MiniMax M2.5 model. Leveraging an Anthropic-compatible API, it fully supports interleaved thinking to unlock M2's powerful reasoning capabilities for long, complex tasks.
+## Features
 
-This project comes packed with features designed for a robust and intelligent agent development experience:
+- 🔍 **BPS AllStats Search** - Search 1.6M+ statistical data points across all BPS domains
+- 🔁 **AllStats-First Fallback Pipeline** - Search via AllStats, then retrieve structured detail through WebAPI
+- 🌏 **Multi-domain Support** - Query national (0000) or provincial data (e.g., 5300=NTT)
+- 📊 **Rich Content Types** - Publications, indicators, press releases, tables, infographics
+- 🔄 **Auto-retry** - Automatic retry with fresh browser context on Cloudflare blocks
+- 🔧 **MCP Server** - 55+ tools running as real MCP server over STDIO
+- ⚡ **Fast Installation** - Single command install via uv/pip
+- ✅ **Production Ready** - 290+ tests, comprehensive coverage
 
-*   ✅ **Full Agent Execution Loop**: A complete and reliable foundation with a basic toolset for file system and shell operations.
-*   ✅ **Persistent Memory**: An active **Session Note Tool** ensures the agent retains key information across multiple sessions.
-*   ✅ **Intelligent Context Management**: Automatically summarizes conversation history to handle contexts up to a configurable token limit, enabling infinitely long tasks.
-*   ✅ **Claude Skills Integration**: Comes with 15 professional skills for documents, design, testing, and development.
-*   ✅ **MCP Tool Integration**: Natively supports MCP for tools like knowledge graph access and web search.
-*   ✅ **Comprehensive Logging**: Detailed logs for every request, response, and tool execution for easy debugging.
-*   ✅ **Clean & Simple Design**: A beautiful CLI and a codebase that is easy to understand, making it the perfect starting point for building advanced agents.
+## Installation
 
-## Table of Contents
-
-- [Mini Agent](#mini-agent)
-  - [Table of Contents](#table-of-contents)
-  - [Quick Start](#quick-start)
-    - [1. Get API Key](#1-get-api-key)
-    - [2. Choose Your Usage Mode](#2-choose-your-usage-mode)
-      - [🚀 Quick Start Mode (Recommended for Beginners)](#-quick-start-mode-recommended-for-beginners)
-      - [🔧 Development Mode](#-development-mode)
-  - [ACP \& Zed Editor Integration(optional)](#acp--zed-editor-integrationoptional)
-  - [Usage Examples](#usage-examples)
-    - [Task Execution](#task-execution)
-    - [Using a Claude Skill (e.g., PDF Generation)](#using-a-claude-skill-eg-pdf-generation)
-    - [Web Search \& Summarization (MCP Tool)](#web-search--summarization-mcp-tool)
-  - [Testing](#testing)
-    - [Quick Run](#quick-run)
-    - [Test Coverage](#test-coverage)
-  - [Troubleshooting](#troubleshooting)
-    - [SSL Certificate Error](#ssl-certificate-error)
-    - [Module Not Found Error](#module-not-found-error)
-  - [Related Documentation](#related-documentation)
-  - [Community](#community)
-  - [Contributing](#contributing)
-  - [License](#license)
-  - [References](#references)
-
-## Quick Start
-
-### 1. Get API Key
-
-MiniMax provides both global and China platforms. Choose based on your network environment:
-
-| Version    | Platform                                                       | API Base                   |
-| ---------- | -------------------------------------------------------------- | -------------------------- |
-| **Global** | [https://platform.minimax.io](https://platform.minimax.io)     | `https://api.minimax.io`   |
-| **China**  | [https://platform.minimaxi.com](https://platform.minimaxi.com) | `https://api.minimaxi.com` |
-
-**Steps to get API Key:**
-1. Visit the corresponding platform to register and login
-2. Go to **Account Management > API Keys**
-3. Click **"Create New Key"**
-4. Copy and save it securely (key is only shown once)
-
-> 💡 **Tip**: Remember the API Base address corresponding to your chosen platform, you'll need it for configuration
-
-### 2. Choose Your Usage Mode
-
-**Prerequisites: Install uv**
-
-Both usage modes require uv. If you don't have it installed:
+### Option 1: Install via uv (Recommended)
 
 ```bash
-# macOS/Linux/WSL
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Windows (PowerShell)
-python -m pip install --user pipx
-python -m pipx ensurepath
-# Restart PowerShell after installation
-
-# After installation, restart your terminal or run:
-source ~/.bashrc  # or ~/.zshrc (macOS/Linux)
+# Install directly from GitHub
+uv tool install git+https://github.com/MiniMax-AI/mini-agent-bps.git
 ```
 
-We offer two usage modes - choose based on your needs:
-
-#### 🚀 Quick Start Mode (Recommended for Beginners)
-
-Perfect for users who want to quickly try Mini Agent without cloning the repository or modifying code.
-
-**Installation:**
+### Option 2: Install via pip
 
 ```bash
-# 1. Install directly from GitHub
-uv tool install git+https://github.com/MiniMax-AI/Mini-Agent.git
+pip install git+https://github.com/MiniMax-AI/mini-agent-bps.git
+```
 
-# 2. Run setup script (automatically creates config files)
+## Configuration
+
+### 1. Run Setup Script
+
+```bash
 # macOS/Linux:
-curl -fsSL https://raw.githubusercontent.com/MiniMax-AI/Mini-Agent/main/scripts/setup-config.sh | bash
+curl -fsSL https://raw.githubusercontent.com/MiniMax-AI/mini-agent-bps/main/scripts/setup-config.sh | bash
 
 # Windows (PowerShell):
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/MiniMax-AI/Mini-Agent/main/scripts/setup-config.ps1" -OutFile "$env:TEMP\setup-config.ps1"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/MiniMax-AI/mini-agent-bps/main/scripts/setup-config.ps1" -OutFile "$env:TEMP\setup-config.ps1"
 powershell -ExecutionPolicy Bypass -File "$env:TEMP\setup-config.ps1"
 ```
 
-> 💡 **Tip**: If you want to develop locally or modify code, use "Development Mode" below
+### 2. Add Your API Key
 
-**Configuration:**
-
-The setup script creates config files in `~/.mini-agent/config/`. Edit the config file:
-
-```bash
-# Edit config file
-nano ~/.mini-agent/config/config.yaml
-```
-
-Fill in your API Key and corresponding API Base:
+Edit `~/.mini-agent-bps/config/config.yaml` and add your MiniMax API key:
 
 ```yaml
-api_key: "YOUR_API_KEY_HERE"          # API Key from step 1
-api_base: "https://api.minimax.io"  # Global
-# api_base: "https://api.minimaxi.com"  # China
-model: "MiniMax-M2.5"
+api_key: "your_api_key_here"
 ```
 
-**Start Using:**
+### Configuration File Locations
+
+Config files are loaded in priority order:
+1. `./mini_agent/config/config.yaml` - Current directory (development)
+2. `~/.mini-agent-bps/config/config.yaml` - User config directory
+3. `<package>/mini_agent/config/config.yaml` - Package installation
+
+## Usage
+
+### CLI Mode
 
 ```bash
-mini-agent                                    # Use current directory as workspace
-mini-agent --workspace /path/to/your/project  # Specify workspace directory
-mini-agent --version                          # Check version
+# Start interactive session
+mini-agent-bps
 
-# Management commands
-uv tool upgrade mini-agent                    # Upgrade to latest version
-uv tool uninstall mini-agent                  # Uninstall if needed
-uv tool list                                  # View all installed tools
+# With specific workspace
+mini-agent-bps --workspace /path/to/project
+
+# Show help
+mini-agent-bps --help
 ```
 
-#### 🔧 Development Mode
+### MCP Server Mode
 
-For developers who need to modify code, add features, or debug.
-
-**Installation & Configuration:**
+Mini-Agent-BPS includes an MCP server that can be used with Claude desktop:
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/MiniMax-AI/Mini-Agent.git
-cd Mini-Agent
-
-# 2. Install uv (if you haven't)
-# macOS/Linux:
-curl -LsSf https://astral.sh/uv/install.sh | sh
-# Windows (PowerShell):
-irm https://astral.sh/uv/install.ps1 | iex
-# Restart terminal after installation
-
-# 3. Sync dependencies
-uv sync
-
-# Alternative: Install dependencies manually (if not using uv)
-# pip install -r requirements.txt
-# Or install required packages:
-# pip install tiktoken pyyaml httpx pydantic requests prompt-toolkit mcp
-
-# 4. Initialize Claude Skills (Optional)
-git submodule update --init --recursive
-
-# 5. Copy config template
-```
-
-**macOS/Linux:**
-```bash
-cp mini_agent/config/config-example.yaml mini_agent/config/config.yaml
-```
-
-**Windows:**
-```powershell
-Copy-Item mini_agent\config\config-example.yaml mini_agent\config\config.yaml
-
-# 6. Edit config file
-vim mini_agent/config/config.yaml  # Or use your preferred editor
-```
-
-Fill in your API Key and corresponding API Base:
-
-```yaml
-api_key: "YOUR_API_KEY_HERE"          # API Key from step 1
-api_base: "https://api.minimax.io"  # Global
-# api_base: "https://api.minimaxi.com"  # China
-model: "MiniMax-M2.5"
-max_steps: 100
-workspace_dir: "./workspace"
-```
-
-> 📖 Full configuration guide: See [config-example.yaml](mini_agent/config/config-example.yaml)
-
-**Run Methods:**
-
-Choose your preferred run method:
-
-```bash
-# Method 1: Run as module directly (good for debugging)
-uv run python -m mini_agent.cli
-
-# Method 2: Install in editable mode (recommended)
-uv tool install -e .
-# After installation, run from anywhere and code changes take effect immediately
-mini-agent
-mini-agent --workspace /path/to/your/project
-```
-
-> 📖 For more development guidance, see [Development Guide](docs/DEVELOPMENT_GUIDE.md)
-
-> 📖 For more production deployment guidance, see [Production Guide](docs/PRODUCTION_GUIDE.md)
-
-## ACP & Zed Editor Integration(optional)
-
-Mini Agent supports the [Agent Communication Protocol (ACP)](https://github.com/modelcontextprotocol/protocol) for integration with code editors like Zed.
-
-**Setup in Zed Editor:**
-
-1. Install Mini Agent in development mode or as a tool
-2. Add to your Zed `settings.json`:
-
-```json
+# Add to your mcp.json:
 {
-  "agent_servers": {
-    "mini-agent": {
-      "command": "/path/to/mini-agent-acp"
+    "mcpServers": {
+        "bps": {
+            "command": "uvx",
+            "args": ["--from", "git+https://github.com/MiniMax-AI/mini-agent-bps.git", "bps-mcp-server"]
+        }
     }
-  }
 }
 ```
 
-The command path should be:
-- If installed via `uv tool install`: Use the output of `which mini-agent-acp`
-- If in development mode: `./mini_agent/acp/server.py`
-
-**Usage:**
-- Open Zed's agent panel with `Ctrl+Shift+P` → "Agent: Toggle Panel"
-- Select "mini-agent" from the agent dropdown
-- Start conversations with Mini Agent directly in your editor
-
-## Usage Examples
-
-Here are a few examples of what Mini Agent can do.
-
-### Task Execution
-
-*In this demo, the agent is asked to create a simple, beautiful webpage and display it in the browser, showcasing the basic tool-use loop.*
-
-![Demo GIF 1: Basic Task Execution](docs/assets/demo1-task-execution.gif "Basic Task Execution Demo")
-
-### Using a Claude Skill (e.g., PDF Generation)
-
-*Here, the agent leverages a Claude Skill to create a professional document (like a PDF or DOCX) based on the user's request, demonstrating its advanced capabilities.*
-
-![Demo GIF 2: Claude Skill Usage](docs/assets/demo2-claude-skill.gif "Claude Skill Usage Demo")
-
-### Web Search & Summarization (MCP Tool)
-
-*This demo shows the agent using its web search tool to find up-to-date information online and summarize it for the user.*
-
-![Demo GIF 3: Web Search](docs/assets/demo3-web-search.gif "Web Search Demo")
-
-## Testing
-
-The project includes comprehensive test cases covering unit tests, functional tests, and integration tests.
-
-### Quick Run
-
+Or run directly:
 ```bash
-# Run all tests
-pytest tests/ -v
-
-# Run core functionality tests
-pytest tests/test_agent.py tests/test_note_tool.py -v
+uvx --from git+https://github.com/MiniMax-AI/mini-agent-bps.git bps-mcp-server
 ```
 
-### Test Coverage
+### Python API
 
-- ✅ **Unit Tests** - Tool classes, LLM client
-- ✅ **Functional Tests** - Session Note Tool, MCP loading
-- ✅ **Integration Tests** - Agent end-to-end execution
-- ✅ **External Services** - Git MCP Server loading
+```python
+from mini_agent.allstats_client import AllStatsClient
 
+async def search_bps():
+    client = AllStatsClient(headless=True)
+    try:
+        response = await client.search(
+            keyword="inflasi",
+            domain="5300",  # NTT province
+            content="all"
+        )
+        for result in response.results:
+            print(f"- {result.title}")
+    finally:
+        await client.close()
+```
+
+## BPS Domain Codes
+
+| Code | Domain |
+|:-----|:-------|
+| 0000 | Nasional (National) |
+| 5300 | Nusa Tenggara Timur (NTT) |
+| 1100 | Aceh |
+| 1200 | Sumatera Utara |
+| ... | Other provinces |
+
+## Content Types
+
+| Type | Indonesian | Description |
+|:-----|:-----------|:------------|
+| `all` | Semua | All content types |
+| `publication` | Publikasi | Statistical publications |
+| `indicator` | Indikator | Statistical indicators |
+| `table` | Tabel | Dynamic tables |
+| `pressrelease` | Berita Resmi Statistik | Official press releases |
+| `infographic` | Infografis | Visual data summaries |
+| `news` | Berita | BPS news |
+| `microdata` | Mikrodata | Raw data files |
+| `glosarium` | Glosarium | Statistical glossary |
+
+## Common Queries
+
+```python
+# Search inflation data for NTT
+response = await client.search("inflasi", domain="5300")
+
+# Search national GDP data
+response = await client.search("PDB", domain="0000")
+
+# Search specific content type
+response = await client.search("penduduk", domain="5300", content="publication")
+
+# Pagination
+response = await client.search("inflasi", domain="5300", page=2)
+```
+
+## Architecture
+
+```
+mini-agent-bps/
+├── mini_agent/
+│   ├── __init__.py
+│   ├── agent.py          # Main agent implementation
+│   ├── cli.py            # CLI entry point
+│   ├── config/           # Configuration files
+│   │   ├── config-example.yaml
+│   │   ├── mcp-example.json
+│   │   └── system_prompt.md
+│   ├── allstats_client.py  # BPS AllStats Playwright client
+│   ├── bps_mcp_server.py   # MCP server implementation
+│   └── skills/           # Agent skills
+├── scripts/
+│   ├── setup-config.sh
+│   └── setup-config.ps1
+├── pyproject.toml
+└── README.md
+```
+
+## Retrieval Strategy
+
+1. Search starts from AllStats.
+2. The best candidate is ranked by query relevance.
+3. The agent resolves the resource type.
+4. For tables, it tries direct static-table detail first.
+5. If that fails, it falls back to WebAPI keyword table search and retries detail retrieval.
+6. Results are normalized with provenance and explicit errors when no supported path succeeds.
 
 ## Troubleshooting
 
-### SSL Certificate Error
+### "Cloudflare blocked" errors
 
-If you encounter `[SSL: CERTIFICATE_VERIFY_FAILED]` error:
+The client automatically retries with fresh browser context. If you see repeated blocks:
+- Wait 10+ seconds between searches
+- Check your network connection
 
-**Quick fix for testing** (modify `mini_agent/llm.py`):
-```python
-# Line 50: Add verify=False to AsyncClient
-async with httpx.AsyncClient(timeout=120.0, verify=False) as client:
+### "API key not found"
+
+Make sure you've configured your API key in `config.yaml` or MCP environment:
+```yaml
+api_key: "your_api_key_here"
 ```
 
-**Production solution**:
+For BPS retrieval through the MCP server, also provide:
+```json
+{
+  "BPS_API_KEY": "your_bps_webapi_key"
+}
+```
+
+### Installation fails
+
+Ensure you have Python 3.10+ and uv/pip installed:
 ```bash
-# Update certificates
-pip install --upgrade certifi
-
-# Or configure system proxy/certificates
+python --version  # Should be 3.10+
+which uv          # or pip
 ```
 
-### Module Not Found Error
+## Development
 
-Make sure you're running from the project directory:
 ```bash
-cd Mini-Agent
-python -m mini_agent.cli
+# Clone the repository
+git clone https://github.com/MiniMax-AI/mini-agent-bps.git
+cd mini-agent-bps
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+
+# Install dependencies
+pip install -e .
+
+# Run tests
+pytest tests/
+
+# Test the search client directly
+.venv/bin/python -c "
+import asyncio
+from mini_agent.allstats_client import AllStatsClient
+
+async def test():
+    client = AllStatsClient()
+    try:
+        response = await client.search('inflasi', domain='5300')
+        print(f'Found {len(response.results)} results')
+    finally:
+        await client.close()
+
+asyncio.run(test())
+"
 ```
-
-## Related Documentation
-
-- [Development Guide](docs/DEVELOPMENT_GUIDE.md) - Detailed development and configuration guidance
-- [Production Guide](docs/PRODUCTION_GUIDE.md) - Best practices for production deployment
-
-## Community
-
-Join the MiniMax official community to get help, share ideas, and stay updated:
-
-- **WeChat Group**: Scan the QR code on [Contact Us](https://platform.minimaxi.com/docs/faq/contact-us) page to join
-
-## Contributing
-
-Issues and Pull Requests are welcome!
-
-- [Contributing Guide](CONTRIBUTING.md) - How to contribute
-- [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
-
-## References
-
-- MiniMax API: https://platform.minimax.io/docs
-- MiniMax-M2: https://github.com/MiniMax-AI/MiniMax-M2
-- Anthropic API: https://docs.anthropic.com/claude/reference
-- Claude Skills: https://github.com/anthropics/skills
-- MCP Servers: https://github.com/modelcontextprotocol/servers
-
----
-
-**⭐ If this project helps you, please give it a Star!**
+MIT License

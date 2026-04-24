@@ -1,8 +1,8 @@
-# Mini Agent Configuration Example
+# Mini-Agent-BPS Configuration Example
 # 
 # Configuration File Locations (in priority order):
 # 1) mini_agent/config/config.yaml - Development mode (current directory)
-# 2) ~/.mini-agent/config/config.yaml - User config directory
+# 2) ~/.mini-agent-bps/config/config.yaml - User config directory
 # 3) <package>/mini_agent/config/config.yaml - Package installation directory
 #
 # To use this config:
@@ -21,7 +21,7 @@ api_base: "https://api.minimax.io"   # Global users (default)
 # api_base: "https://api.minimaxi.com"  # China users
 model: "MiniMax-M2.5"
 # LLM provider: "anthropic" or "openai"
-# For MiniMax API, the suffix (/anthropic or /v1) is auto-appended based on provider.
+# For MiniMax API, the suffix (/anthropica or /v1) is auto-appended based on provider.
 # For third-party APIs (e.g., https://api.siliconflow.cn/v1), api_base is used as-is.
 provider: "anthropic"  # Default: anthropic
 
@@ -37,6 +37,25 @@ retry:
 max_steps: 100  # Maximum execution steps
 workspace_dir: "./workspace"  # Working directory
 system_prompt_path: "system_prompt.md"  # System prompt file (same config directory)
+
+# ===== BPS Configuration =====
+bps:
+  # Default domain for BPS searches
+  # 5300 = Nusa Tenggara Timur (NTT)
+  # 0000 = Nasional (National)
+  # Other provinces: 1100=Aceh, 1200=Sumatera Utara, etc.
+  default_domain: "5300"
+  
+  # Delay between searches (seconds) to avoid Cloudflare rate-limiting
+  search_delay: 10
+  
+  # Maximum results per search
+  max_results: 10
+  
+  # Playwright settings
+  playwright:
+    headless: true
+    timeout: 30
 
 # ===== Tools Configuration =====
 tools:
