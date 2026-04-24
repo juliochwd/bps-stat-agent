@@ -1898,11 +1898,21 @@ class TestExtractDataEdgeCases:
         """Test _extract_data standard path with pagination but no items."""
         response = {
             "data-availability": "available",
-            "data": [{}, None]
+            "data": [{}, []]
         }
         result = api._extract_data(response)
-        # Lines 218-222: data-availability available, len > 1, data[1] is None → returns []
+        # Lines 218-222: data-availability available, len > 1, data[1] is [] (falsy) → returns []
         assert result == []
+
+    def test_extract_data_standard_path_with_string_item(self, api):
+        """Test _extract_data when data is a single string (not dict, not pagination)."""
+        response = {
+            "data-availability": "available",
+            "data": ["single_item"]
+        }
+        result = api._extract_data(response)
+        # Line 216: direct format returns data as-is for non-dict, non-pagination items
+        assert result == ["single_item"]
 
 
 class TestExtractRegionIdEdgeCases:

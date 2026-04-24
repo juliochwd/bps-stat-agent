@@ -194,12 +194,12 @@ class Config(BaseModel):
             return dev_config
 
         # Priority 2: BPS-specific user config directory
-        bps_user_config = Path.home() / ".mini-agent-bps" / "config" / filename
+        bps_user_config = Path.home() / ".bps-stat-agent" / "config" / filename
         if bps_user_config.exists():
             return bps_user_config
 
         # Priority 3: Legacy user config directory
-        user_config = Path.home() / ".mini-agent" / "config" / filename
+        user_config = Path.home() / ".bps-stat-agent" / "config" / filename
         if user_config.exists():
             return user_config
 
