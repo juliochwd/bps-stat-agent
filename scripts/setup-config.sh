@@ -1,6 +1,6 @@
 #!/bin/bash
-# Mini-Agent-BPS Configuration Setup Script
-# This script helps you set up Mini-Agent-BPS configuration files
+# BPS Stat Agent Configuration Setup Script
+# This script helps you set up BPS Stat Agent configuration files
 
 set -e
 
@@ -12,11 +12,11 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Configuration directory - use mini-agent-bps specific directory
-CONFIG_DIR="$HOME/.mini-agent-bps/config"
+# Configuration directory - use bps-stat-agent specific directory
+CONFIG_DIR="$HOME/.bps-stat-agent/config"
 
 echo -e "${CYAN}╔════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║   Mini-Agent-BPS Configuration Setup         ║${NC}"
+echo -e "${CYAN}║   BPS Stat Agent Configuration Setup        ║${NC}"
 echo -e "${CYAN}╚════════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -24,7 +24,7 @@ echo ""
 echo -e "${BLUE}[1/2]${NC} Creating configuration directory..."
 if [ -d "$CONFIG_DIR" ]; then
     # Auto backup existing config
-    BACKUP_DIR="$HOME/.mini-agent-bps/config.backup.$(date +%Y%m%d_%H%M%S)"
+    BACKUP_DIR="$HOME/.bps-stat-agent/config.backup.$(date +%Y%m%d_%H%M%S)"
     echo -e "${YELLOW}   Configuration directory exists, backing up to:${NC}"
     echo -e "${YELLOW}   $BACKUP_DIR${NC}"
     cp -r "$CONFIG_DIR" "$BACKUP_DIR"
@@ -38,8 +38,8 @@ fi
 echo -e "${BLUE}[2/2]${NC} Downloading configuration files..."
 
 FILES_COPIED=0
-# Update URL to mini-agent-bps repo
-GITHUB_RAW_URL="https://raw.githubusercontent.com/MiniMax-AI/mini-agent-bps/main/mini_agent/config"
+# Update URL to bps-stat-agent repo
+GITHUB_RAW_URL="https://raw.githubusercontent.com/juliochwd/bps-stat-agent/main/mini_agent/config"
 
 # Download config-example.yaml as config.yaml
 if curl -fsSL "$GITHUB_RAW_URL/config-example.yaml" -o "$CONFIG_DIR/config.yaml" 2>/dev/null; then
@@ -86,17 +86,17 @@ ls -1 "$CONFIG_DIR" 2>/dev/null | sed 's/^/  📄 /' || echo "  (no files yet)"
 echo ""
 echo -e "${YELLOW}Next Steps:${NC}"
 echo ""
-echo -e "${YELLOW}1. Install Mini-Agent-BPS:${NC}"
-echo -e "   ${GREEN}uv tool install git+https://github.com/MiniMax-AI/mini-agent-bps.git${NC}"
+echo -e "${YELLOW}1. Install BPS Stat Agent:${NC}"
+echo -e "   ${GREEN}uv tool install git+https://github.com/juliochwd/bps-stat-agent.git${NC}"
 echo ""
 echo -e "${YELLOW}2. Configure your API Key:${NC}"
-echo -e "   Edit config.yaml and add your MiniMax API Key:"
+echo -e "   Edit config.yaml and add your API Key:"
 echo -e "   ${GREEN}nano $CONFIG_DIR/config.yaml${NC}"
 echo -e "   ${GREEN}vim $CONFIG_DIR/config.yaml${NC}"
 echo -e "   ${GREEN}code $CONFIG_DIR/config.yaml${NC}"
 echo ""
-echo -e "${YELLOW}3. Start using Mini-Agent-BPS:${NC}"
-echo -e "   ${GREEN}mini-agent-bps${NC}                              # Use current directory"
-echo -e "   ${GREEN}mini-agent-bps --workspace /path/to/project${NC} # Specify workspace"
-echo -e "   ${GREEN}mini-agent-bps --help${NC}                      # Show help"
+echo -e "${YELLOW}3. Start using BPS Stat Agent:${NC}"
+echo -e "   ${GREEN}bps-stat-agent${NC}                              # Use current directory"
+echo -e "   ${GREEN}bps-stat-agent --workspace /path/to/project${NC} # Specify workspace"
+echo -e "   ${GREEN}bps-stat-agent --help${NC}                      # Show help"
 echo ""

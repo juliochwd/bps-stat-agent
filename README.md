@@ -1,6 +1,6 @@
-# Mini-Agent-BPS
+# BPS Stat Agent
 
-Mini-Agent specialized for BPS (Badan Pusat Statistik / Statistics Indonesia) statistical data queries. Provides **55+ MCP tools** for complete access to BPS WebAPI and AllStats Search Engine.
+BPS Stat Agent specialized for BPS (Badan Pusat Statistik / Statistics Indonesia) statistical data queries. Provides **55+ MCP tools** for complete access to BPS WebAPI and AllStats Search Engine.
 
 ## Features
 
@@ -19,13 +19,13 @@ Mini-Agent specialized for BPS (Badan Pusat Statistik / Statistics Indonesia) st
 
 ```bash
 # Install directly from GitHub
-uv tool install git+https://github.com/MiniMax-AI/mini-agent-bps.git
+uv tool install git+https://github.com/juliochwd/bps-stat-agent.git
 ```
 
 ### Option 2: Install via pip
 
 ```bash
-pip install git+https://github.com/MiniMax-AI/mini-agent-bps.git
+pip install git+https://github.com/juliochwd/bps-stat-agent.git
 ```
 
 ## Configuration
@@ -34,16 +34,16 @@ pip install git+https://github.com/MiniMax-AI/mini-agent-bps.git
 
 ```bash
 # macOS/Linux:
-curl -fsSL https://raw.githubusercontent.com/MiniMax-AI/mini-agent-bps/main/scripts/setup-config.sh | bash
+curl -fsSL https://raw.githubusercontent.com/juliochwd/bps-stat-agent/main/scripts/setup-config.sh | bash
 
 # Windows (PowerShell):
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/MiniMax-AI/mini-agent-bps/main/scripts/setup-config.ps1" -OutFile "$env:TEMP\setup-config.ps1"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/juliochwd/bps-stat-agent/main/scripts/setup-config.ps1" -OutFile "$env:TEMP\setup-config.ps1"
 powershell -ExecutionPolicy Bypass -File "$env:TEMP\setup-config.ps1"
 ```
 
 ### 2. Add Your API Key
 
-Edit `~/.mini-agent-bps/config/config.yaml` and add your MiniMax API key:
+Edit `~/.bps-stat-agent/config/config.yaml` and add your MiniMax API key:
 
 ```yaml
 api_key: "your_api_key_here"
@@ -53,7 +53,7 @@ api_key: "your_api_key_here"
 
 Config files are loaded in priority order:
 1. `./mini_agent/config/config.yaml` - Current directory (development)
-2. `~/.mini-agent-bps/config/config.yaml` - User config directory
+2. `~/.bps-stat-agent/config/config.yaml` - User config directory
 3. `<package>/mini_agent/config/config.yaml` - Package installation
 
 ## Usage
@@ -62,13 +62,13 @@ Config files are loaded in priority order:
 
 ```bash
 # Start interactive session
-mini-agent-bps
+bps-stat-agent
 
 # With specific workspace
-mini-agent-bps --workspace /path/to/project
+bps-stat-agent --workspace /path/to/project
 
 # Show help
-mini-agent-bps --help
+bps-stat-agent --help
 ```
 
 ### MCP Server Mode
@@ -81,7 +81,7 @@ Mini-Agent-BPS includes an MCP server that can be used with Claude desktop:
     "mcpServers": {
         "bps": {
             "command": "uvx",
-            "args": ["--from", "git+https://github.com/MiniMax-AI/mini-agent-bps.git", "bps-mcp-server"]
+            "args": ["--from", "git+https://github.com/juliochwd/bps-stat-agent.git", "bps-mcp-server"]
         }
     }
 }
@@ -89,7 +89,7 @@ Mini-Agent-BPS includes an MCP server that can be used with Claude desktop:
 
 Or run directly:
 ```bash
-uvx --from git+https://github.com/MiniMax-AI/mini-agent-bps.git bps-mcp-server
+uvx --from git+https://github.com/juliochwd/bps-stat-agent.git bps-mcp-server
 ```
 
 ### Python API
@@ -154,7 +154,7 @@ response = await client.search("inflasi", domain="5300", page=2)
 ## Architecture
 
 ```
-mini-agent-bps/
+bps-stat-agent/
 ├── mini_agent/
 │   ├── __init__.py
 │   ├── agent.py          # Main agent implementation
@@ -216,8 +216,8 @@ which uv          # or pip
 
 ```bash
 # Clone the repository
-git clone https://github.com/MiniMax-AI/mini-agent-bps.git
-cd mini-agent-bps
+git clone https://github.com/MiniMax-AI/bps-stat-agent.git
+cd bps-stat-agent
 
 # Create virtual environment
 python -m venv .venv

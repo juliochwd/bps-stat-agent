@@ -5,7 +5,7 @@ This server provides tools for accessing BPS (Badan Pusat Statistik / Statistics
 statistical data via the BPS WebAPI (webapi.bps.go.id).
 
 Usage as MCP server:
-    uvx --from git+https://github.com/MiniMax-AI/mini-agent-bps.git bps-mcp-server
+    uvx --from git+https://github.com/juliochwd/bps-stat-agent.git bps-mcp-server
 
 Or as module:
     from mini_agent.bps_mcp_server import bps_list_subjects, bps_get_variables, bps_search

@@ -1,14 +1,14 @@
 [project]
-name = "mini-agent-bps"
+name = "bps-stat-agent"
 version = "1.0.0"
-description = "Mini-Agent for BPS Indonesia Statistical Data - Search and query BPS data via AllStats Search Engine"
+description = "BPS Indonesia Statistical Data Agent - Search and query BPS data via AllStats Search Engine and WebAPI"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-    {name = "Mini Agent Team", email = "minimax@example.com"}
+    {name = "Julio Christian Wadu Doko", email = "juliochwd@gmail.com"}
 ]
 license = {text = "MIT"}
-keywords = ["bps", "statistics", "indonesia", "ntt", "minimax", "agent", "mcp"]
+keywords = ["bps", "statistics", "indonesia", "ntt", "agent", "mcp", "badan-pusat-statistik"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -36,8 +36,8 @@ dependencies = [
 ]
 
 [project.scripts]
-mini-agent-bps = "mini_agent.cli:main"
-mini-agent-bps-acp = "mini_agent.acp.server:main"
+bps-stat-agent = "mini_agent.cli:main"
+bps-stat-agent-acp = "mini_agent.acp.server:main"
 bps-mcp-server = "mini_agent.bps_mcp_server:main"
 
 [project.optional-dependencies]
