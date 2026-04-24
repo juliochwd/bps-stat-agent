@@ -92,7 +92,11 @@ class BPSDataRetriever:
     """
     
     def __init__(self, api_key: str | None = None):
-        self.api_key = api_key or os.environ.get("BPS_API_KEY", "")
+        self.api_key = (
+            api_key
+            or os.environ.get("BPS_API_KEY")
+            or os.environ.get("WEBAPI_APP_ID", "")
+        )
         if not self.api_key:
             raise ValueError("BPS API key required. Set BPS_API_KEY environment variable or pass api_key parameter.")
         self._api = BPSAPI(self.api_key)

@@ -22,13 +22,10 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-# Import BPSAPI from same package
-sys.path.insert(0, os.path.dirname(__file__))
 try:
-    from bps_api import BPSAPI
+    from .bps_api import BPSAPI
 except ImportError:
-    # Fallback for when running as standalone
-    from mini_agent.bps_api import BPSAPI
+    from bps_api import BPSAPI
 from mini_agent.bps_orchestrator import BPSOrchestrator
 from mini_agent.bps_resource_retriever import BPSResourceRetriever
 from mini_agent.bps_resolution import classify_search_result
@@ -39,7 +36,7 @@ MCP_SERVER_NAME = "bps"
 MCP_SERVER_VERSION = "1.0.0"
 
 # Default API key (can be overridden by config or environment)
-DEFAULT_API_KEY = os.environ.get("BPS_API_KEY", "")
+DEFAULT_API_KEY = os.environ.get("BPS_API_KEY") or os.environ.get("WEBAPI_APP_ID", "")
 DEFAULT_SEARCH_DELAY = float(os.environ.get("BPS_SEARCH_DELAY", "3"))
 
 

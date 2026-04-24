@@ -32,13 +32,15 @@ class LLMClient:
 
     # MiniMax API domains that need automatic suffix handling
     MINIMAX_DOMAINS = ("api.minimax.io", "api.minimaxi.com")
+    DEFAULT_API_BASE = "https://api.minimaxi.com"
+    DEFAULT_MODEL = "MiniMax-M2.5"
 
     def __init__(
         self,
         api_key: str,
-        provider: LLMProvider = LLMProvider.ANTHROPIC,
-        api_base: str = "https://api.minimaxi.com",
-        model: str = "MiniMax-M2.5",
+        provider: LLMProvider | str = LLMProvider.ANTHROPIC,
+        api_base: str | None = DEFAULT_API_BASE,
+        model: str | None = DEFAULT_MODEL,
         retry_config: RetryConfig | None = None,
     ):
         """Initialize LLM client with specified provider.
@@ -52,13 +54,16 @@ class LLMClient:
             model: Model name to use
             retry_config: Optional retry configuration
         """
+        if isinstance(provider, str):
+            provider = LLMProvider(provider.lower())
+
         self.provider = provider
         self.api_key = api_key
-        self.model = model
+        self.model = model or self.DEFAULT_MODEL
         self.retry_config = retry_config or RetryConfig()
 
         # Normalize api_base (remove trailing slash)
-        api_base = api_base.rstrip("/")
+        api_base = (api_base or self.DEFAULT_API_BASE).rstrip("/")
 
         # Check if this is a MiniMax API endpoint
         is_minimax = any(domain in api_base for domain in self.MINIMAX_DOMAINS)
@@ -85,14 +90,14 @@ class LLMClient:
             self._client = AnthropicClient(
                 api_key=api_key,
                 api_base=full_api_base,
-                model=model,
+                model=self.model,
                 retry_config=retry_config,
             )
         elif provider == LLMProvider.OPENAI:
             self._client = OpenAIClient(
                 api_key=api_key,
                 api_base=full_api_base,
-                model=model,
+                model=self.model,
                 retry_config=retry_config,
             )
         else:

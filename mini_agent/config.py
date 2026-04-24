@@ -3,7 +3,9 @@
 Provides unified configuration loading and management functionality
 """
 
+import os
 from pathlib import Path
+from typing import ClassVar
 
 import yaml
 from pydantic import BaseModel, Field
@@ -70,6 +72,13 @@ class Config(BaseModel):
     agent: AgentConfig
     tools: ToolsConfig
 
+    INVALID_API_KEYS: ClassVar[set[str]] = {
+        "",
+        "YOUR_API_KEY_HERE",
+        "YOUR_MINIMAX_API_KEY_HERE",
+        "test_key_123",
+    }
+
     @classmethod
     def load(cls) -> "Config":
         """Load configuration from the default search path."""
@@ -107,7 +116,20 @@ class Config(BaseModel):
         if "api_key" not in data:
             raise ValueError("Configuration file missing required field: api_key")
 
-        if not data["api_key"] or data["api_key"] == "YOUR_API_KEY_HERE":
+        configured_api_key = str(data.get("api_key") or "")
+        env_api_key = (
+            os.environ.get("MINIMAX_API_KEY")
+            or os.environ.get("ANTHROPIC_AUTH_TOKEN")
+            or os.environ.get("OPENAI_API_KEY")
+            or ""
+        )
+        api_key = (
+            env_api_key
+            if configured_api_key in cls.INVALID_API_KEYS and env_api_key
+            else configured_api_key
+        )
+
+        if api_key in cls.INVALID_API_KEYS:
             raise ValueError("Please configure a valid API Key")
 
         # Parse retry configuration
@@ -121,7 +143,7 @@ class Config(BaseModel):
         )
 
         llm_config = LLMConfig(
-            api_key=data["api_key"],
+            api_key=api_key,
             api_base=data.get("api_base", "https://api.minimax.io"),
             model=data.get("model", "MiniMax-M2.5"),
             provider=data.get("provider", "anthropic"),

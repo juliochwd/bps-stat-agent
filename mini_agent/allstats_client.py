@@ -14,6 +14,7 @@ Usage:
 
 import asyncio
 import re
+import sys
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -121,19 +122,7 @@ class AllStatsClient:
         """Ensure browser is initialized with anti-detection measures."""
         if self._browser is None:
             self._playwright = await async_playwright().start()
-            self._browser = await self._playwright.chromium.launch(
-                headless=self.headless,
-                args=[
-                    '--disable-blink-features=AutomationControlled',
-                    '--disable-dev-shm-usage',
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-infobars',
-                    '--disable-notifications',
-                    '--window-position=0,0',
-                    '--window-size=1920,1080',
-                ]
-            )
+            self._browser = await self._launch_browser()
             self._context = await self._browser.new_context(
                 viewport={"width": 1920, "height": 1080},
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
@@ -171,6 +160,51 @@ class AllStatsClient:
             
             self._page = await self._context.new_page()
             self._page.set_default_timeout(self.timeout * 1000)
+
+    async def _launch_browser(self):
+        """Launch Chromium, installing the Playwright browser if it is missing."""
+        try:
+            return await self._playwright.chromium.launch(
+                headless=self.headless,
+                args=self._browser_args(),
+            )
+        except Exception as exc:
+            if "Executable doesn't exist" not in str(exc):
+                raise
+            await self._install_chromium()
+            return await self._playwright.chromium.launch(
+                headless=self.headless,
+                args=self._browser_args(),
+            )
+
+    @staticmethod
+    def _browser_args() -> list[str]:
+        return [
+            "--disable-blink-features=AutomationControlled",
+            "--disable-dev-shm-usage",
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-infobars",
+            "--disable-notifications",
+            "--window-position=0,0",
+            "--window-size=1920,1080",
+        ]
+
+    async def _install_chromium(self) -> None:
+        """Install Chromium for one-command package installs."""
+        process = await asyncio.create_subprocess_exec(
+            sys.executable,
+            "-m",
+            "playwright",
+            "install",
+            "chromium",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=300)
+        if process.returncode != 0:
+            output = (stdout + stderr).decode("utf-8", errors="replace")
+            raise RuntimeError(f"Failed to install Playwright Chromium: {output}")
 
     async def search(
         self,
