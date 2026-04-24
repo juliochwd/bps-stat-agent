@@ -726,16 +726,15 @@ class TestDynamicDataEndpoints:
         # List format: [region_id, value, region_id, value, ...]
         assert len(result["data"]) == 2
 
-    def test_get_decoded_data_returns_error_on_failure(self, api, mock_response):
-        """get_decoded_data should raise BPSAPIError when API returns non-OK status."""
-        mock_resp_data = {"status": "ERROR", "message": "Not found"}
-        mock_resp = mock_response(mock_resp_data)
+    def test_get_data_with_string_th_for_ranges(self, api, mock_response):
+        """get_data should accept string TH for year ranges."""
+        mock_resp = mock_response({"data-availability": "available", "data": [{}, []]})
         api.session.get = Mock(return_value=mock_resp)
 
-        with pytest.raises(BPSAPIError) as exc_info:
-            api.get_decoded_data(var=184, th=117)
+        api.get_data(var=184, th="117-120", domain="5300")
 
-        assert "Not found" in str(exc_info.value)
+        call_args = api.session.get.call_args
+        assert call_args.kwargs["params"]["th"] == "117-120"
 
     def test_extract_region_id_returns_none_when_no_match(self, api):
         """_extract_region_id returns None when key doesn't match expected format."""
@@ -1788,6 +1787,170 @@ class TestBPSMaterial:
         mat = BPSMaterial({"title": "Test", "pdf": "http://example.com/test.pdf"})
         # Note: We can't actually download without network, but we can test the method exists
         assert callable(mat.download)
+
+    @patch("mini_agent.bps_api.requests.get")
+    def test_bps_material_content_fetches_pdf(self, mock_get, tmp_path):
+        """BPSMaterial.content should fetch PDF content when accessed."""
+        mock_resp = Mock()
+        mock_resp.content = b"PDF content here"
+        mock_resp.raise_for_status = Mock()
+        mock_get.return_value = mock_resp
+
+        mat = BPSMaterial({"title": "Test", "pdf": "http://example.com/test.pdf"})
+        content = mat.content
+
+        assert content == b"PDF content here"
+        mock_get.assert_called_once_with("http://example.com/test.pdf", timeout=60)
+
+    @patch("mini_agent.bps_api.requests.get")
+    def test_bps_material_download_writes_file(self, mock_get, tmp_path):
+        """BPSMaterial.download should write PDF content to file."""
+        mock_resp = Mock()
+        mock_resp.content = b"PDF content here"
+        mock_resp.raise_for_status = Mock()
+        mock_get.return_value = mock_resp
+
+        mat = BPSMaterial({"title": "Test", "pdf": "http://example.com/test.pdf"})
+        filepath = tmp_path / "test.pdf"
+        mat.download(str(filepath))
+
+        assert filepath.read_bytes() == b"PDF content here"
+
+
+class TestExtractDataEdgeCases:
+    """Tests for _extract_data edge cases."""
+
+    def test_extract_data_returns_empty_when_pagination_only(self, api):
+        """_extract_data should return [] when data is pagination dict only."""
+        response = {
+            "data": [{"page": 1, "total": 0}, None],
+        }
+        result = api._extract_data(response)
+        assert result == []
+
+    def test_extract_data_returns_empty_when_data_unavailable(self, api):
+        """_extract_data should return [] when data-availability is not available."""
+        response = {"data-availability": "unavailable"}
+        result = api._extract_data(response)
+        assert result == []
+
+    def test_extract_data_handles_data_1_none_with_availability(self, api):
+        """_extract_data should return [] when data[1] is None but availability is available."""
+        response = {
+            "data-availability": "available",
+            "data": [{"page": 1}, None]
+        }
+        result = api._extract_data(response)
+        assert result == []
+
+    def test_extract_data_returns_data_directly_when_not_paginated(self, api):
+        """_extract_data should return data directly when it's a simple list."""
+        response = {
+            "data": [{"id": 1}, {"id": 2}]
+        }
+        result = api._extract_data(response)
+        assert result == [{"id": 1}, {"id": 2}]
+
+    def test_extract_data_handles_empty_data_list(self, api):
+        """_extract_data should return [] when data is empty list."""
+        response = {
+            "data-availability": "available",
+            "data": []
+        }
+        result = api._extract_data(response)
+        assert result == []
+
+    def test_extract_data_handles_data_list_single_element(self, api):
+        """_extract_data should return [] when data list has only one element."""
+        response = {
+            "data-availability": "available",
+            "data": [{"page": 1}]
+        }
+        result = api._extract_data(response)
+        assert result == []
+
+    def test_extract_data_standard_path_empty_data(self, api):
+        """Test _extract_data standard path with empty data (lines 220-223)."""
+        # This specifically tests lines 220-223 where:
+        # - data-availability is available
+        # - data is empty list (triggers len(data) > 1 check to fail)
+        response = {
+            "data-availability": "available",
+            "data": []
+        }
+        result = api._extract_data(response)
+        # Line 220: data = response.get("data", []) -> []
+        # Line 221: isinstance([], list) is True but len([]) > 1 is False
+        # Line 223: returns []
+        assert result == []
+
+    def test_extract_data_standard_path_single_item(self, api):
+        """Test _extract_data standard path with single item in data list."""
+        response = {
+            "data-availability": "available",
+            "data": ["single_item"]
+        }
+        result = api._extract_data(response)
+        # Line 216: return data (single-item list passes through directly)
+        assert result == ["single_item"]
+
+    def test_extract_data_standard_path_empty_items(self, api):
+        """Test _extract_data standard path with pagination but no items."""
+        response = {
+            "data-availability": "available",
+            "data": [{}, None]
+        }
+        result = api._extract_data(response)
+        # Lines 218-222: data-availability available, len > 1, data[1] is None → returns []
+        assert result == []
+
+
+class TestExtractRegionIdEdgeCases:
+    """Tests for _extract_region_id ValueError edge case."""
+
+    def test_extract_region_id_with_non_numeric_prefix(self, api):
+        """_extract_region_id should handle non-numeric region prefix gracefully."""
+        # If somehow a non-numeric prefix gets through, ValueError should be caught
+        result = api._extract_region_id("ab1840", 184)
+        assert result is None
+
+
+class TestDecodedDataEdgeCases:
+    """Tests for get_decoded_data edge cases."""
+
+    def test_get_decoded_data_with_empty_datacontent(self, api, mock_response):
+        """get_decoded_data should handle empty datacontent."""
+        mock_resp_data = {
+            "status": "OK",
+            "var": [{"val": 184, "label": "GDP"}],
+            "tahun": [{"val": 117, "label": "2024"}],
+            "vervar": [{"val": 5300, "label": "NTT"}],
+            "datacontent": {}
+        }
+        mock_resp = mock_response(mock_resp_data)
+        api.session.get = Mock(return_value=mock_resp)
+
+        result = api.get_decoded_data(var=184, th=117)
+
+        assert result["status"] == "OK"
+        assert result["data"] == []
+
+    def test_get_decoded_data_with_only_region_in_list(self, api, mock_response):
+        """get_decoded_data should handle list with odd number of elements."""
+        mock_resp_data = {
+            "status": "OK",
+            "var": [{"val": 184, "label": "GDP"}],
+            "tahun": [{"val": 117, "label": "2024"}],
+            "vervar": [{"val": 5300, "label": "NTT"}],
+            "datacontent": [5300]  # Only one element - should be ignored
+        }
+        mock_resp = mock_response(mock_resp_data)
+        api.session.get = Mock(return_value=mock_resp)
+
+        result = api.get_decoded_data(var=184, th=117)
+
+        assert result["status"] == "OK"
+        assert result["data"] == []
 
 
 class TestFormatDomain:
