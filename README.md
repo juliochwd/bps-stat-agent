@@ -1,6 +1,8 @@
 # BPS Stat Agent
 
-BPS Stat Agent specialized for BPS (Badan Pusat Statistik / Statistics Indonesia) statistical data queries. Provides **55+ MCP tools** for complete access to BPS WebAPI and AllStats Search Engine.
+**BPS Indonesia Statistical Data Agent** — Ainson cari data BPS (Badan Pusat Statistik) seperti inflasi, PDB, IPM, angka harapan hidup, pengangguran, kemiskinan di Indonesia. Dilengkapi **55+ MCP tools** untuk akses lengkap ke BPS WebAPI dan AllStats Search Engine.
+
+> Query contoh: "inflasi NTT terbaru", "PDRB kabupaten kota Jawa Timur", "angka harapan hidup menurut provinsi", "IPM nasional 2024"
 
 ## Features
 
@@ -216,7 +218,7 @@ which uv          # or pip
 
 ```bash
 # Clone the repository
-git clone https://github.com/MiniMax-AI/bps-stat-agent.git
+git clone https://github.com/juliochwd/bps-stat-agent.git
 cd bps-stat-agent
 
 # Create virtual environment
