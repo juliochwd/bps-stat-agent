@@ -1,235 +1,290 @@
+---
+name: bps-master
+description: Retrieve BPS (Badan Pusat Statistik / Statistics Indonesia) data including inflation, GDP, PDB, population, IPM/HDI, unemployment, poverty, and census data for Indonesian provinces and national level. Use this skill whenever users ask about BPS statistics, Indonesian economic or demographic data, inflation rates, regional development indicators, BPS publications, or when needing structured data from BPS WebAPI and AllStats Search Engine. Handles both formal queries (in Indonesian or English) and casual mentions of BPS, Statistics Indonesia, or specific indicators like IPM, PDB, inflasi.
+---
+
 # BPS Master Agent Skill
 
-## Overview
-BPS (Badan Pusat Statistik) Indonesia data retrieval agent. Provides access to all BPS statistical data via WebAPI and AllStats Search Engine.
+This skill provides access to all BPS (Badan Pusat Statistik) Indonesia statistical data via two integrated data sources. It exposes **55+ MCP tools** for Indonesian statistical data retrieval.
 
-## Architecture
+## Two Data Sources
 
-### Two Data Sources
-1. **BPS AllStats Search Engine** (`searchengine.web.bps.go.id`) — via Playwright
-   - Search-only, bypasses Cloudflare protection
-   - Returns: title, URL, snippet, content_type
-   - URL: `https://searchengine.web.bps.go.id/search?mfd={domain}&q={keyword}&content={type}&page={page}&sort={sort}`
+### 1. AllStats Search Engine (Playwright — bypasses Cloudflare)
+Use when WebAPI is WAF-blocked or you need to discover content.
 
-2. **BPS WebAPI** (`webapi.bps.go.id`) — direct HTTP
-   - Structured data: indicators, publications, subjects, etc.
-   - Requires API key
-   - Status: WAF-blocked from some IPs
+```
+URL: https://searchengine.web.bps.go.id/search?mfd={domain}&q={keyword}&content={type}&page={page}
+Returns: title, URL, snippet, content_type
+```
 
-### Domain Codes
-- `0000` = Nasional (National)
-- `5300` = Nusa Tenggara Timur (NTT Province)
-- Other provinces: 1100=Aceh, 1200=Sumatera Utara, 3100=DKI Jakarta, etc.
+### 2. BPS WebAPI (direct HTTP — requires API key)
+Use for structured, paginated data retrieval.
 
-## Quick Usage
+```
+Base: https://webapi.bps.go.id
+Requires: BPS_API_KEY or WEBAPI_APP_ID env var
+```
 
+## Decision Tree: Which Tool to Use
+
+```
+Need specific BPS data (inflation, GDP, IPM, etc.)
+├── Know the exact variable ID and period?
+│   ├── YES → bps_get_data OR bps_get_decoded_data
+│   └── NO  → Use AllStats-first pattern
+│
+AllStats-first (recommended for discovery):
+1. bps_answer_query("inflasi NTT", domain="5300") → structured data with summary
+   OR
+1. bps_search_allstats(keyword="inflasi", domain="5300") → search results
+2. Follow result URLs to get detail
+
+Census data (sp2020, etc.):
+- bps_get_census_topics(kegiatan="sp2020")
+- bps_get_census_areas(kegiatan="sp2020")
+- bps_get_census_datasets(kegiatan="sp2020", topik=X)
+
+SIMDASI regional data:
+- bps_get_simdasi_regencies(parent="5300000")  # 7-digit MFD code
+- bps_get_simdasi_subjects(wilayah="5300000")
+
+KBLI/KBKI classifications:
+- bps_list_kbli(year=2020, level="golongan")
+- bps_get_kbli_detail(kbli_id="XX", year=2020)
+
+Foreign trade:
+- bps_get_foreign_trade(sumber=1, kodehs=84, tahun="2024", periode=1, jenishs=1)
+```
+
+## Domain Codes
+
+| Code | Province | Common Use |
+|------|----------|------------|
+| 0000 | Nasional | National GDP, national indicators |
+| 5300 | Nusa Tenggara Timur (NTT) | Provincial inflation, HDI, employment |
+| 1100-7700 | Other provinces | Province-specific data |
+
+## All 55+ MCP Tools Reference
+
+### Utility Tools
+
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_year_to_th` | `year: int` | Year → BPS th ID (e.g., 2024 → 124) |
+| `bps_list_years` | `domain, var?, api_key?` | Available years for variable |
+| `bps_list_domains` | `type="all"\|"prov"\|"kab"`, `prov?`, `api_key?` | List all domains |
+| `bps_list_provinces` | `api_key?` | Province list |
+
+### Subject & Variables
+
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_list_subjects` | `domain, subcat?, lang="ind", page=1, api_key?` | Statistical subjects |
+| `bps_list_subject_categories` | `domain, lang="ind", api_key?` | Subject category tree |
+| `bps_get_variables` | `domain, subject?, year?, lang="ind", page=1, api_key?` | Variables for subject |
+| `bps_list_periods` | `domain, var?, lang="ind", page=1, api_key?` | Time periods (tahun) |
+| `bps_list_vertical_variables` | `domain, var?, lang="ind", page=1, api_key?` | Regional breakdowns (kabupaten/kota) |
+| `bps_list_derived_variables` | `domain, var?, lang="ind", page=1, api_key?` | Sub-category variables |
+| `bps_list_derived_periods` | `domain, var?, lang="ind", page=1, api_key?` | Monthly/quarterly periods |
+| `bps_list_units` | `domain, lang="ind", page=1, api_key?` | Measurement units |
+
+### Core Data Retrieval
+
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_get_data` | `var: int, th: int, domain="5300", api_key?` | Raw numeric data |
+| `bps_get_decoded_data` | `var: int, th: int, domain="5300", api_key?` | Data with region labels (recommended) |
+
+**Example:**
 ```python
-from mini_agent.allstats_client import AllStatsClient
-from dataclasses import asdict
-
-async def search_bps():
-    client = AllStatsClient(headless=True)
-    try:
-        # Search for inflation data in NTT
-        response = await client.search(
-            keyword="inflasi",
-            domain="5300",
-            content="all"  # all/publication/table/pressrelease/infographic
-        )
-
-        for r in response.results:
-            print(f"{r.title}")
-            print(f"  URL: {r.url}")
-            print(f"  Type: {r.content_type}")
-
-        return [asdict(r) for r in response.results]
-    finally:
-        await client.close()
+# Get TPT ( unemployment rate) for NTT 2024
+bps_get_decoded_data(var=522, th=124, domain="5300")
+# var=522 from bps_get_variables, th=124 = year_to_th(2024)
 ```
 
-## Content Types for Search
+### Search Tools
 
-| Type | BPS Product |
-|------|------------|
-| `all` | Semua tipe |
-| `publication` | Publikasi |
-| `table` | Tabel Statistik |
-| `pressrelease` | Berita Resmi Statistik (BRS) |
-| `infographic` | Infografis |
-| `microdata` | Data Mikro |
-| `news` | Berita |
-| `glosarium` | Glosarium |
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_search` | `keyword, domain="5300", content="all", page=1, api_key?` | Static table search (WebAPI) |
+| `bps_search_allstats` | `keyword, domain="5300", content="all", page=1, api_key?` | Playwright search (bypasses WAF) |
+| `bps_search_ntt` | `keyword, page=1, api_key?` | Shortcut: domain=5300 |
+| `bps_search_nasional` | `keyword, page=1, api_key?` | Shortcut: domain=0000 |
+| `bps_search_and_get_data` | `keyword, domain="5300", max_tables=3, format="json", api_key?` | Search + retrieve data |
+| `bps_answer_query` | `keyword, domain="5300", content="all", api_key?` | AI-powered AllStats-first answer |
 
-## Search URL Parameters
+**AllStats content types:** `all`, `publication`, `table`, `pressrelease`, `infographic`, `microdata`, `news`, `glosarium`
 
+### Table Data
+
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_get_table_data` | `table_id: int, domain="5300", format="json"\|"csv", api_key?` | Static table with actual data |
+| `bps_list_dynamic_tables` | `domain, year?, keyword?, lang="ind", page=1, api_key?` | Dynamic tables list |
+
+### Publications & Press Releases
+
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_get_press_releases` | `year=2024, domain="0000", api_key?` | Berita Resmi Statistik (BRS) list |
+| `bps_get_publications` | `domain="5300", page=1, api_key?` | Publication list |
+
+### News & Media
+
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_list_news_categories` | `domain="5300", lang="ind", api_key?` | News categories |
+| `bps_get_news_detail` | `news_id: int, domain="5300", lang="ind", api_key?` | News article |
+
+### Indicators & Infographics
+
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_get_indicators` | `domain="5300", year?, page=1, api_key?` | Strategic indicators |
+| `bps_list_infographics` | `domain="5300", keyword?, lang="ind", page=1, api_key?` | Infographic list |
+| `bps_get_infographic_detail` | `infographic_id: str, domain="5300", lang="ind", api_key?` | Infographic with image URL |
+
+### Glossary
+
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_list_glossary` | `prefix?, perpage=10, page=1, api_key?` | Glossary terms (no domain param) |
+| `bps_get_glossary_detail` | `glossary_id: int, lang="ind", api_key?` | Glossary term detail |
+
+### SDGs & SDDS
+
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_list_sdgs` | `goal?` ("1"-"17"), `api_key?` | SDG indicators (no domain) |
+| `bps_list_sdds` | `api_key?` | SDDS indicators (no domain) |
+
+### Census Data (uses `kegiatan` not domain)
+
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_get_census_topics` | `kegiatan: str` (e.g., "sp2020") | Census topics |
+| `bps_get_census_areas` | `kegiatan: str` | Wilayah sensus areas |
+| `bps_get_census_datasets` | `kegiatan: str, topik: int` | Available datasets |
+| `bps_get_census_data` | `kegiatan: str, wilayah_sensus: int, dataset: int` | Census microdata |
+
+**Census kegiatan values:** `"sp2020"` (Population Census 2020), others depending on available census events
+
+### SIMDASI Data (uses 7-digit MFD codes, not domain)
+
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_get_simdasi_regencies` | `parent: str` (7-digit MFD, e.g., "5300000" for NTT) | Regency MFD codes |
+| `bps_get_simdasi_districts` | `parent: str` (7-digit regency MFD) | District MFD codes |
+| `bps_get_simdasi_subjects` | `wilayah: str` (7-digit area MFD) | SIMDASI subjects |
+| `bps_get_simdasi_master_tables` | `api_key?` | Master table list (no domain) |
+| `bps_get_simdasi_table_detail` | `wilayah: str, tahun: int, id_tabel: str` | Table with data |
+| `bps_get_simdasi_tables_by_area` | `wilayah: str` | Tables for area |
+| `bps_get_simdasi_tables_by_area_and_subject` | `wilayah: str, id_subjek: str` | Tables by area+subject |
+| `bps_get_simdasi_master_table_detail` | `id_tabel: str` | Master table detail |
+
+**MFD code examples:** NTT province="5300000", Kota Kupang="5371000", Kabupaten Ngada="5306000"
+
+### CSA (Custom Statistical Areas)
+
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_list_csa_categories` | `domain="5300", api_key?` | CSA categories |
+| `bps_list_csa_subjects` | `domain="5300", subcat?, api_key?` | CSA subjects |
+| `bps_list_csa_tables` | `domain="5300", subject?, page=1, perpage=10, api_key?` | CSA table statistics |
+| `bps_get_csa_table_detail` | `table_id: str, year?, lang="ind", domain="5300", api_key?` | CSA table detail |
+
+### Classifications (KBLI/KBKI)
+
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_list_kbli` | `year=2020, level?, page=1, perpage=10, api_key?` | KBLI codes (ISIC-based) |
+| `bps_get_kbli_detail` | `kbli_id: str, year=2020, lang="ind", api_key?` | KBLI classification detail |
+| `bps_list_kbki` | `year=2015, page=1, perpage=10, api_key?` | KBKI commodity codes |
+| `bps_get_kbki_detail` | `kbki_id: str, year=2015, lang="ind", api_key?` | KBKI classification detail |
+
+**KBLI years:** 2009, 2015, 2017, 2020
+**KBLI levels:** "kategori", "golongan pokok", "golongan", "subgolongan", "kelompok"
+
+### Foreign Trade
+
+| Tool | Args | Returns |
+|------|------|---------|
+| `bps_get_foreign_trade` | `sumber: int, kodehs: int, tahun: str, periode=1, jenishs=1, api_key?` | Export/import data |
+
+**Foreign trade params:**
+- `sumber`: 1=Export, 2=Import
+- `kodehs`: HS code (2-digit for summary, full for detail)
+- `tahun`: Year string e.g., "2024"
+- `periode`: 1=monthly, 2=annually
+- `jenishs`: 1=Two-digit HS summary, 2=Full HS code
+
+## Common Query Templates
+
+| Intent | Tool to Use | Example |
+|--------|-------------|---------|
+| "inflasi NTT terbaru" | `bps_answer_query` | `bps_answer_query("inflasi", domain="5300")` |
+| "PDB nasional 2024" | `bps_answer_query` or `bps_search_and_get_data` | `bps_answer_query("PDB", domain="0000")` |
+| "IPM kabupaten NTT" | `bps_get_decoded_data` with variable ID | `bps_get_decoded_data(var=X, th=124, domain="5300")` |
+| "statistik penduduk" | `bps_list_subjects` then `bps_get_variables` | explore subject ID 14 |
+| "publikasi BPS terbaru" | `bps_get_publications` | `bps_get_publications(domain="5300")` |
+| "KBLI classification" | `bps_list_kbli` / `bps_get_kbli_detail` | `bps_list_kbli(year=2020, level="golongan")` |
+| "ekspor-impor" | `bps_get_foreign_trade` | `bps_get_foreign_trade(sumber=1, kodehs=84, tahun="2024", ...)` |
+| "SDGs NTT goal 1" | `bps_list_sdgs` | `bps_list_sdgs(goal="1")` |
+| "Sensus 2020" | `bps_get_census_topics` | `bps_get_census_topics(kegiatan="sp2020")` |
+
+## Environment Variables
+
+```bash
+# Required for WebAPI
+BPS_API_KEY=your_key_here
+# or
+WEBAPI_APP_ID=your_key_here
+
+# BPS_API_KEY takes precedence when both set
 ```
-mfd     = Domain code (5300=NTT, 0000=nasional)
-q       = Keyword (use + for spaces: "data+inflasi")
-content = Content type filter
-page    = Page number (default 1)
-sort    = Sort: terbaru (newest), terlama (oldest), relevansi (relevance)
-title   = 0 (search everywhere)
-from    = start date filter
-to      = end date filter
-```
 
-## BPS WebAPI - Complete Endpoint Coverage
+## WAF Bypass Notes
 
-### 55+ MCP Tools Available
+BPS LTM WAF blocks some regional SIMDASI endpoints. Workarounds:
 
-#### Domain & Province
-| Tool | Description |
-|------|-------------|
-| `bps_list_domains` | List all BPS domains (provinces, cities) |
-| `bps_list_provinces` | List all province domains |
-| `bps_year_to_th` | Convert year to BPS time period ID |
-| `bps_list_years` | List available years for a variable |
-
-#### Subject & Categories
-| Tool | Description |
-|------|-------------|
-| `bps_list_subjects` | List statistical subjects |
-| `bps_list_subject_categories` | List subject categories (subjek) |
-
-#### Variables & Data
-| Tool | Description |
-|------|-------------|
-| `bps_get_variables` | List variables in a subject |
-| `bps_list_periods` | List available time periods (tahun) |
-| `bps_list_vertical_variables` | List regional breakdowns (kabupaten/kota) |
-| `bps_list_derived_variables` | List derived variables (sub-categories) |
-| `bps_list_derived_periods` | List monthly/quarterly periods |
-| `bps_list_units` | List units of measurement |
-| `bps_get_data` | Get raw dynamic data values |
-| `bps_get_decoded_data` | Get decoded data with region labels |
-
-#### Search
-| Tool | Description |
-|------|-------------|
-| `bps_search` | Search static tables via WebAPI |
-| `bps_search_allstats` | Search via AllStats (Playwright, bypasses Cloudflare) |
-| `bps_search_ntt` | Convenience: search for NTT (domain 5300) |
-| `bps_search_nasional` | Convenience: search national (domain 0000) |
-| `bps_search_and_get_data` | Complete flow: search + retrieve actual data |
-| `bps_answer_query` | AllStats-first query pipeline with AI answer |
-
-#### Table Data
-| Tool | Description |
-|------|-------------|
-| `bps_get_table_data` | Get actual data from static table |
-| `bps_list_dynamic_tables` | List dynamic tables |
-| `bps_get_dynamic_table_detail` | Get dynamic table detail |
-
-#### Publications & Press Releases
-| Tool | Description |
-|------|-------------|
-| `bps_get_press_releases` | List BPS press releases (BRS) |
-| `bps_get_publications` | List BPS publications |
-
-#### News & Media
-| Tool | Description |
-|------|-------------|
-| `bps_list_news_categories` | List news categories |
-| `bps_get_news_detail` | Get news article detail |
-
-#### Indicators & Infographics
-| Tool | Description |
-|------|-------------|
-| `bps_get_indicators` | Get strategic indicators |
-| `bps_list_infographics` | List infographics |
-| `bps_get_infographic_detail` | Get infographic detail |
-
-#### Glossary
-| Tool | Description |
-|------|-------------|
-| `bps_list_glossary` | List glossary terms |
-| `bps_get_glossary_detail` | Get glossary term detail |
-
-#### SDGs & SDDS
-| Tool | Description |
-|------|-------------|
-| `bps_list_sdgs` | List SDGs indicators (by goal 1-17) |
-| `bps_list_sdds` | List SDDS indicators |
-
-#### Census Data
-| Tool | Description |
-|------|-------------|
-| `bps_get_census_topics` | Get census topics |
-| `bps_get_census_areas` | Get census areas (wilayah sensus) |
-| `bps_get_census_datasets` | Get available census datasets |
-| `bps_get_census_data` | Get actual census microdata |
-
-#### SIMDASI Data
-| Tool | Description |
-|------|-------------|
-| `bps_get_simdasi_regencies` | Get regency MFD codes |
-| `bps_get_simdasi_districts` | Get district MFD codes |
-| `bps_get_simdasi_subjects` | Get SIMDASI subjects by area |
-| `bps_get_simdasi_master_tables` | List master tables |
-| `bps_get_simdasi_table_detail` | Get table detail with data |
-| `bps_get_simdasi_tables_by_area` | Get tables by area |
-| `bps_get_simdasi_tables_by_area_and_subject` | Get tables by area + subject |
-| `bps_get_simdasi_master_table_detail` | Get master table detail |
-
-#### CSA (Custom Statistical Areas)
-| Tool | Description |
-|------|-------------|
-| `bps_list_csa_categories` | List CSA categories |
-| `bps_list_csa_subjects` | List CSA subjects |
-| `bps_list_csa_tables` | List CSA table statistics |
-| `bps_get_csa_table_detail` | Get CSA table detail |
-
-#### Classifications
-| Tool | Description |
-|------|-------------|
-| `bps_list_kbli` | List KBLI codes (ISIC-based, 2009/2015/2017/2020) |
-| `bps_get_kbli_detail` | Get KBLI classification detail |
-| `bps_list_kbki` | List KBKI codes (commodity classification) |
-| `bps_get_kbki_detail` | Get KBKI classification detail |
-
-#### Foreign Trade
-| Tool | Description |
-|------|-------------|
-| `bps_get_foreign_trade` | Get export/import data (dataexim) |
+| Blocked | Workaround |
+|---------|-----------|
+| SIMDASI id/27-29 with regional params | Use Census data (id/41) instead |
+| SIMDASI regional (wilayah ≠ 0000000) | Try wilayah="5300000" (NTT MFD) |
+| AllStats always works | `bps_search_allstats` bypasses Cloudflare |
 
 ## Installation
 
 ```bash
-cd /home/ubuntu/Mini-Agent
-python3 -m venv .venv
-.venv/bin/pip install -e .
-.venv/bin/playwright install chromium
+git clone https://github.com/juliochwd/bps-stat-agent.git
+cd bps-stat-agent
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e .
+playwright install chromium
 ```
 
 ## Running as MCP Server
 
 ```bash
-# Via uvx (recommended)
-uvx --from git+https://github.com/MiniMax-AI/mini-agent-bps.git bps-mcp-server
+# Via uvx (no install needed)
+uvx --from git+https://github.com/juliochwd/bps-stat-agent.git bps-mcp-server
 
 # Or directly
 python -m mini_agent.bps_mcp_server
 ```
 
-## Environment Variables
+## Quick Reference: BPS th Values
 
-| Variable | Description |
-|----------|-------------|
-| `BPS_API_KEY` | BPS WebAPI key |
-| `WEBAPI_APP_ID` | Alternative API key variable |
+| Year | th (year - 1900) |
+|------|------------------|
+| 2017 | 117 |
+| 2018 | 118 |
+| 2019 | 119 |
+| 2020 | 120 |
+| 2021 | 121 |
+| 2022 | 122 |
+| 2023 | 123 |
+| 2024 | 124 |
+| 2025 | 125 |
 
-## WAF Bypass Notes
-
-Some SIMDASI regional endpoints (id/27, id/28, id/29) are blocked by BPS LTM WAF when using regional parameters. Workarounds:
-- Use Census data (id/41) instead of blocked SIMDASI endpoints
-- Use wilayah=0000000 (national) instead of regional codes
-- AllStats search works through Cloudflare
-
-## Verified Working (2026-04-24)
-
-✅ All 55+ MCP tools implemented and registered
-✅ AllStats search with Playwright (10 results per page)
-✅ Domain filtering (5300=NTT, 0000=National)
-✅ Content type filtering
-✅ Title/snippet extraction
-✅ Full BPS WebAPI coverage
+Use `bps_year_to_th(year)` to convert, or `bps_list_years` to discover available periods.
