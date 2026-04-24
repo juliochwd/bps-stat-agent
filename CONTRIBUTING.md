@@ -1,6 +1,6 @@
 # Contributing Guide
 
-Thank you for your interest in the Mini Agent project! We welcome contributions of all forms.
+Thank you for your interest in the BPS Stat Agent project! We welcome contributions of all forms.
 
 ## How to Contribute
 
