@@ -21,7 +21,7 @@
             "command": "uvx",
             "args": [
                 "--from",
-                "git+https://github.com/MiniMax-AI/minimax_search",
+                "git+https://github.com/juliochwd/minimax_search",
                 "minimax-search"
             ],
             "env": {

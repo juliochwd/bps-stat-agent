@@ -179,7 +179,7 @@ class Config(BaseModel):
 
         Search for config file in the following order of priority:
         1) mini_agent/config/{filename} in current directory (development mode)
-        2) ~/.mini-agent/config/{filename} in user home directory
+        2) ~/.bps-stat-agent/config/{filename} in user home directory
         3) {package}/mini_agent/config/{filename} in package installation directory
 
         Args:

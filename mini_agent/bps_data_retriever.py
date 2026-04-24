@@ -24,7 +24,7 @@ from typing import Any
 try:
     from mini_agent.bps_api import BPSAPI
 except ImportError:
-    raise ImportError("bps_api module required. Install mini-agent-bps package.")
+    raise ImportError("bps_api module required. Install bps-stat-agent package.")
 
 
 @dataclass

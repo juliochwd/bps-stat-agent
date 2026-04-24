@@ -1,4 +1,4 @@
-"""Schema definitions for Mini-Agent."""
+"""Schema definitions for BPS Stat Agent."""
 
 from .schema import (
     FunctionCall,

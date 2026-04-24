@@ -583,7 +583,7 @@ async def run_agent(workspace_dir: Path, task: str = None):
         system_prompt = system_prompt_path.read_text(encoding="utf-8")
         print(f"{Colors.GREEN}✅ Loaded system prompt (from: {system_prompt_path}){Colors.RESET}")
     else:
-        system_prompt = "You are Mini-Agent, an intelligent assistant powered by MiniMax M2.5 that can help users complete various tasks."
+        system_prompt = "You are BPS Stat Agent, an intelligent assistant specialized in BPS Indonesia statistical data queries. You can help users find inflation, GDP, IPM, population, and other BPS statistics for Indonesian provinces and national level."
         print(f"{Colors.YELLOW}⚠️  System prompt not found, using default{Colors.RESET}")
 
     # 6. Inject Skills Metadata into System Prompt (Progressive Disclosure - Level 1)
@@ -665,7 +665,7 @@ async def run_agent(workspace_dir: Path, task: str = None):
 
     # Create prompt session with history and auto-suggest
     # Use FileHistory for persistent history across sessions (stored in user's home directory)
-    history_file = Path.home() / ".mini-agent" / ".history"
+    history_file = Path.home() / ".bps-stat-agent" / ".history"
     history_file.parent.mkdir(parents=True, exist_ok=True)
     session = PromptSession(
         history=FileHistory(str(history_file)),

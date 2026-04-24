@@ -75,7 +75,7 @@ bps-stat-agent --help
 
 ### MCP Server Mode
 
-Mini-Agent-BPS includes an MCP server that can be used with Claude desktop:
+BPS Stat Agent includes an MCP server that can be used with Claude desktop:
 
 ```bash
 # Add to your mcp.json:

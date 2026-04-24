@@ -1,4 +1,4 @@
-"""ACP (Agent Client Protocol) bridge for Mini-Agent."""
+"""ACP (Agent Client Protocol) bridge for BPS Stat Agent."""
 
 from __future__ import annotations
 
@@ -67,7 +67,7 @@ class SessionState:
     cancelled: bool = False
 
 
-class MiniMaxACPAgent:
+class BPSStatACPAgent:
     """Minimal ACP adapter wrapping the existing Agent runtime."""
 
     def __init__(
@@ -89,7 +89,7 @@ class MiniMaxACPAgent:
         return InitializeResponse(
             protocolVersion=PROTOCOL_VERSION,
             agentCapabilities=AgentCapabilities(loadSession=False),
-            agentInfo=Implementation(name="mini-agent", title="Mini-Agent", version="0.1.0"),
+            agentInfo=Implementation(name="bps-stat-agent", title="BPS Stat Agent", version="0.1.3"),
         )
 
     async def newSession(self, params: NewSessionRequest) -> NewSessionResponse:
@@ -169,7 +169,7 @@ class MiniMaxACPAgent:
 
 
 async def run_acp_server(config: Config | None = None) -> None:
-    """Run Mini-Agent as an ACP-compatible stdio server."""
+    """Run BPS Stat Agent as an ACP-compatible stdio server."""
     config = config or Config.load()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     base_tools, skill_loader = await initialize_base_tools(config)
@@ -185,8 +185,8 @@ async def run_acp_server(config: Config | None = None) -> None:
     rcfg = config.llm.retry
     llm = LLMClient(api_key=config.llm.api_key, api_base=config.llm.api_base, model=config.llm.model, retry_config=RetryConfigBase(enabled=rcfg.enabled, max_retries=rcfg.max_retries, initial_delay=rcfg.initial_delay, max_delay=rcfg.max_delay, exponential_base=rcfg.exponential_base))
     reader, writer = await stdio_streams()
-    AgentSideConnection(lambda conn: MiniMaxACPAgent(conn, config, llm, base_tools, system_prompt), writer, reader)
-    logger.info("Mini-Agent ACP server running")
+    AgentSideConnection(lambda conn: BPSStatACPAgent(conn, config, llm, base_tools, system_prompt), writer, reader)
+    logger.info("BPS Stat Agent ACP server running")
     await asyncio.Event().wait()
 
 
@@ -194,4 +194,4 @@ def main() -> None:
     asyncio.run(run_acp_server())
 
 
-__all__ = ["MiniMaxACPAgent", "run_acp_server", "main"]
+__all__ = ["BPSStatACPAgent", "run_acp_server", "main"]
