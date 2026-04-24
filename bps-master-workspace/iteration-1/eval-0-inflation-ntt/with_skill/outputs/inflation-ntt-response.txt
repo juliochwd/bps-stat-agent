@@ -1,0 +1,34 @@
+Data Inflasi Provinsi Nusa Tenggara Timur (NTT) - Januari 2026
+=================================================================
+
+Sumber: Berita Resmi Statistik BPS Provinsi NTT (2 Februari 2026)
+
+DATA INFLASI TERBARU:
+----------------------
+• Inflasi Year on Year (y-on-y) Januari 2026: 3,34%
+• Inflasi y-on-y tertinggi di NTT: Waingapu sebesar 4,77%
+
+KETERANGAN:
+-----------
+Berdasarkan rilis resmi BPS Provinsi NTT tanggal 2 Februari 2026, Provinsi
+Nusa Tenggara Timur mengalami inflasi Year on Year (y-on-y) sebesar 3,34%
+pada Januari 2026. Inflasi tertinggi terjadi di Waingapu dengan angka
+4,77%.
+
+Penting untuk dicatat bahwa page-page detail BPS NTT saat ini mengalami
+pemblokiran Cloudflare, sehingga data lengkap mengenai komponen penyebab
+inflasi (andal makanan, minuman & tembakau, housing, dll.) tidak dapat
+diambil langsung dari situs BPS.
+
+SUMBER DATA:
+-------------
+• Berita Resmi Statistik: https://ntt.bps.go.id/news/2026/02/02/819/januari-2026-ntt-inflasi-y-on-y-3-34-.html
+• Laporan Bulanan Data Sosial Ekonomi NTT Januari 2026
+• Tabel Inflasi IHK 2022=100: https://ntt.bps.go.id/statistics-table/2/MTc5MyMy/inflasi-menurut-bulan-y-on-y-ihk-2022-100-.html
+
+CATATAN:
+--------
+• Data terbaru adalah Januari 2026 dengan inflasi 3,34% (y-on-y)
+• Untuk data historis dan breakdown komponen, silakan akses langsung ke:
+  - ntt.bps.go.id/id/pressrelease
+  - Hubungi BPS NTT: 082247291975 (WhatsApp) atau email pst5300@bps.go.id

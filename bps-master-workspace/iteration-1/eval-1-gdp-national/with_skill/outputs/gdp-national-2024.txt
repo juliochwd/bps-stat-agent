@@ -1,0 +1,43 @@
+# Data PDB (Produk Domestik Bruto) Nasional Indonesia Tahun 2024
+
+**Sumber:** Badan Pusat Statistik (BPS) Indonesia
+
+---
+
+## PDB Harga Berlaku (Current Prices) — 2024
+
+| Triwulan | Nilai (Miliar Rupiah) | Pertumbuhan QoQ (%) |
+|----------|----------------------|---------------------|
+| Q1 2024  | 5.288.291,90        | -0,27%             |
+| Q2 2024  | 5.536.495,20        | +4,69%             |
+| Q3 2024  | 5.638.885,10        | +1,85%             |
+| Q4 2024  | 5.674.929,80        | +0,64%             |
+| **Total 2024** | **22.138.964,00** | **+5,97% YoY** |
+
+---
+
+## PDB Harga Konstan 2010 (Constant 2010 Prices) — 2024
+
+| Triwulan | Nilai (Miliar Rupiah) | Pertumbuhan QoQ (%) |
+|----------|----------------------|---------------------|
+| Q1 2024  | 3.112.906,10        | -0,83%             |
+| Q2 2024  | 3.230.971,10        | +3,79%             |
+| Q3 2024  | 3.279.593,40        | +1,50%             |
+| Q4 2024  | 3.296.741,70        | +0,53%             |
+| **Total 2024** | **12.920.281,70** | **+5,03% YoY** |
+
+---
+
+## Ringkasan
+
+- **PDB Harga Berlaku 2024:** 22.138.964,00 miliar rupiah (pertumbuhan 5,97% YoY)
+- **PDB Harga Konstan 2010 2024:** 12.920.281,70 miliar rupiah (pertumbuhan 5,03% YoY)
+- PDB per kapita 2024: USD 4.367,86 (Trading Economics, berdasarkan data BPS)
+- PDB 2024 (USD): USD 1.396,30 miliar (Bank Dunia)
+
+## Catatan
+
+- Publikasi resmi BPS "Produk Domestik Bruto Indonesia Triwulanan 2020–2024" (rilis: 9 Oktober 2024) memuat data hingga Q2/2024.
+- Data Q3 dan Q4 2024full-year released oleh BPS pada awal 2025 (Februari 2025).
+- Angka dalam tabel menunjukkan pertumbuhan quarter-on-quarter (QoQ) dan year-on-year (YoY).
+- Klasifikasi 17 lapangan usaha mengikuti SNA 2008 dengan tahun dasar 2010.

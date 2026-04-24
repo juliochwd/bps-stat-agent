@@ -1,0 +1,22 @@
+{
+  "eval_id": 2,
+  "eval_name": "hdi-ntt-query",
+  "prompt": "Apa itu IPM (Indeks Pembangunan Manusia) untuk kabupaten di NTT? Berikan data terbaru dan ranking kabupaten mana yang tertinggi.",
+  "assertions": [
+    {
+      "text": "Response contains HDI/IPM numeric values",
+      "passed": false,
+      "evidence": ""
+    },
+    {
+      "text": "Response mentions specific NTT kabupatens (e.g., Kota Kupang, Kabupaten Sikka, etc.)",
+      "passed": false,
+      "evidence": ""
+    },
+    {
+      "text": "Response mentions BPS as data source",
+      "passed": false,
+      "evidence": ""
+    }
+  ]
+}

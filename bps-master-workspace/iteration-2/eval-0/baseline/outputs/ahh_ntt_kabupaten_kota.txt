@@ -1,0 +1,35 @@
+Angka Harapan Hidup (AHH) Menurut Kabupaten/Kota di Provinsi Nusa Tenggara Timur (NTT)
+Sumber: Badan Pusat Statistik (BPS) Indonesia
+Catatan: Data tersedia dalam satuan tahun
+
+| No | Kabupaten/Kota          | Angka Harapan Hidup (Tahun) |
+|----|------------------------|----------------------------|
+|  1 | Sumba Barat            | 71.37                     |
+|  2 | Sumba Timur            | 71.57                     |
+|  3 | Kupang                 | 69.53                     |
+|  4 | Timor Tengah Selatan   | 71.22                     |
+|  5 | Timor Tengah Utara     | 71.02                     |
+|  6 | Belu                   | 74.30                     |
+|  7 | Alor                   | 70.88                     |
+|  8 | Lembata               | 73.35                     |
+|  9 | Flores Timur          | 73.91                     |
+| 10 | Sikka                  | 74.24                     |
+| 11 | Ende                   | 72.87                     |
+| 12 | Ngada                  | 74.43                     |
+| 13 | Manggarai             | 72.44                     |
+| 14 | Rote Ndao             | 69.81                     |
+| 15 | Manggarai Barat       | 72.86                     |
+| 16 | Sumba Tengah          | 69.46                     |
+| 17 | Sumba Barat Daya      | 69.20                     |
+| 18 | Nagekeo               | 72.51                     |
+| 19 | Manggarai Timur       | 72.98                     |
+| 20 | Sabu Raijua           | 66.65                     |
+| 21 | Malaka                | 71.47                     |
+| 22 | Kota Kupang           | 74.95                     |
+|----|------------------------|----------------------------|
+|    | Provinsi NTT (Rata-rata) | 71.83                     |
+
+Keterangan:
+- Kabupaten dengan AHH tertinggi: Kota Kupang (74.95 tahun)
+- Kabupaten dengan AHH terendah: Sabu Raijua (66.65 tahun)
+- Data menggambarkan rata-rata harapan hidup saat lahir penduduk masing-masing kabupaten/kota

@@ -1,13 +1,13 @@
 """
-Mini Agent - Interactive Runtime Example
+BPS Stat Agent - Interactive Runtime Example
 
 Usage:
-    mini-agent [--workspace DIR] [--task TASK]
+    bps-stat-agent [--workspace DIR] [--task TASK]
 
 Examples:
-    mini-agent                              # Use current directory as workspace (interactive mode)
-    mini-agent --workspace /path/to/dir     # Use specific workspace directory (interactive mode)
-    mini-agent --task "create a file"       # Execute a task non-interactively
+    bps-stat-agent                              # Use current directory as workspace (interactive mode)
+    bps-stat-agent --workspace /path/to/dir     # Use specific workspace directory (interactive mode)
+    bps-stat-agent --task "create a file"       # Execute a task non-interactively
 """
 
 import argparse
@@ -77,7 +77,7 @@ class Colors:
 
 def get_log_directory() -> Path:
     """Get the log directory path."""
-    return Path.home() / ".mini-agent" / "log"
+    return Path.home() / ".bps-stat-agent" / "log"
 
 
 def show_log_directory(open_file_manager: bool = True) -> None:
@@ -289,14 +289,14 @@ def parse_args() -> argparse.Namespace:
         Parsed arguments
     """
     parser = argparse.ArgumentParser(
-        description="Mini Agent - AI assistant with file tools and MCP support",
+        description="BPS Stat Agent - AI assistant for BPS Indonesia statistical data",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  mini-agent                              # Use current directory as workspace
-  mini-agent --workspace /path/to/dir     # Use specific workspace directory
-  mini-agent log                          # Show log directory and recent files
-  mini-agent log agent_run_xxx.log        # Read a specific log file
+  bps-stat-agent                              # Use current directory as workspace
+  bps-stat-agent --workspace /path/to/dir     # Use specific workspace directory
+  bps-stat-agent log                          # Show log directory and recent files
+  bps-stat-agent log agent_run_xxx.log        # Read a specific log file
         """,
     )
     parser.add_argument(
@@ -317,7 +317,7 @@ Examples:
         "--version",
         "-v",
         action="version",
-        version="mini-agent 0.1.0",
+        version="bps-stat-agent 0.1.3",
     )
 
     # Subcommands
@@ -500,21 +500,21 @@ async def run_agent(workspace_dir: Path, task: str = None):
         print()
         print(f"{Colors.BRIGHT_CYAN}📦 Configuration Search Path:{Colors.RESET}")
         print(f"  {Colors.DIM}1) mini_agent/config/config.yaml{Colors.RESET} (development)")
-        print(f"  {Colors.DIM}2) ~/.mini-agent/config/config.yaml{Colors.RESET} (user)")
+        print(f"  {Colors.DIM}2) ~/.bps-stat-agent/config/config.yaml{Colors.RESET} (user)")
         print(f"  {Colors.DIM}3) <package>/config/config.yaml{Colors.RESET} (installed)")
         print()
         print(f"{Colors.BRIGHT_YELLOW}🚀 Quick Setup (Recommended):{Colors.RESET}")
         print(
-            f"  {Colors.BRIGHT_GREEN}curl -fsSL https://raw.githubusercontent.com/MiniMax-AI/Mini-Agent/main/scripts/setup-config.sh | bash{Colors.RESET}"
+            f"  {Colors.BRIGHT_GREEN}curl -fsSL https://raw.githubusercontent.com/juliochwd/bps-stat-agent/main/scripts/setup-config.sh | bash{Colors.RESET}"
         )
         print()
         print(f"{Colors.DIM}  This will automatically:{Colors.RESET}")
-        print(f"{Colors.DIM}    • Create ~/.mini-agent/config/{Colors.RESET}")
+        print(f"{Colors.DIM}    • Create ~/.bps-stat-agent/config/{Colors.RESET}")
         print(f"{Colors.DIM}    • Download configuration files{Colors.RESET}")
         print(f"{Colors.DIM}    • Guide you to add your API Key{Colors.RESET}")
         print()
         print(f"{Colors.BRIGHT_YELLOW}📝 Manual Setup:{Colors.RESET}")
-        user_config_dir = Path.home() / ".mini-agent" / "config"
+        user_config_dir = Path.home() / ".bps-stat-agent" / "config"
         example_config = Config.get_package_dir() / "config" / "config-example.yaml"
         print(f"  {Colors.DIM}mkdir -p {user_config_dir}{Colors.RESET}")
         print(f"  {Colors.DIM}cp {example_config} {user_config_dir}/config.yaml{Colors.RESET}")

@@ -1,0 +1,22 @@
+{
+  "eval_id": 0,
+  "eval_name": "inflation-ntt-query",
+  "prompt": "Saya butuh data inflasi terbaru untuk provinsi NTT. Berapa persen inflasinya dan apa penyebab utama?",
+  "assertions": [
+    {
+      "text": "Response contains a specific inflation percentage number",
+      "passed": false,
+      "evidence": ""
+    },
+    {
+      "text": "Response mentions NTT province or domain code 5300",
+      "passed": false,
+      "evidence": ""
+    },
+    {
+      "text": "Response mentions BPS as data source",
+      "passed": false,
+      "evidence": ""
+    }
+  ]
+}

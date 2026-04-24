@@ -1,0 +1,22 @@
+[
+  {"query": "cari data inflasi terbaru provinsi NTT", "should_trigger": true},
+  {"query": "berapa PDB nasional tahun 2024 dari BPS", "should_trigger": true},
+  {"query": "apa itu IPM dan bagaimana untuk NTT", "should_trigger": true},
+  {"query": "dapatkan angka unemployement rate untuk Indonesia", "should_trigger": true},
+  {"query": "statistik penduduk NTT berdasarkan sensus terbaru", "should_trigger": true},
+  {"query": " BPS WebAPI endpoint untuk data ekspor-impor", "should_trigger": true},
+  {"query": "carikan publikasi BPS tentang pertumbuhan ekonomi", "should_trigger": true},
+  {"query": "data kemiskinan di provinsi NTT", "should_trigger": true},
+  {"query": "how do I query BPS API for inflation data", "should_trigger": true},
+  {"query": "给我印尼的GDP数据", "should_trigger": true},
+  {"query": "write a fibonacci function in python", "should_trigger": false},
+  {"query": "fix this css layout issue", "should_trigger": false},
+  {"query": "read file /tmp/test.txt and show me contents", "should_trigger": false},
+  {"query": "convert this image to png format", "should_trigger": false},
+  {"query": "what is the weather in jakarta", "should_trigger": false},
+  {"query": "calculate 15% tip for 85000 rupiah", "should_trigger": false},
+  {"query": "create a summary of my last 5 emails", "should_trigger": false},
+  {"query": "translate this english text to bahasa indonesia", "should_trigger": false},
+  {"query": "bps bpjs kesehatan java", "should_trigger": false},
+  {"query": "find my old python scripts in downloads folder", "should_trigger": false}
+]

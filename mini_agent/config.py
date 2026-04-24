@@ -75,7 +75,7 @@ class Config(BaseModel):
         """Load configuration from the default search path."""
         config_path = cls.get_default_config_path()
         if not config_path.exists():
-            raise FileNotFoundError("Configuration file not found. Run scripts/setup-config.sh or place config.yaml in mini_agent/config/.")
+            raise FileNotFoundError("Configuration file not found. Run scripts/setup-config.sh or place config.yaml in bps-stat-agent/config/.")
         return cls.from_yaml(config_path)
 
     @classmethod

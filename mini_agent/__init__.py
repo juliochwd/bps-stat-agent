@@ -1,11 +1,11 @@
-"""Mini Agent - Minimal single agent with basic tools and MCP support."""
+"""BPS Stat Agent - BPS Indonesia Statistical Data Agent with 55+ MCP tools."""
 
 from .agent import Agent
 from .bps_models import BPSResolvedResource, BPSResourceType
 from .llm import LLMClient
 from .schema import FunctionCall, LLMProvider, LLMResponse, Message, ToolCall
 
-__version__ = "0.1.0"
+__version__ = "0.1.3"
 
 __all__ = [
     "Agent",

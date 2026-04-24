@@ -1,0 +1,87 @@
+# Data PDB (Produk Domestik Bruto) Indonesia 2024
+# Sumber: Badan Pusat Statistik (BPS) - Statistics Indonesia
+# Tanggal kompilasi: 24 April 2026
+
+## 1. Data Tahunan (Full Year 2024)
+
+| Indikator | Nilai |
+|-----------|-------|
+| PDB Harga Berlaku (Current Market Prices) | IDR 22.139,0 triliun |
+| PDB per Kapita | Rp 78,62 juta (USD 4.960,33) |
+| Pertumbuhan Ekonomi (C-to-C / YoY) | 5,03% |
+| Target Pertumbuhan 2024 | 5,2% |
+| Pertumbuhan 2023 | 5,05% |
+
+---
+
+## 2. Data Triwulanan (Quarterly Data) 2024
+
+### Q1 2024 (Triwulan I 2024)
+| Indikator | Nilai |
+|-----------|-------|
+| PDB Harga Berlaku | IDR 5.288,3 triliun |
+| PDB Harga Konstan | IDR 3.112,9 triliun |
+| Pertumbuhan YoY | 5,11% |
+| Pertumbuhan QoQ | -0,83% (kontraksi) |
+
+### Q2 2024 (Triwulan II 2024)
+| Indikator | Nilai |
+|-----------|-------|
+| Pertumbuhan QoQ | 3,79% |
+| Pertumbuhan YoY | 5,05% |
+| Pertumbuhan Semester I-2024 (C-to-C) | 5,08% |
+
+### Q3 2024 (Triwulan III 2024)
+| Indikator | Nilai |
+|-----------|-------|
+| PDB Harga Berlaku | IDR 5.638,9 triliun |
+| PDB Harga Konstan | IDR 3.279,6 triliun |
+| Pertumbuhan QoQ | 1,50% |
+| Pertumbuhan YoY | (tidak tersedia单独的 angka YoY Q3) |
+
+### Q4 2024 (Triwulan IV 2024)
+| Indikator | Nilai |
+|-----------|-------|
+| PDB Harga Berlaku | Rp 5.674,9 triliun |
+| PDB Harga Konstan | Rp 3.296,7 triliun |
+| Pertumbuhan YoY | 5,02% |
+| Pertumbuhan QoQ | 0,53% |
+
+---
+
+## 3. Ringkasan Struktur PDB 2024 (Expenditure Side)
+
+| Komponen | Kontribusi terhadap PDB | Pertumbuhan |
+|---------|----------------------|-------------|
+| Konsumsi Rumah Tangga | 54,04% | 4,94% |
+| Formasi Modal Tetap Bruto | 29,15% | 4,61% |
+| Konsumsi Pemerintah | (dominant driver) | 6,61% |
+| Ekspor Barang dan Jasa | - | 6,51% |
+| Impor Barang dan Jasa | - | 7,95% |
+
+---
+
+## 4. Sektor Utama Pertumbuhan (Production Side)
+
+| Sektor | Pertumbuhan |
+|--------|-------------|
+| Other Services | 9,80% |
+| Transportation and Warehousing | 8,69% |
+| Accommodation and Food & Beverage | 8,56% |
+| Wholesale and Retail Trade | 4,86% |
+| Manufacturing | 4,43% |
+| Agriculture, Forestry, and Fisheries | 0,67% |
+
+---
+
+## Catatan Penting
+- PDB tahunan 2024 mencapai IDR 22.139,0 triliun, naik dari Rp 20.892,4 triliun pada 2023
+- Pertumbuhan 5,03% lebih rendah dari target pemerintah (5,2%) dan sedikit melambat dari 2023 (5,05%)
+- PDB per kapita 2024 naik menjadi Rp 78,62 juta dari Rp 75 juta pada 2023
+- Q1 2024 tercatat kontraksi -0,83% QoQ namun rebound dengan pertumbuhan 5,11% YoY
+- Q2 2024 menjadi semester pertama yang kuat dengan pertumbuhan 5,08% C-to-C
+
+## Sumber
+- BPS Press Release (various quarterly releases)
+- BPS Publication: "Produk Domestik Bruto Indonesia Triwulanan 2021-2025"
+- Kadin Indonesia - Profil Ekonomi Indonesia

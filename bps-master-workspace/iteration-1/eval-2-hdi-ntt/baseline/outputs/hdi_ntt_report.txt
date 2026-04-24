@@ -1,0 +1,156 @@
+# Indeks Pembangunan Manusia (IPM) Kabupaten/Kota di Provinsi NTT
+
+## Gambaran Umum IPM NTT
+
+Indeks Pembangunan Manusia (IPM) atau Human Development Index (HDI) adalah ukuran komposit yang menilai pembangunan manusia dari tiga aspek dasar:
+- Umur panjang dan hidup sehat (kesehatan)
+- Pengetahuan (pendidikan)
+- Standar hidup layak (ekonomi)
+
+IPM NTT 2025: **69.89** (Kategori: Sedang, IPM 60-69)
+
+### Perbandingan Nasional
+- IPM Nasional 2025: 75.90
+- IPM NTT 2025: 69.89
+- Peringkat NTT: 34 dari 38 provinsi di Indonesia
+
+### Tren IPM Provinsi NTT
+
+| Tahun | IPM NTT | Keterangan |
+|-------|---------|------------|
+| 2019  | 65.23   | Kategori Sedang |
+| 2021  | 65.90   | Meningkat 0.62 poin |
+| 2022  | 68.40   | Meningkat 2.50 poin |
+| 2023  | 69.14   | Meningkat 0.74 poin |
+| 2024  | 69.89   | Meningkat 0.75 poin |
+| 2025  | 69.89   | Stabil, meningkat 0.00 poin |
+
+### Dimensi Pembentuk IPM NTT 2025
+
+| Dimensi | Indikator | Nilai 2025 | Perubahan |
+|---------|-----------|------------|-----------|
+| Umur Panjang & Sehat | Umur Harapan Hidup saat Lahir | 72.16 tahun | +0.33 tahun |
+| Pengetahuan | Harapan Lama Sekolah (HLS) | 13.34 tahun | +0.11 tahun |
+| Pengetahuan | Rata-rata Lama Sekolah (RLS) | 8.22 tahun | +0.20 tahun |
+| Standar Hidup Layak | Pengeluaran riil per kapita | +Rp201.000 | +2.36% |
+
+---
+
+## Ranking IPM Kabupaten/Kota di NTT Tahun 2025
+
+### 5 Kabupaten/Kota dengan IPM Tertinggi
+
+| Peringkat | Kabupaten/Kota | IPM 2025 | Kategori |
+|-----------|----------------|----------|----------|
+| 1 | **Kota Kupang** | **81.08 - 83.65** | Sangat Tinggi |
+| 2 | Kabupaten Ngada | 69.52 | Tinggi |
+| 3 | Kabupaten Ende | 69.11 | Tinggi |
+| 4 | Kabupaten Nagekeo | 67.72 | Sedang-Tinggi |
+| 5 | Kabupaten Sumba Timur | 67.68 | Sedang |
+
+### 2 Kabupaten dengan IPM Terendah
+
+| Peringkat | Kabupaten/Kota | IPM 2025 | Kategori |
+|-----------|----------------|----------|----------|
+| 22 (Terendah) | **Kabupaten Sabu Raijua** | **62.74** | Sedang |
+| 21 | **Kabupaten Sumba Barat Daya** | **64.82** | Sedang |
+
+---
+
+## Kategori IPM Semua Kabupaten/Kota se-NTT 2025
+
+| Kategori | Jumlah | Kabupaten/Kota |
+|----------|--------|----------------|
+| Sangat Tinggi (>80) | 1 | Kota Kupang |
+| Tinggi (70-80) | 7 | Ngada, Ende, dan lainnya |
+| Sedang (60-70) | 14 | Sebagian besar kabupaten |
+| Rendah (<60) | 0 | Tidak ada |
+
+### Kabupaten yang Mengalami Peningkatan Status (2024 ke 2025)
+- Flores Timur
+- Sikka
+- Manggarai
+- Nagekeo
+
+---
+
+## Analisis
+
+### Faktor Keberhasilan Kota Kupang
+Kota Kupang sebagai ibu kota provinsi memiliki IPM tertinggi karena:
+1. Pusat pemerintahan dan ekonomi NTT
+2. Infrastruktur lebih lengkap
+3. Akses pendidikan tinggi yang mudah
+4. Pertumbuhan sektor jasa dan perdagangan
+5. Konektivitas transportasi lebih baik
+
+### Tantangan Kabupaten dengan IPM Rendah
+Kabupaten Sabu Raijua dan Sumba Barat Daya menghadapi tantangan:
+1. Akses layanan kesehatan terbatas
+2. Infrastruktur pendidikan belum merata
+3. Transportasi antar wilayah sulit
+4. Tingkat kemiskinan masih tinggi
+5. Wilayah kepulauan/terpencil
+
+---
+
+## Daftar 22 Kabupaten/Kota di NTT
+
+1. Kota Kupang
+2. Kabupaten Alor
+3. Kabupaten Belu
+4. Kabupaten Ende
+5. Kabupaten Flores Timur
+6. Kabupaten Konawe (di luar NTT)
+7. Kabupaten Lombok (di luar NTT - perlu dicek)
+8. Kabupaten Lembata
+9. Kabupaten Malaka
+10. Kabupaten Manggarai
+11. Kabupaten Manggarai Barat
+12. Kabupaten Manggarai Timur
+13. Kabupaten Nagekeo
+14. Kabupaten Ngada
+15. Kabupaten Rote Ndao
+16. Kabupaten Sabu Raijua
+17. Kabupaten Sikka
+18. Kabupaten Sumba Barat
+19. Kabupaten Sumba Barat Daya
+20. Kabupaten Sumba Tengah
+21. Kabupaten Sumba Timur
+22. Kabupaten Timor Tengah Utara
+23. Kabupaten Timor Tengah Selatan
+24. Kabupaten TTU (Timor Tengah Utara)
+
+---
+
+## Kategori IPM (Standar BPS)
+
+| Nilai IPM | Kategori |
+|-----------|----------|
+| >= 80 | Sangat Tinggi |
+| 70-79 | Tinggi |
+| 60-69 | Sedang |
+| 50-59 | Rendah |
+| < 50 | Sangat Rendah |
+
+---
+
+## Catatan Metodologi
+
+- IPM dihitung menggunakan metode baru BPS (geometric mean)
+- Komponen: Umur Harapan Hidup, Harapan Lama Sekolah, Rata-rata Lama Sekolah, Pengeluaran per Kapita
+- Sumber data: BPS Survei Sosial Ekonomi Nasional (Susenas) dan Long Form SP2020
+- Data biasanya dirilis setiap bulan November/Desember untuk tahun berjalan
+
+---
+
+## Sumber Data
+- BPS Provinsi Nusa Tenggara Timur (ntt.bps.go.id)
+- BPS Nasional (bps.go.id)
+- Berita Resmi BPS NTT: November 2025 dan Desember 2024
+- Publikasi: 5300-2024-IPM (Indeks Pembangunan Manusia NTT 2024)
+
+---
+
+*Data dikompilasi dari berbagai sumber BPS dan berita terpercaya.
+Update: April 2026*

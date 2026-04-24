@@ -1,0 +1,22 @@
+{
+  "eval_id": 1,
+  "eval_name": "gdp-national-query",
+  "prompt": "Cari data PDB (Produk Domestik Bruto) nasional terbaru dari BPS. Berikan angka quarterly dan yearly untuk tahun 2024.",
+  "assertions": [
+    {
+      "text": "Response contains GDP/PDB numeric values",
+      "passed": false,
+      "evidence": ""
+    },
+    {
+      "text": "Response mentions national domain or domain code 0000",
+      "passed": false,
+      "evidence": ""
+    },
+    {
+      "text": "Response mentions BPS as data source",
+      "passed": false,
+      "evidence": ""
+    }
+  ]
+}
