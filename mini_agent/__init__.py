@@ -1,4 +1,4 @@
-"""BPS Stat Agent - BPS Indonesia Statistical Data Agent with 55+ MCP tools."""
+"""BPS Stat Agent - BPS Indonesia Statistical Data Agent with 62 MCP tools."""
 
 from .agent import Agent
 from .bps_models import BPSResolvedResource, BPSResourceType

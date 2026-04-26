@@ -139,7 +139,7 @@ def read_log_file(filename: str) -> None:
 def print_banner():
     """Print welcome banner with proper alignment"""
     BOX_WIDTH = 58
-    banner_text = f"{Colors.BOLD}🤖 Mini Agent - Multi-turn Interactive Session{Colors.RESET}"
+    banner_text = f"{Colors.BOLD}🤖 BPS Stat Agent - Multi-turn Interactive Session{Colors.RESET}"
     banner_width = calculate_display_width(banner_text)
 
     # Center the text with proper padding
@@ -667,7 +667,7 @@ async def run_agent(workspace_dir: Path, task: str = None):
                 command = user_input.lower()
 
                 if command in ["/exit", "/quit", "/q"]:
-                    print(f"\n{Colors.BRIGHT_YELLOW}👋 Goodbye! Thanks for using Mini Agent{Colors.RESET}\n")
+                    print(f"\n{Colors.BRIGHT_YELLOW}👋 Goodbye! Thanks for using BPS Stat Agent{Colors.RESET}\n")
                     print_stats(agent, session_start)
                     break
 
@@ -709,7 +709,7 @@ async def run_agent(workspace_dir: Path, task: str = None):
 
             # Normal conversation - exit check
             if user_input.lower() in ["exit", "quit", "q"]:
-                print(f"\n{Colors.BRIGHT_YELLOW}👋 Goodbye! Thanks for using Mini Agent{Colors.RESET}\n")
+                print(f"\n{Colors.BRIGHT_YELLOW}👋 Goodbye! Thanks for using BPS Stat Agent{Colors.RESET}\n")
                 print_stats(agent, session_start)
                 break
 

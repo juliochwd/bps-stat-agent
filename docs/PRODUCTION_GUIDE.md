@@ -34,10 +34,11 @@ This project is a **teaching-level demo** that demonstrates the core concepts an
 
 ### 2.2 Model Fallback Mechanism
 
-Currently using a single fixed model (MiniMax-M2.5), which will directly report errors on failure.
+The project supports multiple LLM providers (Anthropic, OpenAI) and the model/provider can be configured in `config.yaml`. However, only a single model is used at a time, which will directly report errors on failure.
 
-- Introduce a model pool by configuring multiple model accounts to improve availability
+- Introduce a model pool by configuring multiple model accounts and providers to improve availability
 - Introduce automatic health checks, failure removal, circuit breaker strategies for the model pool
+- Implement automatic fallback across providers (e.g., Anthropic → OpenAI) when the primary model is unavailable
 
 ### 2.3 Model Hallucination Detection and Correction
 
