@@ -17,9 +17,10 @@ import re
 import sys
 from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import quote
 
 try:
-    from playwright.async_api import async_playwright, Page
+    from playwright.async_api import async_playwright
 except ImportError:
     raise ImportError("playwright not installed. Run: pip install playwright && playwright install chromium")
 
@@ -61,9 +62,6 @@ class AllStatsClient:
     DEFAULT_HEADLESS = True
     DEFAULT_SEARCH_DELAY = 10  # Seconds between searches (avoid Cloudflare rate-limit)
 
-    # Class-level rate limiting
-    _last_search_time: float = 0
-    _search_delay: float = DEFAULT_SEARCH_DELAY
 
     CONTENT_TYPES = {
         "all": "all",
@@ -94,6 +92,7 @@ class AllStatsClient:
         self._browser = None
         self._context = None
         self._page = None
+        self._last_search_time = 0
         self._search_delay = search_delay if search_delay is not None else self.DEFAULT_SEARCH_DELAY
 
     def _build_url(
@@ -105,7 +104,7 @@ class AllStatsClient:
         sort: str = "terbaru",
     ) -> str:
         """Build search URL from parameters."""
-        q = keyword.replace(" ", "+")
+        q = quote(keyword, safe='')
         return (
             f"{self.BASE_URL}/search"
             f"?mfd={domain}"
@@ -244,11 +243,11 @@ class AllStatsClient:
         max_retries = 2
         for attempt in range(max_retries):
             try:
-                await self._page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                await self._page.goto(url, wait_until="domcontentloaded", timeout=self.timeout * 1000)
             except Exception as e:
                 print(f"[AllStatsClient] Page load error: {e}")
                 try:
-                    await self._page.goto(url, wait_until="load", timeout=30000)
+                    await self._page.goto(url, wait_until="load", timeout=self.timeout * 1000)
                 except Exception:
                     pass
 
@@ -279,13 +278,28 @@ class AllStatsClient:
         # Extract total results
         total_results = 0
         try:
-            # Look for total results indicator
             result_count_elem = await self._page.query_selector(".result-count, .total-results, [class*='count']")
             if result_count_elem:
                 count_text = await result_count_elem.inner_text()
                 print(f"[AllStatsClient] Result count text: {count_text}")
+                import re
+                numbers = re.findall(r'\d+', count_text.replace('.', '').replace(',', ''))
+                if numbers:
+                    total_results = int(numbers[0])
         except Exception as e:
             print(f"[AllStatsClient] Could not get result count: {e}")
+
+        # Parse pagination
+        has_next = False
+        has_prev = False
+        try:
+            # Check for next/prev pagination links
+            next_btn = await self._page.query_selector('a[rel="next"], .pagination .next:not(.disabled), li.next:not(.disabled) a')
+            prev_btn = await self._page.query_selector('a[rel="prev"], .pagination .prev:not(.disabled), li.prev:not(.disabled) a')
+            has_next = next_btn is not None
+            has_prev = prev_btn is not None
+        except Exception:
+            pass
 
         response = AllStatsSearchResponse(
             keyword=keyword,
@@ -294,8 +308,8 @@ class AllStatsClient:
             total_results=total_results,
             per_page=len(results),
             results=results,
-            has_next=False,  # TODO: determine from pagination
-            has_prev=False,
+            has_next=has_next,
+            has_prev=has_prev,
             search_url=url,
         )
 
@@ -417,7 +431,7 @@ class AllStatsClient:
         print(f"[AllStatsClient] Opening data page: {result_url}")
 
         try:
-            await self._page.goto(result_url, wait_until="domcontentloaded", timeout=60000)
+            await self._page.goto(result_url, wait_until="domcontentloaded", timeout=self.timeout * 1000)
             await asyncio.sleep(2)
 
             # Try to close popup

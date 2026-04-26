@@ -35,44 +35,12 @@ from mini_agent.tools.base import Tool
 from mini_agent.tools.bash_tool import BashKillTool, BashOutputTool, BashTool
 from mini_agent.tools.file_tools import EditTool, ReadTool, WriteTool
 from mini_agent.tools.mcp_loader import cleanup_mcp_connections, load_mcp_tools_async, set_mcp_timeout_config
-from mini_agent.tools.note_tool import SessionNoteTool
+from mini_agent.tools.note_tool import RecallNoteTool, SessionNoteTool
 from mini_agent.tools.skill_tool import create_skill_tools
 from mini_agent.utils import calculate_display_width
 
 
-# ANSI color codes
-class Colors:
-    """Terminal color definitions"""
-
-    RESET = "\033[0m"
-    BOLD = "\033[1m"
-    DIM = "\033[2m"
-
-    # Foreground colors
-    BLACK = "\033[30m"
-    RED = "\033[31m"
-    GREEN = "\033[32m"
-    YELLOW = "\033[33m"
-    BLUE = "\033[34m"
-    MAGENTA = "\033[35m"
-    CYAN = "\033[36m"
-    WHITE = "\033[37m"
-
-    # Bright colors
-    BRIGHT_BLACK = "\033[90m"
-    BRIGHT_RED = "\033[91m"
-    BRIGHT_GREEN = "\033[92m"
-    BRIGHT_YELLOW = "\033[93m"
-    BRIGHT_BLUE = "\033[94m"
-    BRIGHT_MAGENTA = "\033[95m"
-    BRIGHT_CYAN = "\033[96m"
-    BRIGHT_WHITE = "\033[97m"
-
-    # Background colors
-    BG_RED = "\033[41m"
-    BG_GREEN = "\033[42m"
-    BG_YELLOW = "\033[43m"
-    BG_BLUE = "\033[44m"
+from .colors import Colors
 
 
 def get_log_directory() -> Path:
@@ -465,6 +433,8 @@ def add_workspace_tools(tools: List[Tool], config: Config, workspace_dir: Path):
     if config.tools.enable_note:
         tools.append(SessionNoteTool(memory_file=str(workspace_dir / ".agent_memory.json")))
         print(f"{Colors.GREEN}✅ Loaded session note tool{Colors.RESET}")
+        tools.append(RecallNoteTool(memory_file=str(workspace_dir / ".agent_memory.json")))
+        print(f"{Colors.GREEN}✅ Loaded recall note tool{Colors.RESET}")
 
 
 async def _quiet_cleanup():
@@ -753,6 +723,10 @@ async def run_agent(workspace_dir: Path, task: str = None):
             cancel_event = asyncio.Event()
             agent.cancel_event = cancel_event
 
+            # Capture the running event loop so the listener thread can
+            # set the asyncio.Event in a thread-safe manner.
+            loop = asyncio.get_running_loop()
+
             # Esc key listener thread
             esc_listener_stop = threading.Event()
             esc_cancelled = [False]  # Mutable container for thread access
@@ -769,7 +743,7 @@ async def run_agent(workspace_dir: Path, task: str = None):
                                 if char == b"\x1b":  # Esc
                                     print(f"\n{Colors.BRIGHT_YELLOW}⏹️  Esc pressed, cancelling...{Colors.RESET}")
                                     esc_cancelled[0] = True
-                                    cancel_event.set()
+                                    loop.call_soon_threadsafe(cancel_event.set)
                                     break
                             esc_listener_stop.wait(0.05)
                     except Exception:
@@ -794,7 +768,7 @@ async def run_agent(workspace_dir: Path, task: str = None):
                                 if char == "\x1b":  # Esc
                                     print(f"\n{Colors.BRIGHT_YELLOW}⏹️  Esc pressed, cancelling...{Colors.RESET}")
                                     esc_cancelled[0] = True
-                                    cancel_event.set()
+                                    loop.call_soon_threadsafe(cancel_event.set)
                                     break
                     finally:
                         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)

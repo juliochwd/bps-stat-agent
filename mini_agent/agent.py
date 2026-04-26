@@ -15,31 +15,7 @@ from .tools.base import Tool, ToolResult
 from .utils import calculate_display_width
 
 
-# ANSI color codes
-class Colors:
-    """Terminal color definitions"""
-
-    RESET = "\033[0m"
-    BOLD = "\033[1m"
-    DIM = "\033[2m"
-
-    # Foreground colors
-    RED = "\033[31m"
-    GREEN = "\033[32m"
-    YELLOW = "\033[33m"
-    BLUE = "\033[34m"
-    MAGENTA = "\033[35m"
-    CYAN = "\033[36m"
-
-    # Bright colors
-    BRIGHT_BLACK = "\033[90m"
-    BRIGHT_RED = "\033[91m"
-    BRIGHT_GREEN = "\033[92m"
-    BRIGHT_YELLOW = "\033[93m"
-    BRIGHT_BLUE = "\033[94m"
-    BRIGHT_MAGENTA = "\033[95m"
-    BRIGHT_CYAN = "\033[96m"
-    BRIGHT_WHITE = "\033[97m"
+from .colors import Colors
 
 
 class Agent:
@@ -439,14 +415,17 @@ Requirements:
                 # Arguments (formatted display)
                 print(f"{Colors.DIM}   Arguments:{Colors.RESET}")
                 # Truncate each argument value to avoid overly long output
-                truncated_args = {}
-                for key, value in arguments.items():
-                    value_str = str(value)
-                    if len(value_str) > 200:
-                        truncated_args[key] = value_str[:200] + "..."
-                    else:
-                        truncated_args[key] = value
-                args_json = json.dumps(truncated_args, indent=2, ensure_ascii=False)
+                if isinstance(arguments, dict):
+                    truncated_args = {}
+                    for key, value in arguments.items():
+                        value_str = str(value)
+                        if len(value_str) > 200:
+                            truncated_args[key] = value_str[:200] + "..."
+                        else:
+                            truncated_args[key] = value
+                    args_json = json.dumps(truncated_args, indent=2, ensure_ascii=False)
+                else:
+                    args_json = json.dumps(arguments, indent=2, ensure_ascii=False)
                 for line in args_json.split("\n"):
                     print(f"   {Colors.DIM}{line}{Colors.RESET}")
 

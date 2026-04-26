@@ -66,9 +66,8 @@ class BPSMaterial:
         self._app_id = app_id
         self._content: bytes | None = None
 
-    @property
-    def content(self) -> bytes:
-        """Lazy load and return PDF content."""
+    def download_content(self) -> bytes:
+        """Download and return PDF content. Makes an HTTP request on first call."""
         if self._content is None:
             pdf_url = self.data.get("pdf")
             if not pdf_url:
@@ -77,6 +76,15 @@ class BPSMaterial:
             resp.raise_for_status()
             self._content = resp.content
         return self._content
+
+    @property
+    def content(self) -> bytes:
+        """Lazy load and return PDF content.
+
+        Note: This property makes an HTTP request on first access.
+        Consider using download_content() for explicit behavior.
+        """
+        return self.download_content()
 
     def download(self, filepath: str) -> None:
         """Download PDF content to file.
@@ -150,7 +158,7 @@ class BPSAPI:
         Returns:
             API response dict
         """
-        params = {"model": model, "domain": domain, **kwargs}
+        params = {"model": model, "domain": self._format_domain(domain), **kwargs}
         return self._request(f"{self.BASE_URL}/v1/api/list", params)
 
     def _view(
@@ -168,7 +176,7 @@ class BPSAPI:
         Returns:
             API response dict
         """
-        params = {"model": model, "domain": domain, "lang": lang, "id": id, **kwargs}
+        params = {"model": model, "domain": self._format_domain(domain), "lang": lang, "id": id, **kwargs}
         return self._request(f"{self.BASE_URL}/v1/api/view", params)
 
     def _format_domain(self, domain: str) -> str:
@@ -1018,10 +1026,37 @@ class BPSAPI:
     def search_generic(
         self, keyword: str, domain: str = "0000", lang: str = "ind", page: int = 1
     ) -> dict:
-        """Generic search across BPS WebAPI."""
-        return self._extract_paginated(
-            self._list("search", domain, keyword=keyword, lang=lang, page=page)
-        )
+        """Generic search across BPS WebAPI by querying multiple content models.
+
+        Since BPS API has no unified 'search' model, this searches across
+        static tables, publications, press releases, and news simultaneously.
+
+        Args:
+            keyword: Search keyword
+            domain: Domain code
+            lang: Language (ind/eng)
+            page: Page number
+
+        Returns:
+            Dict with combined results from all content types
+        """
+        combined = {"keyword": keyword, "domain": domain, "results_by_type": {}}
+        for model in ["statictable", "publication", "pressrelease", "news"]:
+            try:
+                result = self._extract_paginated(
+                    self._list(model, domain, keyword=keyword, lang=lang, page=page)
+                )
+                items = result.get("items", [])
+                if items:
+                    combined["results_by_type"][model] = {
+                        "count": len(items),
+                        "items": items,
+                        "pagination": result.get("pagination", {}),
+                    }
+            except Exception:
+                pass  # Skip models that fail
+        combined["total_types_found"] = len(combined["results_by_type"])
+        return combined
 
 
 # ================================================================

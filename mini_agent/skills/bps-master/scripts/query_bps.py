@@ -37,7 +37,7 @@ def main():
     if args.format == "json":
         print(json.dumps(result, indent=2, ensure_ascii=False))
     else:
-        print(format_text(result))
+        print(format_text(result, domain=args.domain))
 
 
 def await_bps_answer_query(query: str, domain: str):
@@ -46,11 +46,11 @@ def await_bps_answer_query(query: str, domain: str):
     return asyncio.run(bps_answer_query(query, domain=domain))
 
 
-def format_text(result: str) -> str:
+def format_text(result: str, domain: str = "unknown") -> str:
     """Format BPS query result as human-readable text."""
     try:
         data = json.loads(result)
-    except:
+    except Exception:
         return f"Raw response: {result[:500]}"
 
     if not data.get("success"):

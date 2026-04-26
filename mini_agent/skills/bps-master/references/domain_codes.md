@@ -5,8 +5,8 @@
 | Code | Province | Alias |
 |------|----------|-------|
 | 0000 | Nasional (National) | Indonesia |
-| 1100 | Aceh | Sumatera Utara |
-| 1200 | Sumatera Utara | Aceh |
+| 1100 | Aceh | NAD, Nanggroe Aceh Darussalam |
+| 1200 | Sumatera Utara | Sumut, North Sumatra |
 | 1300 | Sumatera Barat | West Sumatra |
 | 1400 | Riau | |
 | 1500 | Jambi | |
@@ -14,10 +14,10 @@
 | 1700 | Bengkulu | |
 | 1800 | Lampung | |
 | 1900 | Bangka Belitung Islands | |
+| 2000 | Kepulauan Riau | Kepri, Riau Islands |
 | 2100 | DKI Jakarta | Jakarta |
 | 2200 | Jawa Barat | West Java |
 | 2300 | Jawa Tengah | Central Java |
-| 2400 | Jawa Tengah | |
 | 2500 | DI Yogyakarta | Yogyakarta |
 | 2600 | Jawa Timur | East Java |
 | 2700 | Banten | |

@@ -68,7 +68,7 @@
 # docker-compose.yml
 services:
   agent:
-    image: agent-demo:latest
+    image: bps-stat-agent:latest
     deploy:
       resources:
         limits:
@@ -129,7 +129,7 @@ RUN groupadd -r agent && useradd -r -g agent agent
 WORKDIR /app
 
 # 方案1：从 Git 仓库克隆（适用于公开仓库）
-RUN git clone https://github.com/MiniMax-AI/agent-demo.git . && \
+RUN git clone https://github.com/juliochwd/bps-stat-agent.git . && \
     chown -R agent:agent /app
 
 # 方案2：从本地复制代码（适用于私有部署）
@@ -142,7 +142,7 @@ USER agent
 RUN uv sync
 
 # 启动应用
-CMD ["uv", "run", "mini-agent"]
+CMD ["uv", "run", "bps-stat-agent"]
 ```
 
 #### 3.3.2 文件系统权限

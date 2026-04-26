@@ -5,7 +5,7 @@ Provides unified configuration loading and management functionality
 
 import os
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 import yaml
 from pydantic import BaseModel, Field
@@ -27,7 +27,7 @@ class LLMConfig(BaseModel):
     api_key: str
     api_base: str = "https://api.minimax.io"
     model: str = "MiniMax-M2.5"
-    provider: str = "anthropic"  # "anthropic" or "openai"
+    provider: Literal["anthropic", "openai"] = "anthropic"
     retry: RetryConfig = Field(default_factory=RetryConfig)
 
 
@@ -220,12 +220,7 @@ class Config(BaseModel):
         if bps_user_config.exists():
             return bps_user_config
 
-        # Priority 3: Legacy user config directory
-        user_config = Path.home() / ".bps-stat-agent" / "config" / filename
-        if user_config.exists():
-            return user_config
-
-        # Priority 4: Package installation directory's config/ subdirectory
+        # Priority 3: Package installation directory's config/ subdirectory
         package_config = cls.get_package_dir() / "config" / filename
         if package_config.exists():
             return package_config

@@ -40,15 +40,25 @@ DEFAULT_API_KEY = os.environ.get("BPS_API_KEY") or os.environ.get("WEBAPI_APP_ID
 DEFAULT_SEARCH_DELAY = float(os.environ.get("BPS_SEARCH_DELAY", "3"))
 
 
+_api_client_cache: dict[str, BPSAPI] = {}
+
+
 def get_api_client(api_key: str | None = None) -> BPSAPI:
-    """Get BPSAPI client with the given or configured API key."""
+    """Get BPSAPI client with the given or configured API key (cached)."""
     key = api_key or DEFAULT_API_KEY
     if not key:
         raise ValueError(
             "BPS API key not provided. Set BPS_API_KEY environment variable "
             "or api_key parameter."
         )
-    return BPSAPI(key)
+    if key not in _api_client_cache:
+        _api_client_cache[key] = BPSAPI(key)
+    return _api_client_cache[key]
+
+
+async def _run_sync(func, *args, **kwargs):
+    """Run a synchronous function in a thread to avoid blocking the event loop."""
+    return await asyncio.to_thread(func, *args, **kwargs)
 
 
 def success_response(data: Any, message: str = "OK") -> str:
@@ -92,24 +102,35 @@ def _extract_identifier_from_url(url: str, marker: str) -> str | None:
     import base64
     import re
 
+    # Pattern 1: /marker/DIGITS/ID/
     match = re.search(rf"/{marker}/\d+/([0-9]+)/", url)
     if match:
         return match.group(1)
 
+    # Pattern 2: /marker/DIGITS/ENCODED/
     encoded_match = re.search(rf"/{marker}/\d+/([^/]+)/", url)
-    if not encoded_match:
-        return None
+    if encoded_match:
+        token = encoded_match.group(1)
+        try:
+            padding = "=" * (-len(token) % 4)
+            decoded = base64.b64decode(token + padding).decode("utf-8")
+        except Exception:
+            decoded = None
+        if decoded:
+            decoded_match = re.match(r"([0-9]+)", decoded)
+            if decoded_match:
+                return decoded_match.group(1)
 
-    token = encoded_match.group(1)
-    try:
-        padding = "=" * (-len(token) % 4)
-        decoded = base64.b64decode(token + padding).decode("utf-8")
-    except Exception:
-        return None
+    # Pattern 3: Query parameter ?id=123 or ?table_id=123
+    query_match = re.search(r'[?&](?:id|table_id|pub_id|brs_id)=([0-9]+)', url)
+    if query_match:
+        return query_match.group(1)
 
-    decoded_match = re.match(r"([0-9]+)", decoded)
-    if decoded_match:
-        return decoded_match.group(1)
+    # Pattern 4: /marker/ID (without trailing slash)
+    simple_match = re.search(rf"/{marker}/([0-9]+)(?:\?|$|/)", url)
+    if simple_match:
+        return simple_match.group(1)
+
     return None
 
 
@@ -123,11 +144,21 @@ def _resolve_search_result(result: dict[str, Any]):
     return resolved
 
 
+_allstats_client: "AllStatsClient | None" = None
+
+
+def _get_allstats_client() -> "AllStatsClient":
+    """Return a module-level cached AllStatsClient (lazy-initialized)."""
+    global _allstats_client
+    if _allstats_client is None:
+        from mini_agent.allstats_client import AllStatsClient
+        _allstats_client = AllStatsClient(headless=True, search_delay=DEFAULT_SEARCH_DELAY)
+    return _allstats_client
+
+
 def create_orchestrator(api_key: str | None = None) -> BPSOrchestrator:
     """Create the default AllStats-first orchestrator."""
-    from mini_agent.allstats_client import AllStatsClient
-
-    search_client = AllStatsClient(headless=True, search_delay=DEFAULT_SEARCH_DELAY)
+    search_client = _get_allstats_client()
     retriever = _RetrieverAdapter(api_key=api_key)
     return BPSOrchestrator(
         search_client=search_client,
@@ -145,13 +176,7 @@ async def _answer_query(
 ) -> dict[str, Any]:
     """Run the shared AllStats-first query pipeline."""
     orchestrator = create_orchestrator(api_key)
-    try:
-        return await orchestrator.answer_query(keyword, domain=domain, content=content)
-    finally:
-        search_client = getattr(orchestrator, "_search_client", None)
-        close = getattr(search_client, "close", None)
-        if callable(close):
-            await close()
+    return await orchestrator.answer_query(keyword, domain=domain, content=content)
 
 
 # ============================================================================
@@ -228,14 +253,18 @@ async def bps_list_years(
 
         if var:
             # Try to get available periods for a specific variable
+            import datetime as _dt
+            _current_year = _dt.datetime.now().year
+            _min_th = year_to_th(2017)
+            _max_th = year_to_th(_current_year + 1)  # include next year
             years = []
-            for th in range(117, 130):  # 2017-2029
+            for th in range(_min_th, _max_th + 1):  # 2017 to current+1
                 try:
-                    result = client.get_data(var=var, th=th, domain=domain)
+                    result = await _run_sync(client.get_data, var=var, th=th, domain=domain)
                     if result.get("datacontent"):
                         year = th + 1900
                         years.append({"th": th, "year": year})
-                except:
+                except Exception:
                     pass
 
             return success_response({
@@ -245,16 +274,18 @@ async def bps_list_years(
             }, f"Found {len(years)} available years for variable {var}")
         else:
             # Return general year range
+            import datetime as _dt
+            _current_year = _dt.datetime.now().year
             return success_response({
                 "domain": domain,
                 "year_range": {
                     "min_year": 2017,
-                    "max_year": 2025,
-                    "min_th": 117,
-                    "max_th": 125
+                    "max_year": _current_year,
+                    "min_th": year_to_th(2017),
+                    "max_th": year_to_th(_current_year)
                 },
-                "note": "Most variables available from 2017 (th=117) onwards"
-            }, "Year/th mapping available 2017-2025")
+                "note": f"Most variables available from 2017 (th={year_to_th(2017)}) onwards"
+            }, f"Year/th mapping available 2017-{_current_year}")
 
     except Exception as e:
         return error_response(str(e))
@@ -274,7 +305,7 @@ async def bps_list_domains(type: str = "all", prov: str | None = None, api_key: 
     """
     try:
         client = get_api_client(api_key)
-        domains = client.get_domains(type=type, prov=prov)
+        domains = await _run_sync(client.get_domains, type=type, prov=prov)
         return success_response(domains, f"Found {len(domains)} domains")
     except Exception as e:
         return error_response(str(e))
@@ -289,7 +320,7 @@ async def bps_list_provinces(api_key: str | None = None) -> str:
     """
     try:
         client = get_api_client(api_key)
-        provinces = client.get_provinces()
+        provinces = await _run_sync(client.get_provinces)
         return success_response(provinces, f"Found {len(provinces)} provinces")
     except Exception as e:
         return error_response(str(e))
@@ -317,7 +348,7 @@ async def bps_list_subjects(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_subjects(domain=domain, subcat=subcat, lang=lang, page=page)
+        result = await _run_sync(client.get_subjects, domain=domain, subcat=subcat, lang=lang, page=page)
         return success_response(result, f"Page {page} of subjects")
     except Exception as e:
         return error_response(str(e))
@@ -347,7 +378,8 @@ async def bps_get_variables(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_variables(
+        result = await _run_sync(
+            client.get_variables,
             domain=domain,
             subject=subject,
             year=year,
@@ -386,7 +418,7 @@ async def bps_get_decoded_data(
     """
     try:
         client = get_api_client(api_key)
-        data = client.get_decoded_data(var=var, th=th, domain=domain)
+        data = await _run_sync(client.get_decoded_data, var=var, th=th, domain=domain)
 
         if data.get("status") != "OK":
             return error_response(f"API error: {data.get('status')}")
@@ -402,7 +434,12 @@ async def bps_get_decoded_data(
         lines.append("-" * 50)
 
         for i, item in enumerate(data.get("data", [])):
-            lines.append(f"{i+1:<3} {item['region_label']:<25} {item['value']:.2f}")
+            val = item.get('value')
+            if isinstance(val, (int, float)):
+                formatted_val = f"{val:.2f}"
+            else:
+                formatted_val = str(val) if val is not None else "-"
+            lines.append(f"{i+1:<3} {item.get('region_label', 'Unknown'):<25} {formatted_val:<10}")
 
         lines.append("-" * 50)
         lines.append(f"Total: {len(data.get('data', []))} wilayah")
@@ -438,7 +475,13 @@ async def bps_get_data(
     """
     try:
         client = get_api_client(api_key)
-        data = client.get_data(var=var, th=th, domain=domain)
+        if th is None:
+            return error_response(
+                "Parameter 'th' (time period) is required for data retrieval. "
+                "Use bps_year_to_th to convert a year to th value (e.g., 2024 -> 124). "
+                "Or use bps_list_years to see available periods."
+            )
+        data = await _run_sync(client.get_data, var=var, th=th, domain=domain)
         return success_response(data, "Data retrieved successfully")
     except Exception as e:
         return error_response(str(e))
@@ -471,7 +514,7 @@ async def bps_search(
         client = get_api_client(api_key)
         
         # Search static tables by keyword
-        result = client.get_static_tables(domain=domain, keyword=keyword, page=page)
+        result = await _run_sync(client.get_static_tables, domain=domain, keyword=keyword, page=page)
         
         items = result.get("items", [])
         pagination = result.get("pagination", {})
@@ -592,7 +635,7 @@ async def bps_get_table_data(
         client = get_api_client(api_key)
         
         # Get table detail with data
-        result = client.get_static_table_detail(table_id=table_id, domain=domain)
+        result = await _run_sync(client.get_static_table_detail, table_id=table_id, domain=domain)
         
         data_section = result.get("data", {})
         title = data_section.get("title", "")
@@ -721,7 +764,7 @@ async def bps_search_and_get_data(
         client = get_api_client(api_key)
         
         # Step 1: Search for tables
-        search_result = client.get_static_tables(domain=domain, keyword=keyword, page=1)
+        search_result = await _run_sync(client.get_static_tables, domain=domain, keyword=keyword, page=1)
         items = search_result.get("items", [])
         
         if not items:
@@ -735,7 +778,7 @@ async def bps_search_and_get_data(
                 continue
                 
             try:
-                table_result = client.get_static_table_detail(table_id=table_id, domain=domain)
+                table_result = await _run_sync(client.get_static_table_detail, table_id=table_id, domain=domain)
                 data_section = table_result.get("data", {})
                 title = data_section.get("title", "")
                 subject = data_section.get("subcsa", "")
@@ -842,7 +885,7 @@ async def bps_get_press_releases(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_press_releases(year=year, domain=domain)
+        result = await _run_sync(client.get_press_releases, year=year, domain=domain)
         return success_response(result, f"Found press releases for {year}")
     except Exception as e:
         return error_response(str(e))
@@ -866,7 +909,7 @@ async def bps_get_publications(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_publications(domain=domain, page=page)
+        result = await _run_sync(client.get_publications, domain=domain, page=page)
         return success_response(result, f"Page {page} of publications")
     except Exception as e:
         return error_response(str(e))
@@ -892,7 +935,12 @@ async def bps_get_indicators(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_indicators(domain=domain, page=page)
+        if year is not None:
+            return error_response(
+                f"The BPS indicators API does not support filtering by year (got year={year}). "
+                "Use domain and page parameters instead, or try bps_get_table_data / bps_search for year-specific data."
+            )
+        result = await _run_sync(client.get_indicators, domain=domain, page=page)
         return success_response(result, f"Page {page} of indicators")
     except Exception as e:
         return error_response(str(e))
@@ -916,7 +964,7 @@ async def bps_list_subject_categories(
     """
     try:
         client = get_api_client(api_key)
-        categories = client.get_subject_categories(domain=domain, lang=lang)
+        categories = await _run_sync(client.get_subject_categories, domain=domain, lang=lang)
         return success_response(categories, f"Found {len(categories)} subject categories")
     except Exception as e:
         return error_response(str(e))
@@ -944,7 +992,7 @@ async def bps_list_periods(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_periods(domain=domain, var=var, lang=lang, page=page)
+        result = await _run_sync(client.get_periods, domain=domain, var=var, lang=lang, page=page)
         return success_response(result, f"Page {page} of periods")
     except Exception as e:
         return error_response(str(e))
@@ -972,7 +1020,7 @@ async def bps_list_vertical_variables(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_vertical_variables(domain=domain, var=var, lang=lang, page=page)
+        result = await _run_sync(client.get_vertical_variables, domain=domain, var=var, lang=lang, page=page)
         return success_response(result, f"Page {page} of vertical variables")
     except Exception as e:
         return error_response(str(e))
@@ -1000,7 +1048,7 @@ async def bps_list_derived_variables(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_derived_variables(domain=domain, var=var, lang=lang, page=page)
+        result = await _run_sync(client.get_derived_variables, domain=domain, var=var, lang=lang, page=page)
         return success_response(result, f"Page {page} of derived variables")
     except Exception as e:
         return error_response(str(e))
@@ -1028,7 +1076,7 @@ async def bps_list_derived_periods(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_derived_periods(domain=domain, var=var, lang=lang, page=page)
+        result = await _run_sync(client.get_derived_periods, domain=domain, var=var, lang=lang, page=page)
         return success_response(result, f"Page {page} of derived periods")
     except Exception as e:
         return error_response(str(e))
@@ -1054,7 +1102,7 @@ async def bps_list_units(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_units(domain=domain, lang=lang, page=page)
+        result = await _run_sync(client.get_units, domain=domain, lang=lang, page=page)
         return success_response(result, f"Page {page} of units")
     except Exception as e:
         return error_response(str(e))
@@ -1082,7 +1130,7 @@ async def bps_list_infographics(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_infographics(domain=domain, keyword=keyword, lang=lang, page=page)
+        result = await _run_sync(client.get_infographics, domain=domain, keyword=keyword, lang=lang, page=page)
         return success_response(result, f"Page {page} of infographics")
     except Exception as e:
         return error_response(str(e))
@@ -1108,7 +1156,7 @@ async def bps_get_infographic_detail(
     """
     try:
         client = get_api_client(api_key)
-        detail = client.get_infographic_detail(infographic_id=infographic_id, domain=domain, lang=lang)
+        detail = await _run_sync(client.get_infographic_detail, infographic_id=infographic_id, domain=domain, lang=lang)
         return success_response(detail, "Infographic detail retrieved")
     except Exception as e:
         return error_response(str(e))
@@ -1134,7 +1182,7 @@ async def bps_list_glossary(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_glossary(prefix=prefix, perpage=perpage, page=page)
+        result = await _run_sync(client.get_glossary, prefix=prefix, perpage=perpage, page=page)
         return success_response(result, f"Page {page} of glossary")
     except Exception as e:
         return error_response(str(e))
@@ -1158,7 +1206,7 @@ async def bps_get_glossary_detail(
     """
     try:
         client = get_api_client(api_key)
-        detail = client.get_glossary_detail(glossary_id=glossary_id, lang=lang)
+        detail = await _run_sync(client.get_glossary_detail, glossary_id=glossary_id, lang=lang)
         return success_response(detail, "Glossary detail retrieved")
     except Exception as e:
         return error_response(str(e))
@@ -1180,7 +1228,7 @@ async def bps_list_sdgs(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_sdgs(goal=goal)
+        result = await _run_sync(client.get_sdgs, goal=goal)
         return success_response(result, f"SDGs{' goal ' + goal if goal else ''} retrieved")
     except Exception as e:
         return error_response(str(e))
@@ -1188,7 +1236,7 @@ async def bps_list_sdgs(
 
 async def bps_list_sdds(api_key: str | None = None) -> str:
     """
-    Get BPS SDDS (Strategic Development Goals) indicators.
+    Get BPS SDDS (Special Data Dissemination Standard) indicators.
 
     Args:
         api_key: Optional BPS API key override
@@ -1198,7 +1246,7 @@ async def bps_list_sdds(api_key: str | None = None) -> str:
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_sdds()
+        result = await _run_sync(client.get_sdds)
         return success_response(result, "SDDS indicators retrieved")
     except Exception as e:
         return error_response(str(e))
@@ -1224,7 +1272,7 @@ async def bps_get_news_detail(
     """
     try:
         client = get_api_client(api_key)
-        detail = client.get_news_detail(news_id=news_id, domain=domain, lang=lang)
+        detail = await _run_sync(client.get_news_detail, news_id=news_id, domain=domain, lang=lang)
         return success_response(detail, "News detail retrieved")
     except Exception as e:
         return error_response(str(e))
@@ -1248,7 +1296,7 @@ async def bps_list_news_categories(
     """
     try:
         client = get_api_client(api_key)
-        categories = client.get_news_categories(domain=domain, lang=lang)
+        categories = await _run_sync(client.get_news_categories, domain=domain, lang=lang)
         return success_response(categories, f"Found {len(categories)} news categories")
     except Exception as e:
         return error_response(str(e))
@@ -1270,7 +1318,7 @@ async def bps_get_census_topics(
     """
     try:
         client = get_api_client(api_key)
-        topics = client.get_census_topics(kegiatan=kegiatan)
+        topics = await _run_sync(client.get_census_topics, kegiatan=kegiatan)
         return success_response(topics, f"Found {len(topics)} census topics")
     except Exception as e:
         return error_response(str(e))
@@ -1292,7 +1340,7 @@ async def bps_get_census_areas(
     """
     try:
         client = get_api_client(api_key)
-        areas = client.get_census_areas(kegiatan=kegiatan)
+        areas = await _run_sync(client.get_census_areas, kegiatan=kegiatan)
         return success_response(areas, f"Found {len(areas)} census areas")
     except Exception as e:
         return error_response(str(e))
@@ -1316,7 +1364,7 @@ async def bps_get_census_datasets(
     """
     try:
         client = get_api_client(api_key)
-        datasets = client.get_census_datasets(kegiatan=kegiatan, topik=topik)
+        datasets = await _run_sync(client.get_census_datasets, kegiatan=kegiatan, topik=topik)
         return success_response(datasets, f"Found {len(datasets)} census datasets")
     except Exception as e:
         return error_response(str(e))
@@ -1342,7 +1390,7 @@ async def bps_get_census_data(
     """
     try:
         client = get_api_client(api_key)
-        data = client.get_census_data(kegiatan=kegiatan, wilayah_sensus=wilayah_sensus, dataset=dataset)
+        data = await _run_sync(client.get_census_data, kegiatan=kegiatan, wilayah_sensus=wilayah_sensus, dataset=dataset)
         return success_response(data, "Census data retrieved")
     except Exception as e:
         return error_response(str(e))
@@ -1366,7 +1414,7 @@ async def bps_get_simdasi_regencies(
     """
     try:
         client = get_api_client(api_key)
-        regencies = client.get_simdasi_regencies(parent=parent)
+        regencies = await _run_sync(client.get_simdasi_regencies, parent=parent)
         return success_response(regencies, f"Found {len(regencies)} regencies")
     except Exception as e:
         return error_response(str(e))
@@ -1390,7 +1438,7 @@ async def bps_get_simdasi_districts(
     """
     try:
         client = get_api_client(api_key)
-        districts = client.get_simdasi_districts(parent=parent)
+        districts = await _run_sync(client.get_simdasi_districts, parent=parent)
         return success_response(districts, f"Found {len(districts)} districts")
     except Exception as e:
         return error_response(str(e))
@@ -1412,7 +1460,7 @@ async def bps_get_simdasi_subjects(
     """
     try:
         client = get_api_client(api_key)
-        subjects = client.get_simdasi_subjects(wilayah=wilayah)
+        subjects = await _run_sync(client.get_simdasi_subjects, wilayah=wilayah)
         return success_response(subjects, f"Found {len(subjects)} subjects")
     except Exception as e:
         return error_response(str(e))
@@ -1430,7 +1478,7 @@ async def bps_get_simdasi_master_tables(api_key: str | None = None) -> str:
     """
     try:
         client = get_api_client(api_key)
-        tables = client.get_simdasi_master_tables()
+        tables = await _run_sync(client.get_simdasi_master_tables)
         return success_response(tables, f"Found {len(tables)} master tables")
     except Exception as e:
         return error_response(str(e))
@@ -1456,7 +1504,7 @@ async def bps_get_simdasi_table_detail(
     """
     try:
         client = get_api_client(api_key)
-        detail = client.get_simdasi_table_detail(wilayah=wilayah, tahun=tahun, id_tabel=id_tabel)
+        detail = await _run_sync(client.get_simdasi_table_detail, wilayah=wilayah, tahun=tahun, id_tabel=id_tabel)
         return success_response(detail, "SIMDASI table detail retrieved")
     except Exception as e:
         return error_response(str(e))
@@ -1478,7 +1526,7 @@ async def bps_get_simdasi_tables_by_area(
     """
     try:
         client = get_api_client(api_key)
-        tables = client.get_simdasi_tables_by_area(wilayah=wilayah)
+        tables = await _run_sync(client.get_simdasi_tables_by_area, wilayah=wilayah)
         return success_response(tables, f"Found {len(tables)} tables")
     except Exception as e:
         return error_response(str(e))
@@ -1502,7 +1550,7 @@ async def bps_get_simdasi_tables_by_area_and_subject(
     """
     try:
         client = get_api_client(api_key)
-        tables = client.get_simdasi_tables_by_area_and_subject(wilayah=wilayah, id_subjek=id_subjek)
+        tables = await _run_sync(client.get_simdasi_tables_by_area_and_subject, wilayah=wilayah, id_subjek=id_subjek)
         return success_response(tables, f"Found {len(tables)} tables")
     except Exception as e:
         return error_response(str(e))
@@ -1524,7 +1572,7 @@ async def bps_get_simdasi_master_table_detail(
     """
     try:
         client = get_api_client(api_key)
-        detail = client.get_simdasi_master_table_detail(id_tabel=id_tabel)
+        detail = await _run_sync(client.get_simdasi_master_table_detail, id_tabel=id_tabel)
         return success_response(detail, "Master table detail retrieved")
     except Exception as e:
         return error_response(str(e))
@@ -1546,7 +1594,7 @@ async def bps_list_csa_categories(
     """
     try:
         client = get_api_client(api_key)
-        categories = client.get_csa_categories(domain=domain)
+        categories = await _run_sync(client.get_csa_categories, domain=domain)
         return success_response(categories, f"Found {len(categories)} CSA categories")
     except Exception as e:
         return error_response(str(e))
@@ -1570,7 +1618,7 @@ async def bps_list_csa_subjects(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_csa_subjects(domain=domain, subcat=subcat)
+        result = await _run_sync(client.get_csa_subjects, domain=domain, subcat=subcat)
         return success_response(result, "CSA subjects retrieved")
     except Exception as e:
         return error_response(str(e))
@@ -1598,7 +1646,7 @@ async def bps_list_csa_tables(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_csa_tables(domain=domain, subject=subject, page=page, perpage=perpage)
+        result = await _run_sync(client.get_csa_tables, domain=domain, subject=subject, page=page, perpage=perpage)
         return success_response(result, f"Page {page} of CSA tables")
     except Exception as e:
         return error_response(str(e))
@@ -1626,7 +1674,7 @@ async def bps_get_csa_table_detail(
     """
     try:
         client = get_api_client(api_key)
-        detail = client.get_csa_table_detail(table_id=table_id, year=year, lang=lang, domain=domain)
+        detail = await _run_sync(client.get_csa_table_detail, table_id=table_id, year=year, lang=lang, domain=domain)
         return success_response(detail, "CSA table detail retrieved")
     except Exception as e:
         return error_response(str(e))
@@ -1654,7 +1702,7 @@ async def bps_list_kbli(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_kbli(year=year, level=level, page=page, perpage=perpage)
+        result = await _run_sync(client.get_kbli, year=year, level=level, page=page, perpage=perpage)
         return success_response(result, f"Page {page} of KBLI {year} codes")
     except Exception as e:
         return error_response(str(e))
@@ -1680,7 +1728,7 @@ async def bps_get_kbli_detail(
     """
     try:
         client = get_api_client(api_key)
-        detail = client.get_kbli_detail(kbli_id=kbli_id, year=year, lang=lang)
+        detail = await _run_sync(client.get_kbli_detail, kbli_id=kbli_id, year=year, lang=lang)
         return success_response(detail, "KBLI detail retrieved")
     except Exception as e:
         return error_response(str(e))
@@ -1706,7 +1754,7 @@ async def bps_list_kbki(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_kbki(year=year, page=page, perpage=perpage)
+        result = await _run_sync(client.get_kbki, year=year, page=page, perpage=perpage)
         return success_response(result, f"Page {page} of KBKI codes")
     except Exception as e:
         return error_response(str(e))
@@ -1732,7 +1780,7 @@ async def bps_get_kbki_detail(
     """
     try:
         client = get_api_client(api_key)
-        detail = client.get_kbki_detail(kbki_id=kbki_id, year=year, lang=lang)
+        detail = await _run_sync(client.get_kbki_detail, kbki_id=kbki_id, year=year, lang=lang)
         return success_response(detail, "KBKI detail retrieved")
     except Exception as e:
         return error_response(str(e))
@@ -1762,7 +1810,8 @@ async def bps_get_foreign_trade(
     """
     try:
         client = get_api_client(api_key)
-        data = client.get_foreign_trade(
+        data = await _run_sync(
+            client.get_foreign_trade,
             sumber=sumber,
             kodehs=kodehs,
             tahun=tahun,
@@ -1798,7 +1847,7 @@ async def bps_list_dynamic_tables(
     """
     try:
         client = get_api_client(api_key)
-        result = client.get_dynamic_tables(domain=domain, year=year, keyword=keyword, lang=lang, page=page)
+        result = await _run_sync(client.get_dynamic_tables, domain=domain, year=year, keyword=keyword, lang=lang, page=page)
         return success_response(result, f"Page {page} of dynamic tables")
     except Exception as e:
         return error_response(str(e))
@@ -1824,8 +1873,200 @@ async def bps_get_dynamic_table_detail(
     """
     try:
         client = get_api_client(api_key)
-        detail = client.get_dynamic_table_detail(table_id=table_id, domain=domain, lang=lang)
+        detail = await _run_sync(client.get_dynamic_table_detail, table_id=table_id, domain=domain, lang=lang)
         return success_response(detail, "Dynamic table detail retrieved")
+    except Exception as e:
+        return error_response(str(e))
+
+
+async def bps_list_regencies(
+    prov_id: str | None = None,
+    api_key: str | None = None
+) -> str:
+    """
+    Get list of regency/city (kabupaten/kota) domains.
+    
+    Args:
+        prov_id: Province ID to filter by (4-digit code). If None, returns all regencies.
+        api_key: Optional BPS API key override
+    
+    Returns:
+        JSON string with list of regencies/cities
+    """
+    try:
+        client = get_api_client(api_key)
+        regencies = await _run_sync(client.get_regencies, prov_id=prov_id)
+        return success_response(regencies, f"Found {len(regencies)} regencies/cities")
+    except Exception as e:
+        return error_response(str(e))
+
+
+async def bps_list_news(
+    domain: str = "0000",
+    newscat: int | None = None,
+    year: int | None = None,
+    month: int | None = None,
+    keyword: str | None = None,
+    lang: str = "ind",
+    page: int = 1,
+    api_key: str | None = None
+) -> str:
+    """
+    Get list of BPS news articles.
+    
+    Args:
+        domain: Domain code (default "0000" for national)
+        newscat: News category ID filter
+        year: Year filter
+        month: Month filter (1-12)
+        keyword: Search keyword
+        lang: Language - 'ind' or 'eng'
+        page: Page number
+        api_key: Optional BPS API key override
+    
+    Returns:
+        JSON string with news articles and pagination
+    """
+    try:
+        client = get_api_client(api_key)
+        result = await _run_sync(client.get_news, domain=domain, newscat=newscat, year=year, month=month, keyword=keyword, lang=lang, page=page)
+        return success_response(result, f"Page {page} of news")
+    except Exception as e:
+        return error_response(str(e))
+
+
+async def bps_get_press_release_detail(
+    brs_id: int,
+    domain: str = "0000",
+    lang: str = "ind",
+    api_key: str | None = None
+) -> str:
+    """
+    Get detailed information about a specific BPS press release (Berita Resmi Statistik).
+    
+    Args:
+        brs_id: Press release ID
+        domain: Domain code (default "0000" for national)
+        lang: Language - 'ind' or 'eng'
+        api_key: Optional BPS API key override
+    
+    Returns:
+        JSON string with press release detail including PDF URL
+    """
+    try:
+        client = get_api_client(api_key)
+        material = await _run_sync(client.get_press_release_detail, brs_id=brs_id, domain=domain, lang=lang)
+        data = material.desc()
+        result = {
+            "brs_id": brs_id,
+            "detail": data,
+        }
+        if data.get("pdf"):
+            result["pdf_url"] = data["pdf"]
+        return success_response(result, f"Press release {brs_id} detail retrieved")
+    except Exception as e:
+        return error_response(str(e))
+
+
+async def bps_get_publication_detail(
+    pub_id: str,
+    domain: str = "0000",
+    lang: str = "ind",
+    api_key: str | None = None
+) -> str:
+    """
+    Get detailed information about a specific BPS publication.
+    
+    Args:
+        pub_id: Publication ID
+        domain: Domain code (default "0000" for national)
+        lang: Language - 'ind' or 'eng'
+        api_key: Optional BPS API key override
+    
+    Returns:
+        JSON string with publication detail including PDF and cover URLs
+    """
+    try:
+        client = get_api_client(api_key)
+        material = await _run_sync(client.get_publication_detail, pub_id=pub_id, domain=domain, lang=lang)
+        data = material.desc()
+        result = {
+            "pub_id": pub_id,
+            "detail": data,
+        }
+        if data.get("pdf"):
+            result["pdf_url"] = data["pdf"]
+        if data.get("cover"):
+            result["cover_url"] = data["cover"]
+        return success_response(result, f"Publication {pub_id} detail retrieved")
+    except Exception as e:
+        return error_response(str(e))
+
+
+async def bps_list_census_events(
+    api_key: str | None = None
+) -> str:
+    """
+    Get list of census events (sensus) available in BPS.
+    
+    Returns:
+        JSON string with list of census events (e.g., SP2020, SE2016)
+    """
+    try:
+        client = get_api_client(api_key)
+        events = await _run_sync(client.get_census_events)
+        return success_response(events, f"Found {len(events)} census events")
+    except Exception as e:
+        return error_response(str(e))
+
+
+async def bps_list_simdasi_provinces(
+    api_key: str | None = None
+) -> str:
+    """
+    Get list of SIMDASI province MFD codes.
+    
+    SIMDASI (Sistem Informasi Manajemen Data Statistik Sektoral Indonesia)
+    provides regional statistical data at province/regency/district level.
+    
+    Returns:
+        JSON string with list of SIMDASI provinces
+    """
+    try:
+        client = get_api_client(api_key)
+        provinces = await _run_sync(client.get_simdasi_provinces)
+        return success_response(provinces, f"Found {len(provinces)} SIMDASI provinces")
+    except Exception as e:
+        return error_response(str(e))
+
+
+async def bps_search_generic(
+    keyword: str,
+    domain: str = "0000",
+    lang: str = "ind",
+    page: int = 1,
+    api_key: str | None = None
+) -> str:
+    """
+    Generic search across all BPS WebAPI content types.
+    
+    This searches across all content types (tables, publications, press releases, etc.)
+    using the WebAPI search endpoint.
+    
+    Args:
+        keyword: Search keyword
+        domain: Domain code (default "0000" for national)
+        lang: Language - 'ind' or 'eng'
+        page: Page number
+        api_key: Optional BPS API key override
+    
+    Returns:
+        JSON string with search results across all content types
+    """
+    try:
+        client = get_api_client(api_key)
+        result = await _run_sync(client.search_generic, keyword=keyword, domain=domain, lang=lang, page=page)
+        return success_response(result, f"Search results for '{keyword}' (page {page})")
     except Exception as e:
         return error_response(str(e))
 
@@ -1850,6 +2091,7 @@ def build_mcp_server() -> FastMCP:
         bps_list_years,
         bps_list_domains,
         bps_list_provinces,
+        bps_list_regencies,
         bps_list_subjects,
         bps_list_subject_categories,
         bps_get_variables,
@@ -1862,6 +2104,7 @@ def build_mcp_server() -> FastMCP:
         bps_get_data,
         # Search
         bps_search,
+        bps_search_generic,
         bps_search_allstats,
         bps_search_ntt,
         bps_search_nasional,
@@ -1871,8 +2114,11 @@ def build_mcp_server() -> FastMCP:
         bps_get_table_data,
         # Publications & Press
         bps_get_press_releases,
+        bps_get_press_release_detail,
         bps_get_publications,
+        bps_get_publication_detail,
         # News & Media
+        bps_list_news,
         bps_list_news_categories,
         bps_get_news_detail,
         # Indicators & Infographics
@@ -1886,11 +2132,13 @@ def build_mcp_server() -> FastMCP:
         bps_list_sdgs,
         bps_list_sdds,
         # Census data
+        bps_list_census_events,
         bps_get_census_topics,
         bps_get_census_areas,
         bps_get_census_datasets,
         bps_get_census_data,
         # SIMDASI data
+        bps_list_simdasi_provinces,
         bps_get_simdasi_regencies,
         bps_get_simdasi_districts,
         bps_get_simdasi_subjects,
@@ -1924,6 +2172,16 @@ def build_mcp_server() -> FastMCP:
 
 def main():
     """Run the BPS MCP server over STDIO."""
+    import signal
+
+    def handle_signal(signum, frame):
+        """Handle shutdown signals gracefully."""
+        print(f"BPS MCP Server shutting down (signal {signum})...", file=sys.stderr)
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, handle_signal)
+    signal.signal(signal.SIGINT, handle_signal)
+
     server = build_mcp_server()
     print(f"BPS MCP Server v{MCP_SERVER_VERSION} starting...", file=sys.stderr)
     server.run(transport="stdio")

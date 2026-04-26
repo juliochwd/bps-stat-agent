@@ -173,6 +173,8 @@ class AgentLogger:
             f.write("-" * 80 + "\n")
             f.write(content + "\n")
 
-    def get_log_file_path(self) -> Path:
+    def get_log_file_path(self) -> Path | None:
         """Get current log file path"""
+        if self.log_file is None:
+            return self.log_dir / "(no active log)"
         return self.log_file

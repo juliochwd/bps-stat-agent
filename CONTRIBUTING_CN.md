@@ -32,8 +32,8 @@
 1. Fork 本仓库
 2. 克隆你的 fork：
    ```bash
-   git clone https://github.com/MiniMax-AI/Mini-Agent mini-agent
-   cd mini-agent
+   git clone https://github.com/juliochwd/bps-stat-agent.git
+   cd bps-stat-agent
    ```
 
 3. 创建新分支：
@@ -51,7 +51,7 @@
 #### 开发流程
 
 1. **编写代码**
-   - 遵循项目的代码风格（参考 [开发指南](docs/DEVELOPMENT.md#代码规范)）
+   - 遵循项目的代码风格（参考 [开发指南](docs/DEVELOPMENT_GUIDE_CN.md#代码规范)）
    - 添加必要的注释和文档字符串
    - 保持代码简洁清晰
 

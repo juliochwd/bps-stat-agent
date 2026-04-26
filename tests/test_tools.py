@@ -14,22 +14,19 @@ async def test_read_tool():
     """Test read file tool."""
     print("\n=== Testing ReadTool ===")
 
-    # Create a temp file
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
-        f.write("Hello, World!")
-        temp_path = f.name
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a temp file inside the workspace directory
+        temp_file = Path(tmpdir) / "test_read.txt"
+        temp_file.write_text("Hello, World!")
 
-    try:
-        tool = ReadTool()
-        result = await tool.execute(path=temp_path)
+        tool = ReadTool(workspace_dir=tmpdir)
+        result = await tool.execute(path=str(temp_file))
 
         assert result.success, f"Read failed: {result.error}"
         # ReadTool now returns content with line numbers in format: "LINE_NUMBER|LINE_CONTENT"
         assert "Hello, World!" in result.content, f"Content mismatch: {result.content}"
         assert "|Hello, World!" in result.content, f"Expected line number format: {result.content}"
         print("✅ ReadTool test passed")
-    finally:
-        Path(temp_path).unlink()
 
 
 @pytest.mark.asyncio
@@ -40,7 +37,7 @@ async def test_write_tool():
     with tempfile.TemporaryDirectory() as tmpdir:
         file_path = Path(tmpdir) / "test.txt"
 
-        tool = WriteTool()
+        tool = WriteTool(workspace_dir=tmpdir)
         result = await tool.execute(path=str(file_path), content="Test content")
 
         assert result.success, f"Write failed: {result.error}"
@@ -54,22 +51,19 @@ async def test_edit_tool():
     """Test edit file tool."""
     print("\n=== Testing EditTool ===")
 
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
-        f.write("Hello, World!")
-        temp_path = f.name
+    with tempfile.TemporaryDirectory() as tmpdir:
+        temp_file = Path(tmpdir) / "test_edit.txt"
+        temp_file.write_text("Hello, World!")
 
-    try:
-        tool = EditTool()
+        tool = EditTool(workspace_dir=tmpdir)
         result = await tool.execute(
-            path=temp_path, old_str="World", new_str="Agent"
+            path=str(temp_file), old_str="World", new_str="Agent"
         )
 
         assert result.success, f"Edit failed: {result.error}"
-        content = Path(temp_path).read_text()
+        content = temp_file.read_text()
         assert content == "Hello, Agent!", f"Content mismatch: {content}"
         print("✅ EditTool test passed")
-    finally:
-        Path(temp_path).unlink()
 
 
 @pytest.mark.asyncio

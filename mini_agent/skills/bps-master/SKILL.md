@@ -5,7 +5,7 @@ description: Retrieve BPS (Badan Pusat Statistik / Statistics Indonesia) data in
 
 # BPS Master Agent Skill
 
-This skill provides access to all BPS (Badan Pusat Statistik) Indonesia statistical data via two integrated data sources. It exposes **55+ MCP tools** for Indonesian statistical data retrieval.
+This skill provides access to all BPS (Badan Pusat Statistik) Indonesia statistical data via two integrated data sources. It exposes **62 MCP tools** for Indonesian statistical data retrieval.
 
 ## Two Data Sources
 
@@ -54,6 +54,26 @@ KBLI/KBKI classifications:
 
 Foreign trade:
 - bps_get_foreign_trade(sumber=1, kodehs=84, tahun="2024", periode=1, jenishs=1)
+
+Publications drill-down:
+1. bps_get_publications(domain="5300") → list publications
+2. bps_get_publication_detail(pub_id="XXX", domain="5300") → detail + PDF URL
+
+Press releases drill-down:
+1. bps_get_press_releases(year=2024, domain="0000") → list BRS
+2. bps_get_press_release_detail(brs_id=XXX, domain="0000") → detail + PDF URL
+
+News drill-down:
+1. bps_list_news(domain="5300") → list news articles
+2. bps_get_news_detail(news_id=XXX, domain="5300") → article detail
+
+Dynamic tables drill-down:
+1. bps_list_dynamic_tables(domain="5300") → list tables
+2. bps_get_dynamic_table_detail(table_id=XXX, domain="5300") → table data
+
+Regency/city discovery:
+- bps_list_regencies(prov_id="53") → kabupaten/kota in NTT
+  OR bps_list_domains(type="kabbyprov", prov="53") → same result
 ```
 
 ## Domain Codes
@@ -64,7 +84,7 @@ Foreign trade:
 | 5300 | Nusa Tenggara Timur (NTT) | Provincial inflation, HDI, employment |
 | 1100-7700 | Other provinces | Province-specific data |
 
-## All 55+ MCP Tools Reference
+## All 62 MCP Tools Reference
 
 ### Utility Tools
 
@@ -72,8 +92,9 @@ Foreign trade:
 |------|------|---------|
 | `bps_year_to_th` | `year: int` | Year → BPS th ID (e.g., 2024 → 124) |
 | `bps_list_years` | `domain, var?, api_key?` | Available years for variable |
-| `bps_list_domains` | `type="all"\|"prov"\|"kab"`, `prov?`, `api_key?` | List all domains |
+| `bps_list_domains` | `type="all"\|"prov"\|"kab"\|"kabbyprov"`, `prov?`, `api_key?` | List all domains |
 | `bps_list_provinces` | `api_key?` | Province list |
+| `bps_list_regencies` | `prov_id?: str, api_key?` | List kabupaten/kota domains (optionally filtered by province) |
 
 ### Subject & Variables
 
@@ -112,6 +133,7 @@ bps_get_decoded_data(var=522, th=124, domain="5300")
 | `bps_search_nasional` | `keyword, page=1, api_key?` | Shortcut: domain=0000 |
 | `bps_search_and_get_data` | `keyword, domain="5300", max_tables=3, format="json", api_key?` | Search + retrieve data |
 | `bps_answer_query` | `keyword, domain="5300", content="all", api_key?` | AI-powered AllStats-first answer |
+| `bps_search_generic` | `keyword, domain="0000", lang="ind", page=1, api_key?` | Generic WebAPI search across all content types |
 
 **AllStats content types:** `all`, `publication`, `table`, `pressrelease`, `infographic`, `microdata`, `news`, `glosarium`
 
@@ -121,18 +143,22 @@ bps_get_decoded_data(var=522, th=124, domain="5300")
 |------|------|---------|
 | `bps_get_table_data` | `table_id: int, domain="5300", format="json"\|"csv", api_key?` | Static table with actual data |
 | `bps_list_dynamic_tables` | `domain, year?, keyword?, lang="ind", page=1, api_key?` | Dynamic tables list |
+| `bps_get_dynamic_table_detail` | `table_id: int, domain="5300", lang="ind", api_key?` | Dynamic table detail with data |
 
 ### Publications & Press Releases
 
 | Tool | Args | Returns |
 |------|------|---------|
 | `bps_get_press_releases` | `year=2024, domain="0000", api_key?` | Berita Resmi Statistik (BRS) list |
+| `bps_get_press_release_detail` | `brs_id: int, domain="0000", lang="ind", api_key?` | Press release detail with PDF URL |
 | `bps_get_publications` | `domain="5300", page=1, api_key?` | Publication list |
+| `bps_get_publication_detail` | `pub_id: str, domain="0000", lang="ind", api_key?` | Publication detail with PDF/cover URLs |
 
 ### News & Media
 
 | Tool | Args | Returns |
 |------|------|---------|
+| `bps_list_news` | `domain="0000", newscat?, year?, month?, keyword?, lang="ind", page=1, api_key?` | List news articles |
 | `bps_list_news_categories` | `domain="5300", lang="ind", api_key?` | News categories |
 | `bps_get_news_detail` | `news_id: int, domain="5300", lang="ind", api_key?` | News article |
 
@@ -143,6 +169,8 @@ bps_get_decoded_data(var=522, th=124, domain="5300")
 | `bps_get_indicators` | `domain="5300", year?, page=1, api_key?` | Strategic indicators |
 | `bps_list_infographics` | `domain="5300", keyword?, lang="ind", page=1, api_key?` | Infographic list |
 | `bps_get_infographic_detail` | `infographic_id: str, domain="5300", lang="ind", api_key?` | Infographic with image URL |
+
+> **Note:** `bps_get_indicators` does not support year filtering. Use `bps_search` or `bps_get_table_data` for year-specific data.
 
 ### Glossary
 
@@ -162,6 +190,7 @@ bps_get_decoded_data(var=522, th=124, domain="5300")
 
 | Tool | Args | Returns |
 |------|------|---------|
+| `bps_list_census_events` | `api_key?` | List available census events (SP2020, SE2016, etc.) |
 | `bps_get_census_topics` | `kegiatan: str` (e.g., "sp2020") | Census topics |
 | `bps_get_census_areas` | `kegiatan: str` | Wilayah sensus areas |
 | `bps_get_census_datasets` | `kegiatan: str, topik: int` | Available datasets |
@@ -173,6 +202,7 @@ bps_get_decoded_data(var=522, th=124, domain="5300")
 
 | Tool | Args | Returns |
 |------|------|---------|
+| `bps_list_simdasi_provinces` | `api_key?` | List SIMDASI province MFD codes |
 | `bps_get_simdasi_regencies` | `parent: str` (7-digit MFD, e.g., "5300000" for NTT) | Regency MFD codes |
 | `bps_get_simdasi_districts` | `parent: str` (7-digit regency MFD) | District MFD codes |
 | `bps_get_simdasi_subjects` | `wilayah: str` (7-digit area MFD) | SIMDASI subjects |
@@ -231,6 +261,10 @@ bps_get_decoded_data(var=522, th=124, domain="5300")
 | "ekspor-impor" | `bps_get_foreign_trade` | `bps_get_foreign_trade(sumber=1, kodehs=84, tahun="2024", ...)` |
 | "SDGs NTT goal 1" | `bps_list_sdgs` | `bps_list_sdgs(goal="1")` |
 | "Sensus 2020" | `bps_get_census_topics` | `bps_get_census_topics(kegiatan="sp2020")` |
+| "berita BPS terbaru" | `bps_list_news` | `bps_list_news(domain="5300")` |
+| "detail BRS inflasi" | `bps_get_press_release_detail` | `bps_get_press_release_detail(brs_id=XXX)` |
+| "kabupaten di NTT" | `bps_list_regencies` | `bps_list_regencies(prov_id="53")` |
+| "sensus apa saja" | `bps_list_census_events` | `bps_list_census_events()` |
 
 ## Environment Variables
 

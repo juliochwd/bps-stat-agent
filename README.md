@@ -1,6 +1,6 @@
 # BPS Stat Agent
 
-**BPS Indonesia Statistical Data Agent** — Ainson cari data BPS (Badan Pusat Statistik) seperti inflasi, PDB, IPM, angka harapan hidup, pengangguran, kemiskinan di Indonesia. Dilengkapi **55+ MCP tools** untuk akses lengkap ke BPS WebAPI dan AllStats Search Engine.
+**BPS Indonesia Statistical Data Agent** — Agen AI untuk cari data BPS (Badan Pusat Statistik) seperti inflasi, PDB, IPM, angka harapan hidup, pengangguran, kemiskinan di Indonesia. Dilengkapi **62 MCP tools** untuk akses lengkap ke BPS WebAPI dan AllStats Search Engine.
 
 > Query contoh: "inflasi NTT terbaru", "PDRB kabupaten kota Jawa Timur", "angka harapan hidup menurut provinsi", "IPM nasional 2024"
 
@@ -11,9 +11,10 @@
 - 🌏 **Multi-domain Support** - Query national (0000) or provincial data (e.g., 5300=NTT)
 - 📊 **Rich Content Types** - Publications, indicators, press releases, tables, infographics
 - 🔄 **Auto-retry** - Automatic retry with fresh browser context on Cloudflare blocks
-- 🔧 **MCP Server** - 55+ tools running as real MCP server over STDIO
+- 🔧 **MCP Server** - 62 tools running as real MCP server over STDIO
+- 🤖 **ACP Server** - Agent Client Protocol bridge for agent-to-agent communication
 - ⚡ **Fast Installation** - Single command install via uv/pip
-- ✅ **Production Ready** - 290+ tests, comprehensive coverage
+- ✅ **Production Ready** - 379 tests across 29 test files, comprehensive coverage
 
 ## Installation
 
@@ -45,7 +46,7 @@ powershell -ExecutionPolicy Bypass -File "$env:TEMP\setup-config.ps1"
 
 ### 2. Add Your API Key
 
-Edit `~/.bps-stat-agent/config/config.yaml` and add your MiniMax API key:
+Edit `~/.bps-stat-agent/config/config.yaml` and add your LLM API key:
 
 ```yaml
 api_key: "your_api_key_here"
@@ -75,15 +76,17 @@ bps-stat-agent --help
 
 ### MCP Server Mode
 
-BPS Stat Agent includes an MCP server that can be used with Claude desktop:
+BPS Stat Agent includes an MCP server with 62 tools that can be used with Claude Desktop or any MCP client:
 
-```bash
-# Add to your mcp.json:
+```json
 {
     "mcpServers": {
         "bps": {
             "command": "uvx",
-            "args": ["--from", "git+https://github.com/juliochwd/bps-stat-agent.git", "bps-mcp-server"]
+            "args": ["--from", "git+https://github.com/juliochwd/bps-stat-agent.git", "bps-mcp-server"],
+            "env": {
+                "BPS_API_KEY": "your_bps_webapi_key"
+            }
         }
     }
 }
@@ -92,6 +95,14 @@ BPS Stat Agent includes an MCP server that can be used with Claude desktop:
 Or run directly:
 ```bash
 uvx --from git+https://github.com/juliochwd/bps-stat-agent.git bps-mcp-server
+```
+
+### ACP Server Mode
+
+BPS Stat Agent also supports the Agent Client Protocol for agent-to-agent communication:
+
+```bash
+bps-stat-agent-acp
 ```
 
 ### Python API
@@ -158,19 +169,61 @@ response = await client.search("inflasi", domain="5300", page=2)
 ```
 bps-stat-agent/
 ├── mini_agent/
-│   ├── __init__.py
-│   ├── agent.py          # Main agent implementation
-│   ├── cli.py            # CLI entry point
-│   ├── config/           # Configuration files
-│   │   ├── config-example.yaml
-│   │   ├── mcp-example.json
-│   │   └── system_prompt.md
-│   ├── allstats_client.py  # BPS AllStats Playwright client
-│   ├── bps_mcp_server.py   # MCP server implementation
-│   └── skills/           # Agent skills
-├── scripts/
-│   ├── setup-config.sh
-│   └── setup-config.ps1
+│   ├── __init__.py             # Package exports & version
+│   ├── agent.py                # Core agent loop (token mgmt, tool execution)
+│   ├── cli.py                  # CLI entry point (interactive + non-interactive)
+│   ├── config.py               # Pydantic config loading (YAML + env vars)
+│   ├── colors.py               # ANSI terminal color constants
+│   ├── logger.py               # JSON-structured agent run logger
+│   ├── retry.py                # Async retry with exponential backoff
+│   │
+│   ├── bps_api.py              # BPS WebAPI client (44+ endpoints)
+│   ├── bps_mcp_server.py       # FastMCP server with 62 registered tools
+│   ├── bps_models.py           # BPSResourceType enum + BPSResolvedResource
+│   ├── bps_orchestrator.py     # AllStats-first search → resolve → retrieve
+│   ├── bps_resolution.py       # Classifies search results into resource types
+│   ├── bps_data_retriever.py   # Table search → fetch → HTML parse pipeline
+│   ├── bps_resource_retriever.py # Unified retrieval with fallback chains
+│   ├── bps_normalization.py    # Canonical response payload builder
+│   ├── allstats_client.py      # Playwright browser automation for AllStats
+│   │
+│   ├── llm/                    # LLM abstraction layer
+│   │   ├── base.py             # Abstract LLMClientBase (ABC)
+│   │   ├── llm_wrapper.py      # Unified LLMClient (provider routing)
+│   │   ├── anthropic_client.py # Anthropic SDK (thinking, tool_use, caching)
+│   │   └── openai_client.py    # OpenAI SDK (reasoning, tool_calls)
+│   │
+│   ├── schema/                 # Pydantic data models
+│   │   └── schema.py           # Message, ToolCall, LLMResponse, TokenUsage
+│   │
+│   ├── tools/                  # Tool implementations
+│   │   ├── base.py             # Tool ABC + ToolResult
+│   │   ├── bash_tool.py        # BashTool (fg/bg), BashOutputTool, BashKillTool
+│   │   ├── file_tools.py       # ReadTool, WriteTool, EditTool
+│   │   ├── note_tool.py        # SessionNoteTool + RecallNoteTool
+│   │   ├── skill_tool.py       # GetSkillTool (progressive disclosure)
+│   │   ├── skill_loader.py     # SkillLoader (YAML frontmatter parser)
+│   │   └── mcp_loader.py       # MCPTool + MCPServerConnection
+│   │
+│   ├── acp/                    # Agent Client Protocol bridge
+│   │   ├── __init__.py         # BPSStatACPAgent
+│   │   └── server.py           # ACP server entry point
+│   │
+│   ├── utils/                  # Utilities
+│   │   └── terminal_utils.py   # Display width calculation (ANSI/emoji/CJK)
+│   │
+│   ├── config/                 # Configuration files
+│   │   ├── config-example.yaml # Full annotated config template
+│   │   ├── mcp-example.json    # MCP server config template
+│   │   └── system_prompt.md    # System prompt (bilingual ID/EN)
+│   │
+│   └── skills/                 # Agent skills (git submodule)
+│       └── bps-master/         # BPS domain skill with tool docs
+│
+├── tests/                      # 379 tests across 29 files
+├── examples/                   # 6 usage examples
+├── docs/                       # Development & production guides
+├── scripts/                    # Setup scripts (macOS/Linux/Windows)
 ├── pyproject.toml
 └── README.md
 ```
@@ -228,25 +281,24 @@ source .venv/bin/activate  # or .venv\Scripts\activate on Windows
 # Install dependencies
 pip install -e .
 
+# Install Playwright browser (required for AllStats search)
+playwright install chromium
+
 # Run tests
 pytest tests/
 
-# Test the search client directly
-.venv/bin/python -c "
-import asyncio
-from mini_agent.allstats_client import AllStatsClient
-
-async def test():
-    client = AllStatsClient()
-    try:
-        response = await client.search('inflasi', domain='5300')
-        print(f'Found {len(response.results)} results')
-    finally:
-        await client.close()
-
-asyncio.run(test())
-"
+# Run tests with coverage
+pytest tests/ --cov=mini_agent --cov-report=term-missing
 ```
+
+## Entry Points
+
+| Command | Description |
+|:--------|:------------|
+| `bps-stat-agent` | Interactive CLI agent for querying BPS data |
+| `bps-stat-agent --task "query"` | Non-interactive mode with a single query |
+| `bps-mcp-server` | MCP server over STDIO (62 tools) |
+| `bps-stat-agent-acp` | ACP server for agent-to-agent communication |
 
 ## License
 

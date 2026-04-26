@@ -8,53 +8,89 @@
   - [1. 项目架构](#1-项目架构)
   - [2. 基础使用](#2-基础使用)
     - [2.1 交互式命令](#21-交互式命令)
-    - [2.2 已集成的 MCP 工具](#22-已集成的-mcp-工具)
-      - [Memory - 知识图谱记忆系统](#memory---知识图谱记忆系统)
-      - [MiniMax Search - 网页搜索与浏览](#minimax-search---网页搜索与浏览)
+    - [2.2 入口点](#22-入口点)
+    - [2.3 BPS 数据管道](#23-bps-数据管道)
   - [3. 扩展能力](#3-扩展能力)
     - [3.1 添加自定义工具](#31-添加自定义工具)
-      - [步骤](#步骤)
-      - [示例](#示例)
     - [3.2 添加 MCP 工具](#32-添加-mcp-工具)
     - [3.3 自定义存储](#33-自定义存储)
     - [3.4 初始化 Claude Skills（推荐）](#34-初始化-claude-skills推荐)
     - [3.5 添加新的Skill](#35-添加新的skill)
     - [3.6 自定义系统提示词](#36-自定义系统提示词)
-      - [可定制内容包括：](#可定制内容包括)
   - [4. 故障排查](#4-故障排查)
     - [4.1 常见问题](#41-常见问题)
-      - [API 密钥配置错误](#api-密钥配置错误)
-      - [依赖安装失败](#依赖安装失败)
-      - [MCP 工具加载失败](#mcp-工具加载失败)
     - [4.2 调试技巧](#42-调试技巧)
-      - [启用 Debug 日志](#启用-debug-日志)
-      - [使用 Python 调试器](#使用-python-调试器)
-      - [监控工具调用](#监控工具调用)
 
 ---
 
 ## 1. 项目架构
 
 ```
-mini-agent/
-├── mini_agent/              # 核心源代码
-│   ├── agent.py             # 主 Agent 循环
-│   ├── llm.py               # LLM 客户端
-│   ├── cli.py               # 命令行接口
-│   ├── config.py            # 配置加载
-│   ├── tools/               # 工具实现（文件、Bash、MCP、技能等）
-│   └── skills/              # Claude 技能集（子模块）
-├── tests/                   # 测试代码
-├── docs/                    # 文档
-├── workspace/               # 工作目录
-└── pyproject.toml           # 项目配置
+bps-stat-agent/
+├── mini_agent/                    # 核心源代码
+│   ├── agent.py                   # 主 Agent 循环（Token 管理、工具执行）
+│   ├── cli.py                     # CLI 入口点（交互式 + 非交互式）
+│   ├── config.py                  # Pydantic 配置加载（YAML + 环境变量）
+│   ├── colors.py                  # ANSI 终端颜色常量
+│   ├── logger.py                  # JSON 结构化 Agent 运行日志
+│   ├── retry.py                   # 异步重试（指数退避）
+│   │
+│   ├── bps_api.py                 # BPS WebAPI 客户端（44+ 端点）
+│   ├── bps_mcp_server.py          # FastMCP 服务器（62 个工具）
+│   ├── bps_models.py              # BPSResourceType 枚举 + BPSResolvedResource
+│   ├── bps_orchestrator.py        # AllStats 优先搜索 → 解析 → 检索
+│   ├── bps_resolution.py          # 将搜索结果分类为资源类型
+│   ├── bps_data_retriever.py      # 表格搜索 → 获取 → HTML 解析管道
+│   ├── bps_resource_retriever.py  # 统一检索（含回退链）
+│   ├── bps_normalization.py       # 规范化响应构建器
+│   ├── allstats_client.py         # Playwright 浏览器自动化（AllStats 搜索）
+│   │
+│   ├── llm/                       # LLM 抽象层
+│   │   ├── base.py                # 抽象 LLMClientBase (ABC)
+│   │   ├── llm_wrapper.py         # 统一 LLMClient（提供商路由）
+│   │   ├── anthropic_client.py    # Anthropic SDK（thinking、tool_use、缓存）
+│   │   └── openai_client.py       # OpenAI SDK（reasoning、tool_calls）
+│   │
+│   ├── schema/                    # Pydantic 数据模型
+│   │   └── schema.py              # Message、ToolCall、LLMResponse、TokenUsage
+│   │
+│   ├── tools/                     # 工具实现
+│   │   ├── base.py                # Tool ABC + ToolResult
+│   │   ├── bash_tool.py           # BashTool（前台/后台）、BashOutputTool、BashKillTool
+│   │   ├── file_tools.py          # ReadTool、WriteTool、EditTool
+│   │   ├── note_tool.py           # SessionNoteTool + RecallNoteTool
+│   │   ├── skill_tool.py          # GetSkillTool（渐进式披露）
+│   │   ├── skill_loader.py        # SkillLoader（YAML 前置解析器）
+│   │   └── mcp_loader.py          # MCPTool + MCPServerConnection
+│   │
+│   ├── acp/                       # Agent Client Protocol 桥接
+│   │   ├── __init__.py            # BPSStatACPAgent
+│   │   └── server.py              # ACP 服务器入口点
+│   │
+│   ├── utils/                     # 工具函数
+│   │   └── terminal_utils.py      # 显示宽度计算（ANSI/emoji/CJK）
+│   │
+│   ├── config/                    # 配置文件
+│   │   ├── config-example.yaml    # 完整注释配置模板
+│   │   ├── mcp-example.json       # MCP 服务器配置模板
+│   │   └── system_prompt.md       # 系统提示词（印尼语/英语双语）
+│   │
+│   └── skills/                    # Agent 技能（git 子模块）
+│       └── bps-master/            # BPS 领域技能（含工具文档）
+│
+├── tests/                         # 379 个测试（29 个文件）
+├── examples/                      # 6 个使用示例
+├── docs/                          # 开发与生产指南
+├── scripts/                       # 安装脚本（macOS/Linux/Windows）
+├── pyproject.toml                 # 包定义
+└── README.md
 ```
 
 ## 2. 基础使用
 
 ### 2.1 交互式命令
 
-在交互模式 (通过 `mini-agent` 启动) 下运行 Agent 时，您可以使用以下命令：
+在交互模式 (通过 `bps-stat-agent` 启动) 下运行 Agent 时，您可以使用以下命令：
 
 | 命令                   | 说明                                             |
 | ---------------------- | ------------------------------------------------ |
@@ -63,50 +99,36 @@ mini-agent/
 | `/clear`               | 清除消息历史并开始新会话                         |
 | `/history`             | 显示当前会话的消息数量                           |
 | `/stats`               | 显示会话统计信息（步数、工具调用、使用的 Token） |
+| `/log [filename]`      | 显示日志文件或读取特定日志文件                   |
 
-### 2.2 已集成的 MCP 工具
+### 2.2 入口点
 
-本项目预先集成了以下 MCP (模型上下文协议) 工具，用以扩展 Agent 的能力：
+| 命令 | 说明 |
+|------|------|
+| `bps-stat-agent` | 交互式 CLI Agent，用于查询 BPS 数据 |
+| `bps-stat-agent --task "query"` | 非交互式模式，执行单个查询 |
+| `bps-stat-agent --workspace DIR` | 指定自定义工作目录 |
+| `bps-mcp-server` | 通过 STDIO 运行的 MCP 服务器（62 个工具） |
+| `bps-stat-agent-acp` | ACP 服务器，用于 Agent 间通信 |
 
-#### Memory - 知识图谱记忆系统
+### 2.3 BPS 数据管道
 
-**功能**：基于图数据库，为 Agent 提供长期记忆的存储与检索能力。
+Agent 使用 **AllStats 优先回退管道** 进行数据检索：
 
-**状态**：默认启用
-
-**配置**：无需 API Key，开箱即用
-
-**能力**：
-- 跨会话存储并检索信息
-- 根据对话内容构建知识图谱
-- 对已存储的记忆进行语义搜索
-
----
-
-#### MiniMax Search - 网页搜索与浏览
-
-**功能**：提供三大强大工具：
-- `search` - 网页搜索
-- `parallel_search` - 并行执行多个搜索任务
-- `browse` - 智能网页浏览与内容提取
-
-**状态**：默认禁用，需要配置 API Key 后方可启用。
-
-**配置示例**：
-
-```json
-{
-  "mcpServers": {
-    "minimax_search": {
-      "disabled": false,
-      "env": {
-        "JINA_API_KEY": "your-jina-api-key",
-        "SERPER_API_KEY": "your-serper-api-key",
-        "MINIMAX_API_KEY": "your-minimax-token"
-      }
-    }
-  }
-}
+```
+查询 → BPSOrchestrator.answer_query()
+  ├── 1. AllStatsClient.search() [Playwright 浏览器自动化]
+  │     └── Cloudflare 绕过（反检测、新上下文重试）
+  ├── 2. _select_best_result() [相关性评分]
+  ├── 3. classify_search_result() → BPSResolvedResource
+  │     └── 映射为: TABLE, PUBLICATION, PRESSRELEASE, NEWS, INFOGRAPHIC 等
+  ├── 4. BPSResourceRetriever.retrieve()
+  │     ├── TABLE → get_static_table_detail() → HTML 解析 → 结构化数据
+  │     │     └── 回退: 关键词搜索 → 重新选择 → 重试详情
+  │     ├── PUBLICATION → get_publication_detail() → BPSMaterial (PDF/封面)
+  │     ├── PRESSRELEASE → get_press_release_detail() → BPSMaterial
+  │     └── OTHER → search_result_only（仅元数据）
+  └── 5. build_normalized_response() → 带溯源的规范化响应
 ```
 
 ## 3. 扩展能力

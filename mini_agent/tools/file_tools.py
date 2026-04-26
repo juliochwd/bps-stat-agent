@@ -113,6 +113,16 @@ class ReadTool(Tool):
             if not file_path.is_absolute():
                 file_path = self.workspace_dir / file_path
 
+            # Path traversal protection
+            resolved = file_path.resolve()
+            workspace_resolved = self.workspace_dir.resolve()
+            if not str(resolved).startswith(str(workspace_resolved)):
+                return ToolResult(
+                    success=False,
+                    content="",
+                    error=f"Access denied: path '{path}' is outside workspace directory",
+                )
+
             if not file_path.exists():
                 return ToolResult(
                     success=False,
@@ -200,6 +210,16 @@ class WriteTool(Tool):
             if not file_path.is_absolute():
                 file_path = self.workspace_dir / file_path
 
+            # Path traversal protection
+            resolved = file_path.resolve()
+            workspace_resolved = self.workspace_dir.resolve()
+            if not str(resolved).startswith(str(workspace_resolved)):
+                return ToolResult(
+                    success=False,
+                    content="",
+                    error=f"Access denied: path '{path}' is outside workspace directory",
+                )
+
             # Create parent directories if they don't exist
             file_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -261,6 +281,16 @@ class EditTool(Tool):
             if not file_path.is_absolute():
                 file_path = self.workspace_dir / file_path
 
+            # Path traversal protection
+            resolved = file_path.resolve()
+            workspace_resolved = self.workspace_dir.resolve()
+            if not str(resolved).startswith(str(workspace_resolved)):
+                return ToolResult(
+                    success=False,
+                    content="",
+                    error=f"Access denied: path '{path}' is outside workspace directory",
+                )
+
             if not file_path.exists():
                 return ToolResult(
                     success=False,
@@ -277,7 +307,15 @@ class EditTool(Tool):
                     error=f"Text not found in file: {old_str}",
                 )
 
-            new_content = content.replace(old_str, new_str)
+            count = content.count(old_str)
+            if count > 1:
+                return ToolResult(
+                    success=False,
+                    content="",
+                    error=f"The text to replace appears {count} times in the file. Please provide a more unique string to ensure only the intended occurrence is replaced.",
+                )
+
+            new_content = content.replace(old_str, new_str, 1)
             file_path.write_text(new_content, encoding="utf-8")
 
             return ToolResult(success=True, content=f"Successfully edited {file_path}")

@@ -68,7 +68,7 @@ To prevent the Agent from consuming excessive CPU/Memory resources and affecting
 # docker-compose.yml
 services:
   agent:
-    image: agent-demo:latest
+    image: bps-stat-agent:latest
     deploy:
       resources:
         limits:
@@ -129,7 +129,7 @@ RUN groupadd -r agent && useradd -r -g agent agent
 WORKDIR /app
 
 # Option 1: Clone from Git repository (for public repos)
-RUN git clone https://github.com/MiniMax-AI/agent-demo.git . && \
+RUN git clone https://github.com/juliochwd/bps-stat-agent.git . && \
     chown -R agent:agent /app
 
 # Option 2: Copy code from local (for private deployments)
@@ -142,7 +142,7 @@ USER agent
 RUN uv sync
 
 # Start the application
-CMD ["uv", "run", "mini-agent"]
+CMD ["uv", "run", "bps-stat-agent"]
 ```
 
 #### 3.3.2 File System Permissions

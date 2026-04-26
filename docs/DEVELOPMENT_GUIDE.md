@@ -7,53 +7,89 @@
   - [1. Project Architecture](#1-project-architecture)
   - [2. Basic Usage](#2-basic-usage)
     - [2.1 Interactive Commands](#21-interactive-commands)
-    - [2.2 Integrated MCP Tools](#22-integrated-mcp-tools)
-      - [Memory - Knowledge Graph Memory System](#memory---knowledge-graph-memory-system)
-      - [MiniMax Search - Web Search and Browse](#minimax-search---web-search-and-browse)
+    - [2.2 Entry Points](#22-entry-points)
+    - [2.3 BPS Data Pipeline](#23-bps-data-pipeline)
   - [3. Extended Abilities](#3-extended-abilities)
     - [3.1 Adding Custom Tools](#31-adding-custom-tools)
-      - [Steps](#steps)
-      - [Example](#example)
     - [3.2 Adding MCP Tools](#32-adding-mcp-tools)
     - [3.3 Customizing Note Storage](#33-customizing-note-storage)
     - [3.4 Initialize Claude Skills (Recommended)](#34-initialize-claude-skills-recommended)
     - [3.5 Adding a New Skill](#35-adding-a-new-skill)
     - [3.6 Customizing System Prompt](#36-customizing-system-prompt)
-      - [What You Can Customize](#what-you-can-customize)
   - [4. Troubleshooting](#4-troubleshooting)
     - [4.1 Common Issues](#41-common-issues)
-      - [API Key Configuration Error](#api-key-configuration-error)
-      - [Dependency Installation Failure](#dependency-installation-failure)
-      - [MCP Tool Loading Failure](#mcp-tool-loading-failure)
     - [4.2 Debugging Tips](#42-debugging-tips)
-      - [Enable Verbose Logging](#enable-verbose-logging)
-      - [Using the Python Debugger](#using-the-python-debugger)
-      - [Inspecting Tool Calls](#inspecting-tool-calls)
 
 ---
 
 ## 1. Project Architecture
 
 ```
-mini-agent/
-├── mini_agent/              # Core source code
-│   ├── agent.py             # Main agent loop
-│   ├── llm.py               # LLM client
-│   ├── cli.py               # Command-line interface
-│   ├── config.py            # Configuration loading
-│   ├── tools/               # Tool implementations (file, bash, MCP, skills, etc.)
-│   └── skills/              # Claude Skills (submodule)
-├── tests/                   # Test code
-├── docs/                    # Documentation
-├── workspace/               # Working directory
-└── pyproject.toml           # Project configuration
+bps-stat-agent/
+├── mini_agent/                    # Core source code
+│   ├── agent.py                   # Main agent loop (token mgmt, tool execution)
+│   ├── cli.py                     # CLI entry point (interactive + non-interactive)
+│   ├── config.py                  # Pydantic config loading (YAML + env vars)
+│   ├── colors.py                  # ANSI terminal color constants
+│   ├── logger.py                  # JSON-structured agent run logger
+│   ├── retry.py                   # Async retry with exponential backoff
+│   │
+│   ├── bps_api.py                 # BPS WebAPI client (44+ endpoints)
+│   ├── bps_mcp_server.py          # FastMCP server (62 tools)
+│   ├── bps_models.py              # BPSResourceType enum + BPSResolvedResource
+│   ├── bps_orchestrator.py        # AllStats-first search → resolve → retrieve
+│   ├── bps_resolution.py          # Classifies search results into resource types
+│   ├── bps_data_retriever.py      # Table search → fetch → HTML parse pipeline
+│   ├── bps_resource_retriever.py  # Unified retrieval with fallback chains
+│   ├── bps_normalization.py       # Canonical response payload builder
+│   ├── allstats_client.py         # Playwright browser automation for AllStats
+│   │
+│   ├── llm/                       # LLM abstraction layer
+│   │   ├── base.py                # Abstract LLMClientBase (ABC)
+│   │   ├── llm_wrapper.py         # Unified LLMClient (provider routing)
+│   │   ├── anthropic_client.py    # Anthropic SDK (thinking, tool_use, caching)
+│   │   └── openai_client.py       # OpenAI SDK (reasoning, tool_calls)
+│   │
+│   ├── schema/                    # Pydantic data models
+│   │   └── schema.py              # Message, ToolCall, LLMResponse, TokenUsage
+│   │
+│   ├── tools/                     # Tool implementations
+│   │   ├── base.py                # Tool ABC + ToolResult
+│   │   ├── bash_tool.py           # BashTool (fg/bg), BashOutputTool, BashKillTool
+│   │   ├── file_tools.py          # ReadTool, WriteTool, EditTool
+│   │   ├── note_tool.py           # SessionNoteTool + RecallNoteTool
+│   │   ├── skill_tool.py          # GetSkillTool (progressive disclosure)
+│   │   ├── skill_loader.py        # SkillLoader (YAML frontmatter parser)
+│   │   └── mcp_loader.py          # MCPTool + MCPServerConnection
+│   │
+│   ├── acp/                       # Agent Client Protocol bridge
+│   │   ├── __init__.py            # BPSStatACPAgent
+│   │   └── server.py              # ACP server entry point
+│   │
+│   ├── utils/                     # Utilities
+│   │   └── terminal_utils.py      # Display width calculation (ANSI/emoji/CJK)
+│   │
+│   ├── config/                    # Configuration files
+│   │   ├── config-example.yaml    # Full annotated config template
+│   │   ├── mcp-example.json       # MCP server config template
+│   │   └── system_prompt.md       # System prompt (bilingual ID/EN)
+│   │
+│   └── skills/                    # Agent skills (git submodule)
+│       └── bps-master/            # BPS domain skill with tool docs
+│
+├── tests/                         # 379 tests across 29 files
+├── examples/                      # 6 usage examples
+├── docs/                          # Development & production guides
+├── scripts/                       # Setup scripts (macOS/Linux/Windows)
+├── pyproject.toml                 # Package definition
+└── README.md
 ```
 
 ## 2. Basic Usage
 
 ### 2.1 Interactive Commands
 
-When running the agent in interactive mode (`mini-agent`), the following commands are available:
+When running the agent in interactive mode (`bps-stat-agent`), the following commands are available:
 
 | Command                | Description                                                 |
 | ---------------------- | ----------------------------------------------------------- |
@@ -62,50 +98,36 @@ When running the agent in interactive mode (`mini-agent`), the following command
 | `/clear`               | Clear message history and start a new session               |
 | `/history`             | Show the current session message count                      |
 | `/stats`               | Display session statistics (steps, tool calls, tokens used) |
+| `/log [filename]`      | Show log files or read a specific log file                  |
 
-### 2.2 Integrated MCP Tools
+### 2.2 Entry Points
 
-This project comes with pre-configured MCP (Model Context Protocol) tools that extend the agent's capabilities:
+| Command | Description |
+|---------|-------------|
+| `bps-stat-agent` | Interactive CLI agent for querying BPS data |
+| `bps-stat-agent --task "query"` | Non-interactive mode with a single query |
+| `bps-stat-agent --workspace DIR` | Specify custom workspace directory |
+| `bps-mcp-server` | MCP server over STDIO (62 tools) |
+| `bps-stat-agent-acp` | ACP server for agent-to-agent communication |
 
-#### Memory - Knowledge Graph Memory System
+### 2.3 BPS Data Pipeline
 
-**Function**: Provides long-term memory storage and retrieval based on graph database
+The agent uses an **AllStats-First Fallback Pipeline** for data retrieval:
 
-**Status**: Enabled by default (`disabled: false`)
-
-**Configuration**: No API Key required, works out of the box
-
-**Capabilities**:
-- Store and retrieve information across sessions
-- Build knowledge graphs from conversations
-- Semantic search through stored memories
-
----
-
-#### MiniMax Search - Web Search and Browse
-
-**Function**: Provides three powerful tools:
-- `search` - Web search capability
-- `parallel_search` - Execute multiple searches simultaneously
-- `browse` - Intelligent web browsing and content extraction
-
-**Status**: Disabled by default, needs configuration to enable
-
-**Configuration Example**
-
-```json
-{
-  "mcpServers": {
-    "minimax_search": {
-      "disabled": false,
-      "env": {
-        "JINA_API_KEY": "your-jina-api-key",
-        "SERPER_API_KEY": "your-serper-api-key",
-        "MINIMAX_TOKEN": "your-minimax-token"
-      }
-    }
-  }
-}
+```
+Query → BPSOrchestrator.answer_query()
+  ├── 1. AllStatsClient.search() [Playwright browser automation]
+  │     └── Cloudflare bypass (anti-detection, fresh context retry)
+  ├── 2. _select_best_result() [relevance scoring]
+  ├── 3. classify_search_result() → BPSResolvedResource
+  │     └── Maps to: TABLE, PUBLICATION, PRESSRELEASE, NEWS, INFOGRAPHIC, etc.
+  ├── 4. BPSResourceRetriever.retrieve()
+  │     ├── TABLE → get_static_table_detail() → HTML parse → structured data
+  │     │     └── Fallback: keyword search → re-select → retry detail
+  │     ├── PUBLICATION → get_publication_detail() → BPSMaterial (PDF/cover)
+  │     ├── PRESSRELEASE → get_press_release_detail() → BPSMaterial
+  │     └── OTHER → search_result_only (metadata only)
+  └── 5. build_normalized_response() → canonical payload with provenance
 ```
 
 ## 3. Extended Abilities

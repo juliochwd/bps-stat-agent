@@ -76,7 +76,15 @@ class SessionNoteTool(Tool):
         
         try:
             return json.loads(self.memory_file.read_text())
-        except Exception:
+        except Exception as e:
+            # Backup corrupted file and warn
+            backup_path = self.memory_file.with_suffix('.json.bak')
+            try:
+                import shutil
+                shutil.copy2(self.memory_file, backup_path)
+            except Exception:
+                pass
+            print(f"Warning: Corrupted notes file ({e}). Backed up to {backup_path}. Starting fresh.")
             return []
 
     def _save_to_file(self, notes: list):

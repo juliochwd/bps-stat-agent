@@ -14,12 +14,12 @@ Usage:
     data = await retriever.get_table_data(table_id=1501, domain="5300")
 """
 
+import asyncio
 import os
 import json
 import re
 from html import unescape
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 try:
     from mini_agent.bps_api import BPSAPI
@@ -53,12 +53,15 @@ class BPSDataResult:
     
     def to_csv(self) -> str:
         """Convert to CSV string."""
-        lines = []
-        lines.append(",".join(self.headers))
+        import csv
+        import io
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(self.headers)
         for row in self.data:
             values = [str(row.get(h, "")) for h in self.headers]
-            lines.append(",".join(values))
-        return "\n".join(lines)
+            writer.writerow(values)
+        return output.getvalue().strip()
     
     def summary(self) -> str:
         """Get human-readable summary."""
@@ -211,8 +214,7 @@ class BPSDataRetriever:
                 has_td = has_td or cell_type.lower() == "td"
                 text = re.sub(r"<[^>]+>", "", cell)
                 text = self._normalize_cell(unescape(text))
-                if text:
-                    cells.append(text)
+                cells.append(text)
             if cells:
                 parsed_rows.append((cells, has_td))
 
@@ -284,7 +286,9 @@ class BPSDataRetriever:
 async def main():
     """Test the data retriever."""
     import os
-    os.environ["BPS_API_KEY"] = "80a6bd62b0007e3c9f685346544e6afa"
+    if not os.environ.get("BPS_API_KEY"):
+        print("ERROR: BPS_API_KEY environment variable is not set.")
+        return
     
     print("=" * 70)
     print("BPS Data Retriever - Full Flow Test")
