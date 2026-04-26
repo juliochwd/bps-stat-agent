@@ -42,7 +42,7 @@ bps-mcp-server = "mini_agent.bps_mcp_server:main"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0.0",
+    "pytest>=9.0.3",
     "pytest-asyncio>=1.2.0",
 ]
 
