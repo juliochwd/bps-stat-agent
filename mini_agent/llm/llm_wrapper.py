@@ -31,7 +31,7 @@ class LLMClient:
     """
 
     # MiniMax API domains that need automatic suffix handling
-    MINIMAX_DOMAINS = ("api.minimax.io", "api.minimaxi.com")
+    MINIMAX_DOMAINS = ("api.minimax.io", "api.minimaxi.com", "platform.minimax.io")
     DEFAULT_API_BASE = "https://api.minimaxi.com"
     DEFAULT_MODEL = "MiniMax-M2.5"
 

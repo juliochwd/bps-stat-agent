@@ -39,6 +39,7 @@ dependencies = [
 
 [project.scripts]
 bps-stat-agent = "mini_agent.cli:main"
+bpsagent = "mini_agent.cli:main"
 bps-stat-agent-acp = "mini_agent.acp.server:main"
 bps-mcp-server = "mini_agent.bps_mcp_server:main"
 

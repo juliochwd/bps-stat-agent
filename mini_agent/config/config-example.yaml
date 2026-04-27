@@ -18,16 +18,16 @@
 # - MiniMax Global: https://api.minimax.io -> api_base: https://api.minimax.io
 # - MiniMax China: https://api.minimaxi.com -> api_base: https://api.minimaxi.com
 # Please choose based on your network environment and get API key from corresponding platform
-api_key: "YOUR_API_KEY_HERE"  # Replace with your API Key
-api_base: "https://api.anthropic.com"   # Default (Anthropic)
+api_key: "YOUR_API_KEY_HERE"  # Replace with your API Key (run: bpsagent setup)
+api_base: "https://platform.minimax.io"  # Default (MiniMax)
+# api_base: "https://api.anthropic.com"  # Anthropic
 # api_base: "https://api.openai.com"  # OpenAI
 # api_base: "https://api.minimax.io"  # MiniMax Global
 # api_base: "https://api.minimaxi.com"  # MiniMax China
-model: "claude-sonnet-4-6"
+model: "MiniMax-M2.5"
 # LLM provider: "anthropic" or "openai"
-# For Anthropic/OpenAI the suffix is auto-appended.
-# For third-party APIs (e.g., https://api.siliconflow.cn/v1), api_base is used as-is.
-provider: "anthropic"  # Default: anthropic
+# MiniMax uses OpenAI-compatible API, so use "openai" for MiniMax.
+provider: "openai"  # Default: openai (for MiniMax)
 
 # ===== Retry Configuration =====
 retry:

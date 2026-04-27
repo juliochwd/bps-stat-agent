@@ -293,6 +293,16 @@ Examples:
     # Subcommands
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
+    # setup subcommand
+    setup_parser = subparsers.add_parser("setup", help="Run interactive setup wizard")
+    setup_parser.add_argument(
+        "--force",
+        "-f",
+        action="store_true",
+        default=False,
+        help="Force re-run setup even if already configured",
+    )
+
     # log subcommand
     log_parser = subparsers.add_parser("log", help="Show log directory or read log files")
     log_parser.add_argument(
@@ -842,8 +852,14 @@ async def run_agent(workspace_dir: Path, task: str = None):
 
 def main():
     """Main entry point for CLI"""
-    # Parse command line arguments
     args = parse_args()
+
+    # Handle setup subcommand
+    if args.command == "setup":
+        from mini_agent.setup_wizard import run_setup_wizard
+
+        success = run_setup_wizard(force=getattr(args, "force", False))
+        sys.exit(0 if success else 1)
 
     # Handle log subcommand
     if args.command == "log":
@@ -853,8 +869,20 @@ def main():
             show_log_directory(open_file_manager=True)
         return
 
-    # Determine workspace directory
-    # Expand ~ to user home directory for portability
+    # Auto-redirect to setup if not configured
+    from mini_agent.setup_wizard import needs_setup
+
+    if needs_setup():
+        print(f"\n{Colors.BRIGHT_YELLOW}⚙️  BPS Stat Agent is not configured yet.{Colors.RESET}")
+        print(f"{Colors.DIM}   Running setup wizard...{Colors.RESET}\n")
+        from mini_agent.setup_wizard import run_setup_wizard
+
+        success = run_setup_wizard()
+        if not success:
+            print(f"\n{Colors.RED}❌ Setup was not completed. Run 'bpsagent setup' to try again.{Colors.RESET}")
+            sys.exit(1)
+        print(f"\n{Colors.GREEN}✅ Setup complete! Starting agent...{Colors.RESET}\n")
+
     if args.workspace:
         workspace_dir = Path(args.workspace).expanduser().absolute()
     else:

@@ -2,12 +2,8 @@
     "mcpServers": {
         "bps": {
             "description": "BPS Indonesia Statistical Data Search - AllStats Search Engine (searchengine.web.bps.go.id)",
-            "command": "uvx",
-            "args": [
-                "--from",
-                "git+https://github.com/juliochwd/bps-stat-agent.git",
-                "bps-mcp-server"
-            ],
+            "command": "bps-mcp-server",
+            "args": [],
             "env": {
                 "BPS_API_KEY": "",
                 "BPS_DEFAULT_DOMAIN": "5300",
