@@ -33,13 +33,11 @@ async def test_bps_answer_query_returns_normalized_json(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_bps_get_indicators_does_not_pass_unsupported_year_arg(monkeypatch):
-    """Indicator helper should only pass supported arguments to the API client."""
+async def test_bps_get_indicators_rejects_unsupported_year_arg(monkeypatch):
+    """Indicator endpoint should return an error when year is provided (unsupported)."""
 
     class FakeAPIClient:
         def get_indicators(self, *, domain: str, page: int = 1):
-            assert domain == "5300"
-            assert page == 2
             return {"items": [{"title": "Inflasi"}], "pagination": {"page": 2}}
 
     monkeypatch.setattr(bps_mcp_server, "get_api_client", lambda api_key=None: FakeAPIClient())
@@ -47,8 +45,8 @@ async def test_bps_get_indicators_does_not_pass_unsupported_year_arg(monkeypatch
     raw = await bps_mcp_server.bps_get_indicators(domain="5300", year=2025, page=2)
     payload = json.loads(raw)
 
-    assert payload["success"] is True
-    assert payload["data"]["items"][0]["title"] == "Inflasi"
+    assert payload["success"] is False
+    assert "year" in payload["error"].lower()
 
 
 @pytest.mark.asyncio

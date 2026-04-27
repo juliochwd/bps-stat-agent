@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import ClassVar, Literal
 
 import yaml
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 
@@ -47,12 +48,28 @@ class MCPConfig(BaseModel):
     sse_read_timeout: float = 120.0  # SSE read timeout (seconds)
 
 
+class LoggingConfig(BaseModel):
+    """Logging configuration"""
+
+    level: str = "INFO"
+    json_output: bool = False
+    log_file: str | None = None
+
+
+class TracingConfig(BaseModel):
+    """OpenTelemetry tracing configuration"""
+
+    enabled: bool = False
+    exporter: str = "none"  # "none", "console", "otlp"
+    otlp_endpoint: str | None = None
+
+
 class ToolsConfig(BaseModel):
     """Tools configuration"""
 
     # Basic tools (file operations, bash)
     enable_file_tools: bool = True
-    enable_bash: bool = True
+    enable_bash: bool = False
     enable_note: bool = True
 
     # Skills
@@ -71,6 +88,8 @@ class Config(BaseModel):
     llm: LLMConfig
     agent: AgentConfig
     tools: ToolsConfig
+    logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    tracing: TracingConfig = Field(default_factory=TracingConfig)
 
     INVALID_API_KEYS: ClassVar[set[str]] = {
         "",
@@ -102,6 +121,9 @@ class Config(BaseModel):
             ValueError: Invalid configuration format or missing required fields
         """
         config_path = Path(config_path)
+
+        # Load .env file if present (searches current dir and parent dirs)
+        load_dotenv()
 
         if not config_path.exists():
             raise FileNotFoundError(f"Configuration file does not exist: {config_path}")
@@ -170,7 +192,7 @@ class Config(BaseModel):
 
         tools_config = ToolsConfig(
             enable_file_tools=tools_data.get("enable_file_tools", True),
-            enable_bash=tools_data.get("enable_bash", True),
+            enable_bash=tools_data.get("enable_bash", False),
             enable_note=tools_data.get("enable_note", True),
             enable_skills=tools_data.get("enable_skills", True),
             skills_dir=tools_data.get("skills_dir", "./skills"),
@@ -179,10 +201,27 @@ class Config(BaseModel):
             mcp=mcp_config,
         )
 
+        logging_data = data.get("logging", {})
+        logging_config = LoggingConfig(
+            level=logging_data.get("level", "INFO"),
+            json_output=logging_data.get("json_output", False),
+            log_file=logging_data.get("log_file", None),
+        )
+
+        # Parse tracing configuration
+        tracing_data = data.get("tracing", {})
+        tracing_config = TracingConfig(
+            enabled=tracing_data.get("enabled", False),
+            exporter=tracing_data.get("exporter", "none"),
+            otlp_endpoint=tracing_data.get("otlp_endpoint", None),
+        )
+
         return cls(
             llm=llm_config,
             agent=agent_config,
             tools=tools_config,
+            logging=logging_config,
+            tracing=tracing_config,
         )
 
     @staticmethod

@@ -1,0 +1,95 @@
+services:
+  agent:
+    build: .
+    image: bps-stat-agent:latest
+    container_name: bps-stat-agent-cli
+    profiles: ["cli"]
+    stdin_open: true
+    tty: true
+    command: ["bps-stat-agent"]
+    environment:
+      - ANTHROPIC_AUTH_TOKEN
+      - OPENAI_API_KEY
+      - MINIMAX_API_KEY
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./config:/home/agent/.bps-stat-agent/config:ro
+      - ./workspace:/app/workspace
+      - agent-logs:/home/agent/.bps-stat-agent/log
+    tmpfs:
+      - /tmp:size=1G
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+  mcp-server:
+    build: .
+    image: bps-stat-agent:latest
+    container_name: bps-mcp-server
+    profiles: ["mcp"]
+    stdin_open: true
+    restart: unless-stopped
+    command: ["bps-mcp-server"]
+    environment:
+      - ANTHROPIC_AUTH_TOKEN
+      - OPENAI_API_KEY
+      - MINIMAX_API_KEY
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./config:/home/agent/.bps-stat-agent/config:ro
+      - ./workspace:/app/workspace
+      - mcp-logs:/home/agent/.bps-stat-agent/log
+    tmpfs:
+      - /tmp:size=1G
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+  acp-server:
+    build: .
+    image: bps-stat-agent:latest
+    container_name: bps-acp-server
+    profiles: ["acp"]
+    stdin_open: true
+    restart: unless-stopped
+    command: ["bps-stat-agent-acp"]
+    environment:
+      - ANTHROPIC_AUTH_TOKEN
+      - OPENAI_API_KEY
+      - MINIMAX_API_KEY
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./config:/home/agent/.bps-stat-agent/config:ro
+      - ./workspace:/app/workspace
+      - acp-logs:/home/agent/.bps-stat-agent/log
+    tmpfs:
+      - /tmp:size=1G
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+volumes:
+  agent-logs:
+  mcp-logs:
+  acp-logs:

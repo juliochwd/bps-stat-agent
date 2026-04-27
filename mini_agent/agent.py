@@ -16,6 +16,12 @@ from .utils import calculate_display_width
 
 
 from .colors import Colors
+from .metrics import (
+    AGENT_RUNS_TOTAL, AGENT_STEPS_TOTAL, AGENT_RUN_DURATION,
+    AGENT_ACTIVE_RUNS, LLM_REQUESTS_TOTAL, LLM_REQUEST_DURATION,
+    LLM_TOKENS_TOTAL, TOOL_CALLS_TOTAL, TOOL_CALL_DURATION,
+    track_duration,
+)
 
 
 class Agent:
@@ -315,6 +321,9 @@ Requirements:
 
         step = 0
         run_start_time = perf_counter()
+        AGENT_ACTIVE_RUNS.inc()
+        _llm_provider = str(getattr(self.llm, "provider", "unknown"))
+        _llm_model = str(getattr(self.llm, "model", "unknown"))
 
         while step < self.max_steps:
             # Check for cancellation at start of each step
@@ -322,9 +331,13 @@ Requirements:
                 self._cleanup_incomplete_messages()
                 cancel_msg = "Task cancelled by user."
                 print(f"\n{Colors.BRIGHT_YELLOW}⚠️  {cancel_msg}{Colors.RESET}")
+                AGENT_RUNS_TOTAL.labels(status="cancelled").inc()
+                AGENT_RUN_DURATION.observe(perf_counter() - run_start_time)
+                AGENT_ACTIVE_RUNS.dec()
                 return cancel_msg
 
             step_start_time = perf_counter()
+            AGENT_STEPS_TOTAL.inc()
             # Check and summarize message history to prevent context overflow
             await self._summarize_messages()
 
@@ -344,23 +357,35 @@ Requirements:
             # Log LLM request and call LLM with Tool objects directly
             self.logger.log_request(messages=self.messages, tools=tool_list)
 
+            llm_call_start = perf_counter()
             try:
                 response = await self.llm.generate(messages=self.messages, tools=tool_list)
+                LLM_REQUEST_DURATION.labels(provider=_llm_provider, model=_llm_model).observe(perf_counter() - llm_call_start)
+                LLM_REQUESTS_TOTAL.labels(provider=_llm_provider, model=_llm_model, status="success").inc()
             except Exception as e:
+                LLM_REQUEST_DURATION.labels(provider=_llm_provider, model=_llm_model).observe(perf_counter() - llm_call_start)
                 # Check if it's a retry exhausted error
                 from .retry import RetryExhaustedError
 
                 if isinstance(e, RetryExhaustedError):
+                    LLM_REQUESTS_TOTAL.labels(provider=_llm_provider, model=_llm_model, status="retry_exhausted").inc()
                     error_msg = f"LLM call failed after {e.attempts} retries\nLast error: {str(e.last_exception)}"
                     print(f"\n{Colors.BRIGHT_RED}❌ Retry failed:{Colors.RESET} {error_msg}")
                 else:
+                    LLM_REQUESTS_TOTAL.labels(provider=_llm_provider, model=_llm_model, status="error").inc()
                     error_msg = f"LLM call failed: {str(e)}"
                     print(f"\n{Colors.BRIGHT_RED}❌ Error:{Colors.RESET} {error_msg}")
+                AGENT_RUNS_TOTAL.labels(status="error").inc()
+                AGENT_RUN_DURATION.observe(perf_counter() - run_start_time)
+                AGENT_ACTIVE_RUNS.dec()
                 return error_msg
 
             # Accumulate API reported token usage
             if response.usage:
                 self.api_total_tokens = response.usage.total_tokens
+                LLM_TOKENS_TOTAL.labels(provider=_llm_provider, model=_llm_model, type="prompt").inc(response.usage.prompt_tokens)
+                LLM_TOKENS_TOTAL.labels(provider=_llm_provider, model=_llm_model, type="completion").inc(response.usage.completion_tokens)
+                LLM_TOKENS_TOTAL.labels(provider=_llm_provider, model=_llm_model, type="total").inc(response.usage.total_tokens)
 
             # Log LLM response
             self.logger.log_response(
@@ -394,6 +419,9 @@ Requirements:
                 step_elapsed = perf_counter() - step_start_time
                 total_elapsed = perf_counter() - run_start_time
                 print(f"\n{Colors.DIM}⏱️  Step {step + 1} completed in {step_elapsed:.2f}s (total: {total_elapsed:.2f}s){Colors.RESET}")
+                AGENT_RUNS_TOTAL.labels(status="completed").inc()
+                AGENT_RUN_DURATION.observe(total_elapsed)
+                AGENT_ACTIVE_RUNS.dec()
                 return response.content
 
             # Check for cancellation before executing tools
@@ -401,6 +429,9 @@ Requirements:
                 self._cleanup_incomplete_messages()
                 cancel_msg = "Task cancelled by user."
                 print(f"\n{Colors.BRIGHT_YELLOW}⚠️  {cancel_msg}{Colors.RESET}")
+                AGENT_RUNS_TOTAL.labels(status="cancelled").inc()
+                AGENT_RUN_DURATION.observe(perf_counter() - run_start_time)
+                AGENT_ACTIVE_RUNS.dec()
                 return cancel_msg
 
             # Execute tool calls
@@ -430,6 +461,7 @@ Requirements:
                     print(f"   {Colors.DIM}{line}{Colors.RESET}")
 
                 # Execute tool
+                tool_call_start = perf_counter()
                 if function_name not in self.tools:
                     result = ToolResult(
                         success=False,
@@ -451,6 +483,8 @@ Requirements:
                             content="",
                             error=f"Tool execution failed: {error_detail}\n\nTraceback:\n{error_trace}",
                         )
+                TOOL_CALL_DURATION.labels(tool_name=function_name).observe(perf_counter() - tool_call_start)
+                TOOL_CALLS_TOTAL.labels(tool_name=function_name, status="success" if result.success else "error").inc()
 
                 # Log tool execution result
                 self.logger.log_tool_result(
@@ -484,6 +518,9 @@ Requirements:
                     self._cleanup_incomplete_messages()
                     cancel_msg = "Task cancelled by user."
                     print(f"\n{Colors.BRIGHT_YELLOW}⚠️  {cancel_msg}{Colors.RESET}")
+                    AGENT_RUNS_TOTAL.labels(status="cancelled").inc()
+                    AGENT_RUN_DURATION.observe(perf_counter() - run_start_time)
+                    AGENT_ACTIVE_RUNS.dec()
                     return cancel_msg
 
             step_elapsed = perf_counter() - step_start_time
@@ -495,6 +532,9 @@ Requirements:
         # Max steps reached
         error_msg = f"Task couldn't be completed after {self.max_steps} steps."
         print(f"\n{Colors.BRIGHT_YELLOW}⚠️  {error_msg}{Colors.RESET}")
+        AGENT_RUNS_TOTAL.labels(status="max_steps").inc()
+        AGENT_RUN_DURATION.observe(perf_counter() - run_start_time)
+        AGENT_ACTIVE_RUNS.dec()
         return error_msg
 
     def get_history(self) -> list[Message]:

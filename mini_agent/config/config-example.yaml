@@ -65,7 +65,7 @@ bps:
 tools:
   # Basic tool switches
   enable_file_tools: true  # File read/write/edit tools (ReadTool, WriteTool, EditTool)
-  enable_bash: true        # Bash command execution tool
+  enable_bash: false       # Bash command execution tool (disabled by default for security)
   enable_note: true        # Session note tool (SessionNoteTool)
   
   # Claude Skills
@@ -81,3 +81,15 @@ tools:
     connect_timeout: 10.0    # Connection timeout in seconds (default: 10)
     execute_timeout: 60.0    # Tool execution timeout in seconds (default: 60)
     sse_read_timeout: 120.0  # SSE read timeout in seconds (default: 120)
+
+# ===== Logging Configuration =====
+logging:
+  level: "INFO"           # Log level: DEBUG, INFO, WARNING, ERROR
+  json_output: false      # true for production (JSON to stdout), false for development
+  #   log_file: null        # Optional: path to additional log file
+
+# ===== Tracing Configuration (requires: pip install bps-stat-agent[tracing]) =====
+tracing:
+  enabled: false          # Enable OpenTelemetry tracing
+  exporter: "none"        # "none", "console", or "otlp"
+  # otlp_endpoint: "http://localhost:4317"  # OTLP gRPC endpoint (e.g., Jaeger)

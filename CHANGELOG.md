@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.2.0 — Production Infrastructure
+
+### Added
+- **Dockerfile** — Multi-stage build (builder + runtime) with Python 3.11, uv, Playwright chromium, non-root user
+- **docker-compose.yml** — 3 services (CLI, MCP, ACP) with profiles, resource limits, tmpfs, env_file
+- **.dockerignore** — Excludes secrets, dev artifacts, documentation
+- **GitHub Actions CI** — Lint (ruff) → Test (pytest, Python 3.11/3.12) → Security (pip-audit) → Build pipeline
+- **Docker build workflow** — Verifies Dockerfile builds on push to main
+- **Makefile** — 20 targets for install, test, lint, format, build, docker, and run operations
+- **Centralized JSON logging** (`mini_agent/logging_config.py`) — 12-factor structured logging to stdout, configurable JSON/human-readable format
+- **Health check server** (`mini_agent/health.py`) — HTTP /health, /ready, /metrics endpoints for container orchestrators
+- **Prometheus metrics** (`mini_agent/metrics.py`) — 10 application metrics (agent runs, LLM requests, tokens, tool calls) with graceful no-op fallback
+- **OpenTelemetry tracing** (`mini_agent/tracing.py`) — Distributed tracing for agent runs, LLM calls, tool executions with graceful no-op fallback
+- **.env support** — python-dotenv integration for environment variable loading from .env files
+- **.env.example** — Template for required environment variables
+- **ruff.toml** — Linter configuration (Python 3.11, line-length 120)
+- **Optional dependency groups** — `metrics`, `tracing`, `observability` for production monitoring
+
+### Changed
+- **`enable_bash` default changed to `false`** — Bash tool disabled by default for security (enable explicitly in config.yaml)
+- **Config** — Added `LoggingConfig` and `TracingConfig` sections
+- **config-example.yaml** — Added logging and tracing configuration sections
+- **agent.py** — Integrated Prometheus metrics and OpenTelemetry tracing into agent loop
+- **cli.py** — Integrated centralized logging and tracing configuration
+- **acp/__init__.py** — Integrated centralized logging and tracing configuration
+
+### Fixed
+- **test_search_generic_returns_paginated** — Updated test to match current `search_generic` return format
+- **test_search_generic_uses_search_model** — Updated test to verify multi-model search behavior
+- **test_bps_get_indicators** — Updated test to match current year-rejection behavior
+
+### Security
+- Bash command execution disabled by default (P0 security hardening)
+- Non-root Docker user (`agent`)
+- .env files excluded from git and Docker builds
+
 ## [v0.1.3] - 2026-04-27
 
 ### Added

@@ -505,6 +505,23 @@ async def run_agent(workspace_dir: Path, task: str = None):
         print(f"{Colors.RED}❌ Error: Failed to load configuration file: {e}{Colors.RESET}")
         return
 
+    from mini_agent.logging_config import configure_logging
+    from mini_agent.tracing import configure_tracing
+
+    configure_logging(
+        level=config.logging.level,
+        json_output=config.logging.json_output,
+        log_file=config.logging.log_file,
+    )
+
+    if config.tracing.enabled:
+        configure_tracing(
+            service_name="bps-stat-agent",
+            service_version="0.1.3",
+            exporter=config.tracing.exporter,
+            otlp_endpoint=config.tracing.otlp_endpoint,
+        )
+
     # 2. Initialize LLM client
     from mini_agent.retry import RetryConfig as RetryConfigBase
 

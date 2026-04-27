@@ -166,7 +166,23 @@ class BPSStatACPAgent:
 async def run_acp_server(config: Config | None = None) -> None:
     """Run BPS Stat Agent as an ACP-compatible stdio server."""
     config = config or Config.load()
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    from mini_agent.logging_config import configure_logging
+    from mini_agent.tracing import configure_tracing
+
+    configure_logging(
+        level=config.logging.level,
+        json_output=config.logging.json_output,
+        log_file=config.logging.log_file,
+    )
+
+    if config.tracing.enabled:
+        configure_tracing(
+            service_name="bps-stat-agent-acp",
+            service_version="0.1.3",
+            exporter=config.tracing.exporter,
+            otlp_endpoint=config.tracing.otlp_endpoint,
+        )
+
     base_tools, skill_loader = await initialize_base_tools(config)
     prompt_path = Config.find_config_file(config.agent.system_prompt_path)
     if prompt_path and prompt_path.exists():

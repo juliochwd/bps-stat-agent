@@ -1,0 +1,81 @@
+# =============================================================================
+# .dockerignore — BPS Stat Agent
+# Keep the build context small and exclude secrets/dev artifacts.
+# =============================================================================
+
+# --- Version control ---
+.git
+.gitignore
+.gitmodules
+
+# --- Python build / cache ---
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+sdist/
+wheels/
+*.whl
+.installed.cfg
+.Python
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- IDE / editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Test / coverage ---
+.coverage
+coverage.json
+coverage.lcov
+htmlcov/
+.pytest_cache/
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+
+# --- Secrets & user config (never bake into image) ---
+config.yaml
+mcp.json
+mcp.json.bak
+.env
+.env.*
+
+# --- Project artifacts that don't belong in the image ---
+workspace/
+bps-master-workspace/
+bps-webapidoc/
+docs/
+plan/
+examples/
+scripts/
+*.log
+
+# --- Misc dev files ---
+demo.py
+hello.py
+test.txt
+hello_world.py
+demo_test.txt
+demo_commands.txt
+CLAUDE.md
+.agent_memory.json
+
+# --- Docker files (no recursion) ---
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml

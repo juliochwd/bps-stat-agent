@@ -58,6 +58,36 @@ uv tool install git+https://github.com/juliochwd/bps-stat-agent.git
 pip install git+https://github.com/juliochwd/bps-stat-agent.git
 ```
 
+## 🐳 Docker
+
+### Quick Start
+```bash
+# Build the image
+docker compose build
+
+# Run CLI (interactive)
+docker compose --profile cli run --rm agent
+
+# Run MCP server
+docker compose --profile mcp up -d
+
+# Run ACP server
+docker compose --profile acp up -d
+
+# View logs
+docker compose logs -f
+
+# Stop all
+docker compose down
+```
+
+### Environment Variables
+Create a `.env` file (see `.env.example`):
+```bash
+cp .env.example .env
+# Edit .env with your API keys
+```
+
 ## Configuration
 
 ### 1. Run Setup Script
@@ -78,6 +108,13 @@ Edit `~/.bps-stat-agent/config/config.yaml` and add your LLM API key:
 ```yaml
 api_key: "your_api_key_here"
 ```
+
+### Security Note
+
+> ⚠️ **`enable_bash` is `false` by default** for security. Bash tool access is disabled unless you explicitly enable it in `config.yaml`:
+> ```yaml
+> enable_bash: true  # Only enable if you trust the execution environment
+> ```
 
 ### Configuration File Locations
 
@@ -264,6 +301,45 @@ bps-stat-agent/
 5. If that fails, it falls back to WebAPI keyword table search and retries detail retrieval.
 6. Results are normalized with provenance and explicit errors when no supported path succeeds.
 
+## 📊 Observability
+
+### Logging
+Configure structured JSON logging for production:
+```yaml
+# config.yaml
+logging:
+  level: "INFO"
+  json_output: true   # JSON to stdout (production)
+```
+
+### Health Checks
+Built-in HTTP health server for container orchestrators:
+```python
+from mini_agent.health import start_health_server
+start_health_server(port=8080)
+# GET /health → liveness check
+# GET /ready  → readiness check
+# GET /metrics → Prometheus metrics
+```
+
+### Metrics (Optional)
+```bash
+pip install bps-stat-agent[metrics]  # Install Prometheus client
+```
+Tracks: agent runs, LLM requests, token usage, tool call duration.
+
+### Tracing (Optional)
+```bash
+pip install bps-stat-agent[tracing]  # Install OpenTelemetry
+```
+```yaml
+# config.yaml
+tracing:
+  enabled: true
+  exporter: "otlp"
+  otlp_endpoint: "http://localhost:4317"
+```
+
 ## Troubleshooting
 
 ### "Cloudflare blocked" errors
@@ -294,7 +370,7 @@ python --version  # Should be 3.10+
 which uv          # or pip
 ```
 
-## Development
+## 🛠️ Development
 
 ```bash
 # Clone the repository
@@ -317,6 +393,24 @@ pytest tests/
 # Run tests with coverage
 pytest tests/ --cov=mini_agent --cov-report=term-missing
 ```
+
+### Makefile
+```bash
+make help          # Show all available targets
+make install-dev   # Install deps + Playwright
+make test          # Run tests (excluding live)
+make test-cov      # Run tests with coverage
+make lint          # Run ruff linter
+make format        # Auto-format code
+make check         # Lint + test (quality gate)
+make build         # Build package
+make clean         # Remove build artifacts
+```
+
+### CI/CD
+The project includes GitHub Actions workflows:
+- **CI** (`ci.yml`): Lint → Test → Security audit → Build (Python 3.11/3.12 matrix)
+- **Docker** (`docker.yml`): Verifies Docker image builds on push to main
 
 ## Entry Points
 

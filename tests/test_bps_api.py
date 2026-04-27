@@ -1680,15 +1680,17 @@ class TestKBKIEndpoints:
 class TestSearchEndpoint:
     """Tests for generic search endpoint."""
 
-    def test_search_generic_returns_paginated(self, api, mock_response):
-        """search_generic should return paginated result."""
+    def test_search_generic_returns_combined_results(self, api, mock_response):
+        """search_generic should return combined results from multiple content types."""
         mock_resp = mock_response({"data-availability": "available", "data": [{}, []]})
         api.session.get = Mock(return_value=mock_resp)
 
         result = api.search_generic(keyword="population")
 
-        assert "pagination" in result
-        assert "items" in result
+        assert "keyword" in result
+        assert "domain" in result
+        assert "results_by_type" in result
+        assert "total_types_found" in result
 
     def test_search_generic_passes_keyword(self, api, mock_response):
         """search_generic should pass keyword parameter."""
@@ -1730,15 +1732,19 @@ class TestSearchEndpoint:
         call_args = api.session.get.call_args
         assert call_args.kwargs["params"]["page"] == 2
 
-    def test_search_generic_uses_search_model(self, api, mock_response):
-        """search_generic should use 'search' model."""
+    def test_search_generic_queries_multiple_models(self, api, mock_response):
+        """search_generic should query multiple content models (statictable, publication, etc.)."""
         mock_resp = mock_response({"data-availability": "available", "data": [{}, []]})
         api.session.get = Mock(return_value=mock_resp)
 
         api.search_generic(keyword="population")
 
-        call_args = api.session.get.call_args
-        assert call_args.kwargs["params"]["model"] == "search"
+        called_models = [
+            call.kwargs["params"]["model"]
+            for call in api.session.get.call_args_list
+        ]
+        assert "statictable" in called_models
+        assert "news" in called_models
 
 
 # ============================================================================

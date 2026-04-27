@@ -1,0 +1,39 @@
+# Ruff linter & formatter configuration
+# https://docs.astral.sh/ruff/configuration/
+
+target-version = "py311"
+line-length = 120
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long — handled by formatter
+    "B008",   # do not perform function calls in argument defaults (common in FastAPI/Pydantic)
+    "B905",   # `zip()` without an explicit `strict=` parameter (too noisy for existing code)
+    "SIM108", # use ternary operator — reduces readability in many cases
+    "SIM117", # use single `with` statement — not always clearer
+    "UP007",  # use X | Y for union types — keep Optional[] for 3.10 compat
+]
+
+[lint.per-file-ignores]
+"tests/**/*.py" = [
+    "B011",   # assert False is fine in tests
+    "SIM300", # yoda conditions in assertions are fine
+]
+
+[lint.isort]
+known-first-party = ["mini_agent"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
