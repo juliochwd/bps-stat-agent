@@ -35,7 +35,7 @@ bps-stat-agent/
 │   ├── logger.py                  # JSON 结构化 Agent 运行日志
 │   ├── retry.py                   # 异步重试（指数退避）
 │   │
-│   ├── bps_api.py                 # BPS WebAPI 客户端（44+ 端点）
+│   ├── bps_api.py                 # BPS WebAPI 客户端（59 端点）
 │   ├── bps_mcp_server.py          # FastMCP 服务器（62 个工具）
 │   ├── bps_models.py              # BPSResourceType 枚举 + BPSResolvedResource
 │   ├── bps_orchestrator.py        # AllStats 优先搜索 → 解析 → 检索

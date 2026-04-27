@@ -204,7 +204,7 @@ bps-stat-agent/
 │   ├── logger.py               # JSON-structured agent run logger
 │   ├── retry.py                # Async retry with exponential backoff
 │   │
-│   ├── bps_api.py              # BPS WebAPI client (44+ endpoints)
+│   ├── bps_api.py              # BPS WebAPI client (59 endpoints)
 │   ├── bps_mcp_server.py       # FastMCP server with 62 registered tools
 │   ├── bps_models.py           # BPSResourceType enum + BPSResolvedResource
 │   ├── bps_orchestrator.py     # AllStats-first search → resolve → retrieve
