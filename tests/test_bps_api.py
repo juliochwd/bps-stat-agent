@@ -15,6 +15,7 @@ from mini_agent.bps_api import BPSAPI, BPSAPIError, BPSMaterial
 # FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def api():
     """Create BPSAPI instance with test key."""
@@ -24,6 +25,7 @@ def api():
 @pytest.fixture
 def mock_response():
     """Factory for creating mock API responses."""
+
     def _make_response(data, status_code=200, json_data=None):
         """Create a mock response object.
 
@@ -38,16 +40,16 @@ def mock_response():
         resp.json.return_value = data
         resp.raise_for_status = Mock()
         if status_code >= 400:
-            resp.raise_for_status.side_effect = requests.HTTPError(
-                f"{status_code} Error", response=resp
-            )
+            resp.raise_for_status.side_effect = requests.HTTPError(f"{status_code} Error", response=resp)
         return resp
+
     return _make_response
 
 
 # ============================================================================
 # INITIALIZATION & HTTP METHODS
 # ============================================================================
+
 
 class TestBPSAPIInitialization:
     """Tests for BPSAPI initialization and session setup."""
@@ -168,6 +170,7 @@ class TestBPSAPIPrivateMethods:
 # DATA EXTRACTION METHODS
 # ============================================================================
 
+
 class TestExtractData:
     """Tests for _extract_data helper method."""
 
@@ -176,7 +179,7 @@ class TestExtractData:
         response = {
             "data": [
                 {},  # pagination dict
-                {"data": [{"id": 1}, {"id": 2}]}  # nested data
+                {"data": [{"id": 1}, {"id": 2}]},  # nested data
             ]
         }
         result = api._extract_data(response)
@@ -184,20 +187,13 @@ class TestExtractData:
 
     def test_extract_data_handles_paginated_format(self, api):
         """Should extract items from paginated [pagination, items] format."""
-        response = {
-            "data": [
-                {"page": 1, "total": 10},
-                [{"id": 1}, {"id": 2}]
-            ]
-        }
+        response = {"data": [{"page": 1, "total": 10}, [{"id": 1}, {"id": 2}]]}
         result = api._extract_data(response)
         assert result == [{"id": 1}, {"id": 2}]
 
     def test_extract_data_handles_direct_list_format(self, api):
         """Should return data directly when it's a simple list."""
-        response = {
-            "data": [{"id": 1}, {"id": 2}, {"id": 3}]
-        }
+        response = {"data": [{"id": 1}, {"id": 2}, {"id": 3}]}
         result = api._extract_data(response)
         assert result == [{"id": 1}, {"id": 2}, {"id": 3}]
 
@@ -228,7 +224,7 @@ class TestExtractData:
         response = {
             "data": [
                 {},  # data[0] is dict
-                None  # data[1] is None - not a list
+                None,  # data[1] is None - not a list
             ]
         }
         result = api._extract_data(response)
@@ -238,10 +234,7 @@ class TestExtractData:
     def test_extract_data_standard_format_with_list_data(self, api):
         """Test standard BPS format where data is a list and data-availability is available."""
         # This tests lines 145-150 for when data is a list with len > 1
-        response = {
-            "data-availability": "available",
-            "data": [{"page": 1}, [{"id": 1}]]
-        }
+        response = {"data-availability": "available", "data": [{"page": 1}, [{"id": 1}]]}
         result = api._extract_data(response)
         # Line 145: data-availability == "available" (not !=), so doesn't return early
         # Line 147: data = [{"page": 1}, [{"id": 1}]]
@@ -251,10 +244,7 @@ class TestExtractData:
 
     def test_extract_data_standard_format_with_data_1_none(self, api):
         """Test standard format where data[1] is None, returns empty list."""
-        response = {
-            "data-availability": "available",
-            "data": [{"id": 123}, None]
-        }
+        response = {"data-availability": "available", "data": [{"id": 123}, None]}
         result = api._extract_data(response)
         # data[0] has no 'page'/'pagination' key, so line 143 check fails
         # Then data[1] is None, so line 152 returns []
@@ -272,7 +262,7 @@ class TestExtractData:
         response = {
             "data": [
                 {},  # not a dict for paginated format
-                {"other_key": "value"}  # doesn't have 'data' key
+                {"other_key": "value"},  # doesn't have 'data' key
             ]
         }
         result = api._extract_data(response)
@@ -288,10 +278,7 @@ class TestExtractPaginated:
         """Should return dict with pagination and items keys."""
         response = {
             "data-availability": "available",
-            "data": [
-                {"page": 1, "total": 100, "count": 50},
-                [{"id": 1}, {"id": 2}]
-            ]
+            "data": [{"page": 1, "total": 100, "count": 50}, [{"id": 1}, {"id": 2}]],
         }
         result = api._extract_paginated(response)
 
@@ -320,8 +307,8 @@ class TestExtractPaginated:
             "data-availability": "available",
             "data": [
                 "not a dict",  # data[0] is a truthy string
-                [{"id": 1}]
-            ]
+                [{"id": 1}],
+            ],
         }
         result = api._extract_paginated(response)
         # Code uses data[0] if truthy, so the string is returned
@@ -332,6 +319,7 @@ class TestExtractPaginated:
 # ============================================================================
 # DOMAIN ENDPOINTS (Types 1, 18)
 # ============================================================================
+
 
 class TestDomainEndpoints:
     """Tests for domain-related endpoints."""
@@ -390,13 +378,9 @@ class TestDomainEndpoints:
 
     def test_get_domains_extracts_data(self, api, mock_response):
         """get_domains should return extracted data list."""
-        mock_resp = mock_response({
-            "data-availability": "available",
-            "data": [
-                {},
-                [{"domain_id": "5300", "domain_name": "NTT"}]
-            ]
-        })
+        mock_resp = mock_response(
+            {"data-availability": "available", "data": [{}, [{"domain_id": "5300", "domain_name": "NTT"}]]}
+        )
         api.session.get = Mock(return_value=mock_resp)
 
         result = api.get_domains()
@@ -407,6 +391,7 @@ class TestDomainEndpoints:
 # ============================================================================
 # SUBJECT ENDPOINTS (Type 2)
 # ============================================================================
+
 
 class TestSubjectEndpoints:
     """Tests for subject-related endpoints."""
@@ -424,13 +409,9 @@ class TestSubjectEndpoints:
 
     def test_get_subjects_returns_paginated(self, api, mock_response):
         """get_subjects should return paginated result."""
-        mock_resp = mock_response({
-            "data-availability": "available",
-            "data": [
-                {"page": 1, "total": 50},
-                [{"id": 1, "label": "Ekonomi"}]
-            ]
-        })
+        mock_resp = mock_response(
+            {"data-availability": "available", "data": [{"page": 1, "total": 50}, [{"id": 1, "label": "Ekonomi"}]]}
+        )
         api.session.get = Mock(return_value=mock_resp)
 
         result = api.get_subjects(domain="5300")
@@ -474,15 +455,13 @@ class TestSubjectEndpoints:
 # VARIABLE ENDPOINTS (Type 1, 19, 20)
 # ============================================================================
 
+
 class TestVariableEndpoints:
     """Tests for variable-related endpoints."""
 
     def test_get_variables_returns_paginated(self, api, mock_response):
         """get_variables should return paginated result."""
-        mock_resp = mock_response({
-            "data-availability": "available",
-            "data": [{}, [{"id": 1, "label": "GDP"}]]
-        })
+        mock_resp = mock_response({"data-availability": "available", "data": [{}, [{"id": 1, "label": "GDP"}]]})
         api.session.get = Mock(return_value=mock_resp)
 
         result = api.get_variables(domain="5300")
@@ -635,6 +614,7 @@ class TestVariableEndpoints:
 # DYNAMIC DATA (Type 1)
 # ============================================================================
 
+
 class TestDynamicDataEndpoints:
     """Tests for dynamic data retrieval."""
 
@@ -693,7 +673,7 @@ class TestDynamicDataEndpoints:
             "var": [{"val": 184, "label": "GDP", "unit": "Miliar", "subj": "Ekonomi"}],
             "tahun": [{"val": 117, "label": "2024"}],
             "vervar": [{"val": 5300, "label": "NTT"}],
-            "datacontent": {"11840": 15000.5}  # key = "1" (region_id) + "1840" (var_id=184 + year hint)
+            "datacontent": {"11840": 15000.5},  # key = "1" (region_id) + "1840" (var_id=184 + year hint)
         }
         mock_resp = mock_response(mock_resp_data)
         api.session.get = Mock(return_value=mock_resp)
@@ -716,7 +696,7 @@ class TestDynamicDataEndpoints:
             "var": [{"val": 184, "label": "GDP"}],
             "tahun": [{"val": 117, "label": "2024"}],
             "vervar": [{"val": 5300, "label": "NTT"}],
-            "datacontent": [5300, 15000.5, 1100, 25000.0]
+            "datacontent": [5300, 15000.5, 1100, 25000.0],
         }
         mock_resp = mock_response(mock_resp_data)
         api.session.get = Mock(return_value=mock_resp)
@@ -757,6 +737,7 @@ class TestDynamicDataEndpoints:
 # ============================================================================
 # STATIC TABLE ENDPOINTS (Type 3)
 # ============================================================================
+
 
 class TestStaticTableEndpoints:
     """Tests for static and dynamic table endpoints."""
@@ -838,6 +819,7 @@ class TestStaticTableEndpoints:
 # PRESS RELEASE ENDPOINTS (Type 6)
 # ============================================================================
 
+
 class TestPressReleaseEndpoints:
     """Tests for press release endpoints."""
 
@@ -893,6 +875,7 @@ class TestPressReleaseEndpoints:
         assert call_args.kwargs["params"]["id"] == 789
         # Verify it returns BPSMaterial
         from mini_agent.bps_api import BPSMaterial
+
         assert isinstance(result, BPSMaterial)
         assert result.desc()["title"] == "Press Release"
 
@@ -900,6 +883,7 @@ class TestPressReleaseEndpoints:
 # ============================================================================
 # PUBLICATION ENDPOINTS (Type 5)
 # ============================================================================
+
 
 class TestPublicationEndpoints:
     """Tests for publication endpoints."""
@@ -956,6 +940,7 @@ class TestPublicationEndpoints:
         assert call_args.kwargs["params"]["id"] == "PUB123"
         # Verify it returns BPSMaterial
         from mini_agent.bps_api import BPSMaterial
+
         assert isinstance(result, BPSMaterial)
         assert result.desc()["title"] == "Publication"
 
@@ -963,6 +948,7 @@ class TestPublicationEndpoints:
 # ============================================================================
 # INDICATOR & INFOGRAPHIC ENDPOINTS (Types 4, 8)
 # ============================================================================
+
 
 class TestIndicatorEndpoints:
     """Tests for indicator and infographic endpoints."""
@@ -1023,6 +1009,7 @@ class TestIndicatorEndpoints:
 # GLOSSARY ENDPOINTS (Type 15)
 # ============================================================================
 
+
 class TestGlossaryEndpoints:
     """Tests for glossary endpoints."""
 
@@ -1071,6 +1058,7 @@ class TestGlossaryEndpoints:
 # ============================================================================
 # SDGs & SDDS ENDPOINTS (Types 11, 12)
 # ============================================================================
+
 
 class TestSDGSddsEndpoints:
     """Tests for SDGs and SDDS endpoints."""
@@ -1129,6 +1117,7 @@ class TestSDGSddsEndpoints:
 # ============================================================================
 # NEWS ENDPOINTS (Type 7)
 # ============================================================================
+
 
 class TestNewsEndpoints:
     """Tests for news endpoints."""
@@ -1209,6 +1198,7 @@ class TestNewsEndpoints:
 # CSA ENDPOINTS (Type 22)
 # ============================================================================
 
+
 class TestCSAEndpoints:
     """Tests for CSA (Custom Statistical Areas) endpoints."""
 
@@ -1288,6 +1278,7 @@ class TestCSAEndpoints:
 # ============================================================================
 # FOREIGN TRADE ENDPOINT (Type 21)
 # ============================================================================
+
 
 class TestForeignTradeEndpoint:
     """Tests for foreign trade (export/import) endpoint."""
@@ -1371,6 +1362,7 @@ class TestForeignTradeEndpoint:
 # KBLI ENDPOINTS (Type 13)
 # ============================================================================
 
+
 class TestKBLIEndpoints:
     """Tests for KBLI (Indonesian Industrial Classification) endpoints."""
 
@@ -1441,6 +1433,7 @@ class TestKBLIEndpoints:
 # CENSUS ENDPOINTS (Type 9)
 # ============================================================================
 
+
 class TestCensusEndpoints:
     """Tests for census data endpoints."""
 
@@ -1506,6 +1499,7 @@ class TestCensusEndpoints:
 # ============================================================================
 # SIMDASI ENDPOINTS (Type 10)
 # ============================================================================
+
 
 class TestSIMDASIEndpoints:
     """Tests for SIMDASI (Regional Statistics) endpoints."""
@@ -1617,6 +1611,7 @@ class TestSIMDASIEndpoints:
 # KBKI ENDPOINTS (Type 14)
 # ============================================================================
 
+
 class TestKBKIEndpoints:
     """Tests for KBKI (Indonesian Standard Classification of Education) endpoints."""
 
@@ -1676,6 +1671,7 @@ class TestKBKIEndpoints:
 # ============================================================================
 # SEARCH ENDPOINT
 # ============================================================================
+
 
 class TestSearchEndpoint:
     """Tests for generic search endpoint."""
@@ -1739,10 +1735,7 @@ class TestSearchEndpoint:
 
         api.search_generic(keyword="population")
 
-        called_models = [
-            call.kwargs["params"]["model"]
-            for call in api.session.get.call_args_list
-        ]
+        called_models = [call.kwargs["params"]["model"] for call in api.session.get.call_args_list]
         assert "statictable" in called_models
         assert "news" in called_models
 
@@ -1750,6 +1743,7 @@ class TestSearchEndpoint:
 # ============================================================================
 # BPSAPI ERROR CLASS
 # ============================================================================
+
 
 class TestBPSAPIError:
     """Tests for BPSAPIError exception class."""
@@ -1776,12 +1770,14 @@ class TestBPSMaterial:
     def test_bps_material_creation(self):
         """BPSMaterial should be creatable with data dict."""
         from mini_agent.bps_api import BPSMaterial
+
         mat = BPSMaterial({"title": "Test", "pdf": "http://example.com/test.pdf"})
         assert mat.desc()["title"] == "Test"
 
     def test_bps_material_content_raises_without_pdf(self):
         """BPSMaterial.content should raise BPSAPIError if no PDF URL."""
         from mini_agent.bps_api import BPSAPIError, BPSMaterial
+
         mat = BPSMaterial({"title": "Test"})  # No PDF URL
         with pytest.raises(BPSAPIError) as exc_info:
             _ = mat.content
@@ -1790,6 +1786,7 @@ class TestBPSMaterial:
     def test_bps_material_download(self, tmp_path):
         """BPSMaterial.download should write content to file."""
         from mini_agent.bps_api import BPSMaterial
+
         mat = BPSMaterial({"title": "Test", "pdf": "http://example.com/test.pdf"})
         # Note: We can't actually download without network, but we can test the method exists
         assert callable(mat.download)
@@ -1842,36 +1839,25 @@ class TestExtractDataEdgeCases:
 
     def test_extract_data_handles_data_1_none_with_availability(self, api):
         """_extract_data should return [] when data[1] is None but availability is available."""
-        response = {
-            "data-availability": "available",
-            "data": [{"page": 1}, None]
-        }
+        response = {"data-availability": "available", "data": [{"page": 1}, None]}
         result = api._extract_data(response)
         assert result == []
 
     def test_extract_data_returns_data_directly_when_not_paginated(self, api):
         """_extract_data should return data directly when it's a simple list."""
-        response = {
-            "data": [{"id": 1}, {"id": 2}]
-        }
+        response = {"data": [{"id": 1}, {"id": 2}]}
         result = api._extract_data(response)
         assert result == [{"id": 1}, {"id": 2}]
 
     def test_extract_data_handles_empty_data_list(self, api):
         """_extract_data should return [] when data is empty list."""
-        response = {
-            "data-availability": "available",
-            "data": []
-        }
+        response = {"data-availability": "available", "data": []}
         result = api._extract_data(response)
         assert result == []
 
     def test_extract_data_handles_data_list_single_element(self, api):
         """_extract_data should return [] when data list has only one element."""
-        response = {
-            "data-availability": "available",
-            "data": [{"page": 1}]
-        }
+        response = {"data-availability": "available", "data": [{"page": 1}]}
         result = api._extract_data(response)
         assert result == []
 
@@ -1880,10 +1866,7 @@ class TestExtractDataEdgeCases:
         # This specifically tests lines 220-223 where:
         # - data-availability is available
         # - data is empty list (triggers len(data) > 1 check to fail)
-        response = {
-            "data-availability": "available",
-            "data": []
-        }
+        response = {"data-availability": "available", "data": []}
         result = api._extract_data(response)
         # Line 220: data = response.get("data", []) -> []
         # Line 221: isinstance([], list) is True but len([]) > 1 is False
@@ -1892,30 +1875,21 @@ class TestExtractDataEdgeCases:
 
     def test_extract_data_standard_path_single_item(self, api):
         """Test _extract_data standard path with single item in data list."""
-        response = {
-            "data-availability": "available",
-            "data": ["single_item"]
-        }
+        response = {"data-availability": "available", "data": ["single_item"]}
         result = api._extract_data(response)
         # Line 216: return data (single-item list passes through directly)
         assert result == ["single_item"]
 
     def test_extract_data_standard_path_empty_items(self, api):
         """Test _extract_data standard path with pagination but no items."""
-        response = {
-            "data-availability": "available",
-            "data": [{}, []]
-        }
+        response = {"data-availability": "available", "data": [{}, []]}
         result = api._extract_data(response)
         # Lines 218-222: data-availability available, len > 1, data[1] is [] (falsy) → returns []
         assert result == []
 
     def test_extract_data_standard_path_with_string_item(self, api):
         """Test _extract_data when data is a single string (not dict, not pagination)."""
-        response = {
-            "data-availability": "available",
-            "data": ["single_item"]
-        }
+        response = {"data-availability": "available", "data": ["single_item"]}
         result = api._extract_data(response)
         # Line 216: direct format returns data as-is for non-dict, non-pagination items
         assert result == ["single_item"]
@@ -1941,7 +1915,7 @@ class TestDecodedDataEdgeCases:
             "var": [{"val": 184, "label": "GDP"}],
             "tahun": [{"val": 117, "label": "2024"}],
             "vervar": [{"val": 5300, "label": "NTT"}],
-            "datacontent": {}
+            "datacontent": {},
         }
         mock_resp = mock_response(mock_resp_data)
         api.session.get = Mock(return_value=mock_resp)
@@ -1958,7 +1932,7 @@ class TestDecodedDataEdgeCases:
             "var": [{"val": 184, "label": "GDP"}],
             "tahun": [{"val": 117, "label": "2024"}],
             "vervar": [{"val": 5300, "label": "NTT"}],
-            "datacontent": [5300]  # Only one element - should be ignored
+            "datacontent": [5300],  # Only one element - should be ignored
         }
         mock_resp = mock_response(mock_resp_data)
         api.session.get = Mock(return_value=mock_resp)
@@ -1989,6 +1963,7 @@ class TestFormatDomain:
 # EDGE CASES & BOUNDARY CONDITIONS
 # ============================================================================
 
+
 class TestEdgeCases:
     """Tests for edge cases and boundary conditions."""
 
@@ -2000,19 +1975,13 @@ class TestEdgeCases:
 
     def test_pagination_items_can_be_none(self, api):
         """_extract_paginated should handle None items."""
-        response = {
-            "data-availability": "available",
-            "data": [{"page": 1}, None]
-        }
+        response = {"data-availability": "available", "data": [{"page": 1}, None]}
         result = api._extract_paginated(response)
         assert result["items"] == []
 
     def test_pagination_dict_can_be_none(self, api):
         """_extract_paginated should handle None pagination dict."""
-        response = {
-            "data-availability": "available",
-            "data": [None, [{"id": 1}]]
-        }
+        response = {"data-availability": "available", "data": [None, [{"id": 1}]]}
         result = api._extract_paginated(response)
         assert result["pagination"] == {}
         assert result["items"] == [{"id": 1}]
@@ -2022,7 +1991,7 @@ class TestEdgeCases:
         response = {
             "data": [
                 {},  # data[0] is dict
-                {"data": None}  # data[1] is dict with 'data' key but value is None
+                {"data": None},  # data[1] is dict with 'data' key but value is None
             ]
         }
         result = api._extract_data(response)
@@ -2034,7 +2003,7 @@ class TestEdgeCases:
         response = {
             "data": [
                 {},  # data[0] is dict
-                {"other_key": "value"}  # data[1] is dict but no 'data' key
+                {"other_key": "value"},  # data[1] is dict but no 'data' key
             ]
         }
         result = api._extract_data(response)

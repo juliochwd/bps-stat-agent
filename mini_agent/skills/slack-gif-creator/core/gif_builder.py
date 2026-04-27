@@ -38,7 +38,7 @@ class GIFBuilder:
             frame: Frame as numpy array or PIL Image (will be converted to RGB)
         """
         if isinstance(frame, Image.Image):
-            frame = np.array(frame.convert('RGB'))
+            frame = np.array(frame.convert("RGB"))
 
         # Ensure frame is correct size
         if frame.shape[:2] != (self.height, self.width):
@@ -91,7 +91,7 @@ class GIFBuilder:
 
             # Reshape to proper RGB image format (H, W, 3)
             img_array = all_pixels[:pixels_needed].reshape(height, width, 3).astype(np.uint8)
-            combined_img = Image.fromarray(img_array, mode='RGB')
+            combined_img = Image.fromarray(img_array, mode="RGB")
 
             # Generate global palette
             global_palette = combined_img.quantize(colors=num_colors, method=2)
@@ -100,13 +100,13 @@ class GIFBuilder:
             for frame in self.frames:
                 pil_frame = Image.fromarray(frame)
                 quantized = pil_frame.quantize(palette=global_palette, dither=1)
-                optimized.append(np.array(quantized.convert('RGB')))
+                optimized.append(np.array(quantized.convert("RGB")))
         else:
             # Use per-frame quantization
             for frame in self.frames:
                 pil_frame = Image.fromarray(frame)
                 quantized = pil_frame.quantize(colors=num_colors, method=2, dither=1)
-                optimized.append(np.array(quantized.convert('RGB')))
+                optimized.append(np.array(quantized.convert("RGB")))
 
         return optimized
 
@@ -145,8 +145,13 @@ class GIFBuilder:
         self.frames = deduplicated
         return removed_count
 
-    def save(self, output_path: str | Path, num_colors: int = 128,
-             optimize_for_emoji: bool = False, remove_duplicates: bool = True) -> dict:
+    def save(
+        self,
+        output_path: str | Path,
+        num_colors: int = 128,
+        optimize_for_emoji: bool = False,
+        remove_duplicates: bool = True,
+    ) -> dict:
         """
         Save frames as optimized GIF for Slack.
 
@@ -204,7 +209,7 @@ class GIFBuilder:
             output_path,
             optimized_frames,
             duration=frame_duration,
-            loop=0  # Infinite loop
+            loop=0,  # Infinite loop
         )
 
         # Get file info
@@ -212,14 +217,14 @@ class GIFBuilder:
         file_size_mb = file_size_kb / 1024
 
         info = {
-            'path': str(output_path),
-            'size_kb': file_size_kb,
-            'size_mb': file_size_mb,
-            'dimensions': f'{self.width}x{self.height}',
-            'frame_count': len(optimized_frames),
-            'fps': self.fps,
-            'duration_seconds': len(optimized_frames) / self.fps,
-            'colors': num_colors
+            "path": str(output_path),
+            "size_kb": file_size_kb,
+            "size_mb": file_size_mb,
+            "dimensions": f"{self.width}x{self.height}",
+            "frame_count": len(optimized_frames),
+            "fps": self.fps,
+            "duration_seconds": len(optimized_frames) / self.fps,
+            "colors": num_colors,
         }
 
         # Print info

@@ -27,6 +27,7 @@ except ImportError:
 @dataclass
 class AllStatsResult:
     """Single search result."""
+
     title: str
     url: str
     snippet: str
@@ -41,6 +42,7 @@ class AllStatsResult:
 @dataclass
 class AllStatsSearchResponse:
     """Paginated search response."""
+
     keyword: str
     content_type: str
     page: int
@@ -60,7 +62,6 @@ class AllStatsClient:
     DEFAULT_TIMEOUT = 30
     DEFAULT_HEADLESS = True
     DEFAULT_SEARCH_DELAY = 10  # Seconds between searches (avoid Cloudflare rate-limit)
-
 
     CONTENT_TYPES = {
         "all": "all",
@@ -103,7 +104,7 @@ class AllStatsClient:
         sort: str = "terbaru",
     ) -> str:
         """Build search URL from parameters."""
-        q = quote(keyword, safe='')
+        q = quote(keyword, safe="")
         return (
             f"{self.BASE_URL}/search"
             f"?mfd={domain}"
@@ -139,7 +140,7 @@ class AllStatsClient:
                     "Sec-Fetch-Site": "none",
                     "Sec-Fetch-User": "?1",
                     "Cache-Control": "max-age=0",
-                }
+                },
             )
 
             # Apply stealth anti-detection scripts
@@ -226,6 +227,7 @@ class AllStatsClient:
         """
         # Rate limiting: wait if last search was too recent
         import time
+
         now = time.time()
         time_since_last = now - self._last_search_time
         if time_since_last < self._search_delay:
@@ -255,8 +257,12 @@ class AllStatsClient:
 
             # Check if blocked by Cloudflare
             page_content = await self._page.content()
-            if "Cloudflare" in page_content or "Checking your browser" in page_content or "Just a moment" in page_content:
-                print(f"[AllStatsClient] Blocked by Cloudflare on attempt {attempt+1}, creating fresh context...")
+            if (
+                "Cloudflare" in page_content
+                or "Checking your browser" in page_content
+                or "Just a moment" in page_content
+            ):
+                print(f"[AllStatsClient] Blocked by Cloudflare on attempt {attempt + 1}, creating fresh context...")
                 # Close and recreate browser context
                 if self._context:
                     await self._context.close()
@@ -282,7 +288,8 @@ class AllStatsClient:
                 count_text = await result_count_elem.inner_text()
                 print(f"[AllStatsClient] Result count text: {count_text}")
                 import re
-                numbers = re.findall(r'\d+', count_text.replace('.', '').replace(',', ''))
+
+                numbers = re.findall(r"\d+", count_text.replace(".", "").replace(",", ""))
                 if numbers:
                     total_results = int(numbers[0])
         except Exception as e:
@@ -293,8 +300,12 @@ class AllStatsClient:
         has_prev = False
         try:
             # Check for next/prev pagination links
-            next_btn = await self._page.query_selector('a[rel="next"], .pagination .next:not(.disabled), li.next:not(.disabled) a')
-            prev_btn = await self._page.query_selector('a[rel="prev"], .pagination .prev:not(.disabled), li.prev:not(.disabled) a')
+            next_btn = await self._page.query_selector(
+                'a[rel="next"], .pagination .next:not(.disabled), li.next:not(.disabled) a'
+            )
+            prev_btn = await self._page.query_selector(
+                'a[rel="prev"], .pagination .prev:not(.disabled), li.prev:not(.disabled) a'
+            )
             has_next = next_btn is not None
             has_prev = prev_btn is not None
         except Exception:
@@ -392,15 +403,17 @@ class AllStatsClient:
 
             # Convert dicts to AllStatsResult objects
             for item in parsed:
-                results.append(AllStatsResult(
-                    title=item.get('title', ''),
-                    url=item.get('url', ''),
-                    snippet=item.get('snippet', ''),
-                    content_type=item.get('content_type', ''),
-                    domain_name=item.get('domain_name', ''),
-                    domain_code=item.get('domain_code', ''),
-                    year=item.get('year', ''),
-                ))
+                results.append(
+                    AllStatsResult(
+                        title=item.get("title", ""),
+                        url=item.get("url", ""),
+                        snippet=item.get("snippet", ""),
+                        content_type=item.get("content_type", ""),
+                        domain_name=item.get("domain_name", ""),
+                        domain_code=item.get("domain_code", ""),
+                        year=item.get("year", ""),
+                    )
+                )
 
             print(f"[AllStatsClient] Parsed {len(results)} results from DOM")
             return results
@@ -408,6 +421,7 @@ class AllStatsClient:
         except Exception as e:
             print(f"[AllStatsClient] DOM parsing error: {e}")
             import traceback
+
             traceback.print_exc()
             return results
 

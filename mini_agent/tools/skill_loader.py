@@ -183,9 +183,7 @@ class SkillLoader:
 
         # Match markdown link patterns with optional prefix words
         # Captures: (optional prefix word) [link text] (complete file path including ./)
-        pattern_markdown = (
-            r"(?:(Read|See|Check|Refer to|Load|View)\s+)?\[(`?[^`\]]+`?)\]\(((?:\./)?[^)]+\.(?:md|txt|json|yaml|js|py|html))\)"
-        )
+        pattern_markdown = r"(?:(Read|See|Check|Refer to|Load|View)\s+)?\[(`?[^`\]]+`?)\]\(((?:\./)?[^)]+\.(?:md|txt|json|yaml|js|py|html))\)"
         content = re.sub(pattern_markdown, replace_markdown_link, content, flags=re.IGNORECASE)
 
         return content
@@ -245,7 +243,9 @@ class SkillLoader:
             return ""
 
         prompt_parts = ["## Available Skills\n"]
-        prompt_parts.append("You have access to specialized skills. Each skill provides expert guidance for specific tasks.\n")
+        prompt_parts.append(
+            "You have access to specialized skills. Each skill provides expert guidance for specific tasks.\n"
+        )
         prompt_parts.append("Load a skill's full content using the appropriate skill tool when needed.\n")
 
         # List all skills with their descriptions

@@ -18,6 +18,7 @@ try:
         Info,
         generate_latest,
     )
+
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
@@ -25,19 +26,38 @@ except ImportError:
 
 # ---- No-op fallbacks when prometheus_client is not installed ----
 
+
 class _NoOpMetric:
     """No-op metric that silently ignores all operations."""
-    def inc(self, *a, **kw): pass
-    def dec(self, *a, **kw): pass
-    def set(self, *a, **kw): pass
-    def observe(self, *a, **kw): pass
-    def labels(self, *a, **kw): return self
-    def info(self, *a, **kw): pass
-    def time(self): return _NoOpTimer()
+
+    def inc(self, *a, **kw):
+        pass
+
+    def dec(self, *a, **kw):
+        pass
+
+    def set(self, *a, **kw):
+        pass
+
+    def observe(self, *a, **kw):
+        pass
+
+    def labels(self, *a, **kw):
+        return self
+
+    def info(self, *a, **kw):
+        pass
+
+    def time(self):
+        return _NoOpTimer()
+
 
 class _NoOpTimer:
-    def __enter__(self): return self
-    def __exit__(self, *a): pass
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        pass
 
 
 def _noop(*a, **kw):

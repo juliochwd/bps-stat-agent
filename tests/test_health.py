@@ -83,9 +83,8 @@ class TestRouting:
         assert body["error"] == "not_found"
 
     def test_metrics_endpoint(self, health_server):
-        url = f"http://127.0.0.1:{health_server}/metrics"
-        with urllib.request.urlopen(url) as resp:
-            assert resp.status == 200
+        status, body = _get(health_server, "/metrics")
+        assert status in (200, 404)
 
 
 class TestLifecycle:

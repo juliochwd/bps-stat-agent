@@ -46,10 +46,7 @@ def get_api_client(api_key: str | None = None) -> BPSAPI:
     """Get BPSAPI client with the given or configured API key (cached)."""
     key = api_key or DEFAULT_API_KEY
     if not key:
-        raise ValueError(
-            "BPS API key not provided. Set BPS_API_KEY environment variable "
-            "or api_key parameter."
-        )
+        raise ValueError("BPS API key not provided. Set BPS_API_KEY environment variable or api_key parameter.")
     if key not in _api_client_cache:
         _api_client_cache[key] = BPSAPI(key)
     return _api_client_cache[key]
@@ -62,20 +59,12 @@ async def _run_sync(func, *args, **kwargs):
 
 def success_response(data: Any, message: str = "OK") -> str:
     """Create a success JSON response."""
-    return json.dumps({
-        "success": True,
-        "message": message,
-        "data": data
-    }, default=str, ensure_ascii=False)
+    return json.dumps({"success": True, "message": message, "data": data}, default=str, ensure_ascii=False)
 
 
 def error_response(error: str, details: Any = None) -> str:
     """Create an error JSON response."""
-    return json.dumps({
-        "success": False,
-        "error": error,
-        "details": details
-    }, ensure_ascii=False)
+    return json.dumps({"success": False, "error": error, "details": details}, ensure_ascii=False)
 
 
 class _RetrieverAdapter:
@@ -121,7 +110,7 @@ def _extract_identifier_from_url(url: str, marker: str) -> str | None:
                 return decoded_match.group(1)
 
     # Pattern 3: Query parameter ?id=123 or ?table_id=123
-    query_match = re.search(r'[?&](?:id|table_id|pub_id|brs_id)=([0-9]+)', url)
+    query_match = re.search(r"[?&](?:id|table_id|pub_id|brs_id)=([0-9]+)", url)
     if query_match:
         return query_match.group(1)
 
@@ -151,6 +140,7 @@ def _get_allstats_client() -> "AllStatsClient":
     global _allstats_client
     if _allstats_client is None:
         from mini_agent.allstats_client import AllStatsClient
+
         _allstats_client = AllStatsClient(headless=True, search_delay=DEFAULT_SEARCH_DELAY)
     return _allstats_client
 
@@ -181,6 +171,7 @@ async def _answer_query(
 # ============================================================================
 # MCP Tools - BPS WebAPI Functions
 # ============================================================================
+
 
 def year_to_th(year: int) -> int:
     """Convert year to BPS time period ID (th).
@@ -224,18 +215,12 @@ async def bps_year_to_th(year: int, api_key: str | None = None) -> str:
         JSON string with the th value
     """
     th = year_to_th(year)
-    return success_response({
-        "year": year,
-        "th": th,
-        "note": f"BPS th={th} corresponds to year {year}"
-    }, f"year {year} -> th {th}")
+    return success_response(
+        {"year": year, "th": th, "note": f"BPS th={th} corresponds to year {year}"}, f"year {year} -> th {th}"
+    )
 
 
-async def bps_list_years(
-    domain: str = "5300",
-    var: int | None = None,
-    api_key: str | None = None
-) -> str:
+async def bps_list_years(domain: str = "5300", var: int | None = None, api_key: str | None = None) -> str:
     """
     List available years (th values) for a variable/domain.
 
@@ -253,6 +238,7 @@ async def bps_list_years(
         if var:
             # Try to get available periods for a specific variable
             import datetime as _dt
+
             _current_year = _dt.datetime.now().year
             _min_th = year_to_th(2017)
             _max_th = year_to_th(_current_year + 1)  # include next year
@@ -266,25 +252,28 @@ async def bps_list_years(
                 except Exception:
                     pass
 
-            return success_response({
-                "variable": var,
-                "domain": domain,
-                "available_years": years
-            }, f"Found {len(years)} available years for variable {var}")
+            return success_response(
+                {"variable": var, "domain": domain, "available_years": years},
+                f"Found {len(years)} available years for variable {var}",
+            )
         else:
             # Return general year range
             import datetime as _dt
+
             _current_year = _dt.datetime.now().year
-            return success_response({
-                "domain": domain,
-                "year_range": {
-                    "min_year": 2017,
-                    "max_year": _current_year,
-                    "min_th": year_to_th(2017),
-                    "max_th": year_to_th(_current_year)
+            return success_response(
+                {
+                    "domain": domain,
+                    "year_range": {
+                        "min_year": 2017,
+                        "max_year": _current_year,
+                        "min_th": year_to_th(2017),
+                        "max_th": year_to_th(_current_year),
+                    },
+                    "note": f"Most variables available from 2017 (th={year_to_th(2017)}) onwards",
                 },
-                "note": f"Most variables available from 2017 (th={year_to_th(2017)}) onwards"
-            }, f"Year/th mapping available 2017-{_current_year}")
+                f"Year/th mapping available 2017-{_current_year}",
+            )
 
     except Exception as e:
         return error_response(str(e))
@@ -293,12 +282,12 @@ async def bps_list_years(
 async def bps_list_domains(type: str = "all", prov: str | None = None, api_key: str | None = None) -> str:
     """
     Get list of BPS statistic domains (provinces, cities, national).
-    
+
     Args:
         type: Domain type - 'all', 'prov', 'kab', 'kabbyprov'
         prov: Province ID (required when type='kabbyprov')
         api_key: Optional BPS API key override
-    
+
     Returns:
         JSON string with list of domains
     """
@@ -313,7 +302,7 @@ async def bps_list_domains(type: str = "all", prov: str | None = None, api_key: 
 async def bps_list_provinces(api_key: str | None = None) -> str:
     """
     Get list of all province domains.
-    
+
     Returns:
         JSON string with list of provinces
     """
@@ -326,22 +315,18 @@ async def bps_list_provinces(api_key: str | None = None) -> str:
 
 
 async def bps_list_subjects(
-    domain: str = "5300",
-    subcat: int | None = None,
-    lang: str = "ind",
-    page: int = 1,
-    api_key: str | None = None
+    domain: str = "5300", subcat: int | None = None, lang: str = "ind", page: int = 1, api_key: str | None = None
 ) -> str:
     """
     Get list of statistical subjects for a domain.
-    
+
     Args:
         domain: Domain code (default "5300" for NTT, "0000" for national)
         subcat: Subject category ID filter
         lang: Language - 'ind' (Indonesian) or 'eng' (English)
         page: Page number
         api_key: Optional BPS API key override
-    
+
     Returns:
         JSON string with subjects and pagination info
     """
@@ -359,11 +344,11 @@ async def bps_get_variables(
     year: int | None = None,
     lang: str = "ind",
     page: int = 1,
-    api_key: str | None = None
+    api_key: str | None = None,
 ) -> str:
     """
     Get list of statistical variables for a domain/subject.
-    
+
     Args:
         domain: Domain code (default "5300" for NTT)
         subject: Subject ID filter
@@ -371,31 +356,19 @@ async def bps_get_variables(
         lang: Language - 'ind' or 'eng'
         page: Page number
         api_key: Optional BPS API key override
-    
+
     Returns:
         JSON string with variables and pagination info
     """
     try:
         client = get_api_client(api_key)
-        result = await _run_sync(
-            client.get_variables,
-            domain=domain,
-            subject=subject,
-            year=year,
-            lang=lang,
-            page=page
-        )
+        result = await _run_sync(client.get_variables, domain=domain, subject=subject, year=year, lang=lang, page=page)
         return success_response(result, f"Page {page} of variables")
     except Exception as e:
         return error_response(str(e))
 
 
-async def bps_get_decoded_data(
-    var: int,
-    th: int,
-    domain: str = "5300",
-    api_key: str | None = None
-) -> str:
+async def bps_get_decoded_data(var: int, th: int, domain: str = "5300", api_key: str | None = None) -> str:
     """
     Get actual statistical data values with human-readable decoded format.
 
@@ -433,33 +406,31 @@ async def bps_get_decoded_data(
         lines.append("-" * 50)
 
         for i, item in enumerate(data.get("data", [])):
-            val = item.get('value')
+            val = item.get("value")
             if isinstance(val, (int, float)):
                 formatted_val = f"{val:.2f}"
             else:
                 formatted_val = str(val) if val is not None else "-"
-            lines.append(f"{i+1:<3} {item.get('region_label', 'Unknown'):<25} {formatted_val:<10}")
+            lines.append(f"{i + 1:<3} {item.get('region_label', 'Unknown'):<25} {formatted_val:<10}")
 
         lines.append("-" * 50)
         lines.append(f"Total: {len(data.get('data', []))} wilayah")
 
-        return success_response({
-            "status": "OK",
-            "variable": data.get("variable"),
-            "year": data.get("year"),
-            "data": data.get("data"),
-            "table_formatted": "\n".join(lines)
-        }, "\n".join(lines))
+        return success_response(
+            {
+                "status": "OK",
+                "variable": data.get("variable"),
+                "year": data.get("year"),
+                "data": data.get("data"),
+                "table_formatted": "\n".join(lines),
+            },
+            "\n".join(lines),
+        )
     except Exception as e:
         return error_response(str(e))
 
 
-async def bps_get_data(
-    var: int,
-    th: int | None = None,
-    domain: str = "5300",
-    api_key: str | None = None
-) -> str:
+async def bps_get_data(var: int, th: int | None = None, domain: str = "5300", api_key: str | None = None) -> str:
     """
     Get raw statistical data values for a variable.
 
@@ -487,25 +458,21 @@ async def bps_get_data(
 
 
 async def bps_search(
-    keyword: str,
-    domain: str = "5300",
-    content: str = "all",
-    page: int = 1,
-    api_key: str | None = None
+    keyword: str, domain: str = "5300", content: str = "all", page: int = 1, api_key: str | None = None
 ) -> str:
     """
     Search BPS data using WebAPI static tables with keyword.
-    
+
     This function searches static tables for matching keywords
     and returns downloadable Excel file URLs.
-    
+
     Args:
         keyword: Search keyword
         domain: Domain code (default "5300" for NTT)
         content: Content type filter - not used for WebAPI search
         page: Page number
         api_key: Optional BPS API key override
-    
+
     Returns:
         JSON string with search results (tables with download URLs)
     """
@@ -521,45 +488,46 @@ async def bps_search(
         # Extract safe info (don't expose the encrypted download URLs directly)
         tables = []
         for item in items:
-            tables.append({
-                "table_id": item.get("table_id"),
-                "title": item.get("title"),
-                "subject": item.get("subj"),
-                "update_date": item.get("updt_date"),
-                "size": item.get("size"),
-            })
+            tables.append(
+                {
+                    "table_id": item.get("table_id"),
+                    "title": item.get("title"),
+                    "subject": item.get("subj"),
+                    "update_date": item.get("updt_date"),
+                    "size": item.get("size"),
+                }
+            )
 
-        return success_response({
-            "keyword": keyword,
-            "domain": domain,
-            "tables_count": len(tables),
-            "tables": tables,
-            "pagination": pagination
-        }, f"Found {len(tables)} tables for '{keyword}'")
+        return success_response(
+            {
+                "keyword": keyword,
+                "domain": domain,
+                "tables_count": len(tables),
+                "tables": tables,
+                "pagination": pagination,
+            },
+            f"Found {len(tables)} tables for '{keyword}'",
+        )
     except Exception as e:
         return error_response(str(e))
 
 
 async def bps_search_allstats(
-    keyword: str,
-    domain: str = "5300",
-    content: str = "all",
-    page: int = 1,
-    api_key: str | None = None
+    keyword: str, domain: str = "5300", content: str = "all", page: int = 1, api_key: str | None = None
 ) -> str:
     """
     Search BPS AllStats Search Engine using Playwright.
-    
+
     This is a fallback when WebAPI doesn't return results.
     Uses Playwright with anti-detection measures to bypass Cloudflare.
-    
+
     Args:
         keyword: Search keyword
         domain: Domain code (default "5300" for NTT)
         content: Content type filter - all, publication, table, pressrelease, infographic, etc.
         page: Page number
         api_key: Optional BPS API key override
-    
+
     Returns:
         JSON string with search results from AllStats
     """
@@ -572,28 +540,33 @@ async def bps_search_allstats(
 
             results_data = []
             for r in result.results:
-                results_data.append({
-                    "title": r.title,
-                    "url": r.url,
-                    "snippet": r.snippet,
-                    "content_type": r.content_type,
-                    "domain_name": r.domain_name,
-                    "domain_code": r.domain_code,
-                    "year": r.year,
-                })
+                results_data.append(
+                    {
+                        "title": r.title,
+                        "url": r.url,
+                        "snippet": r.snippet,
+                        "content_type": r.content_type,
+                        "domain_name": r.domain_name,
+                        "domain_code": r.domain_code,
+                        "year": r.year,
+                    }
+                )
 
-            return success_response({
-                "keyword": keyword,
-                "domain": domain,
-                "content_type": content,
-                "results_count": len(results_data),
-                "total_results": result.total_results,
-                "per_page": result.per_page,
-                "has_next": result.has_next,
-                "has_prev": result.has_prev,
-                "results": results_data,
-                "source": "allstats"
-            }, f"Found {len(results_data)} results from AllStats")
+            return success_response(
+                {
+                    "keyword": keyword,
+                    "domain": domain,
+                    "content_type": content,
+                    "results_count": len(results_data),
+                    "total_results": result.total_results,
+                    "per_page": result.per_page,
+                    "has_next": result.has_next,
+                    "has_prev": result.has_prev,
+                    "results": results_data,
+                    "source": "allstats",
+                },
+                f"Found {len(results_data)} results from AllStats",
+            )
     except ImportError:
         return error_response("AllStats client not available", "Playwright may not be installed")
     except Exception as e:
@@ -603,17 +576,14 @@ async def bps_search_allstats(
 async def bps_search_ntt(keyword: str, page: int = 1, api_key: str | None = None) -> str:
     """
     Search BPS data specifically for NTT province (domain 5300).
-    
+
     Convenience function for bps_search with domain='5300'.
     """
     return await bps_search(keyword, domain="5300", page=page, api_key=api_key)
 
 
 async def bps_get_table_data(
-    table_id: int,
-    domain: str = "5300",
-    format: str = "json",
-    api_key: str | None = None
+    table_id: int, domain: str = "5300", format: str = "json", api_key: str | None = None
 ) -> str:
     """
     Get actual data from a BPS static table.
@@ -646,10 +616,7 @@ async def bps_get_table_data(
         headers, data_rows = _parse_html_table(html_content)
 
         if not headers or not data_rows:
-            return error_response("No data found in table", {
-                "table_id": table_id,
-                "title": title
-            })
+            return error_response("No data found in table", {"table_id": table_id, "title": title})
 
         # Convert to list of dicts
         data = []
@@ -688,36 +655,33 @@ async def bps_get_table_data(
 def _parse_html_table(html: str) -> tuple[list[str], list[list[str]]]:
     """
     Parse HTML table to headers and data rows.
-    
+
     Args:
         html: HTML content with table
-        
+
     Returns:
         Tuple of (headers list, data rows list)
     """
     import re
+
     # Unescape HTML entities
-    html = html.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"').replace('&amp;', '&')
+    html = html.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", '"').replace("&amp;", "&")
 
     # Find all rows
-    row_matches = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL | re.IGNORECASE)
+    row_matches = re.findall(r"<tr[^>]*>(.*?)</tr>", html, re.DOTALL | re.IGNORECASE)
 
     rows = []
     for row_html in row_matches:
         # Find all cells
-        cell_matches = re.findall(r'<t[hd][^>]*>(.*?)</t[hd]>', row_html, re.DOTALL | re.IGNORECASE)
+        cell_matches = re.findall(r"<t[hd][^>]*>(.*?)</t[hd]>", row_html, re.DOTALL | re.IGNORECASE)
 
         # Clean cells
         cells = []
         for cell in cell_matches:
             # Remove HTML tags but preserve text
-            text = re.sub(r'<[^>]+>', '', cell)
+            text = re.sub(r"<[^>]+>", "", cell)
             # Decode HTML entities and clean whitespace
-            text = (text.replace('&nbsp;', ' ')
-                   .replace('\r', ' ')
-                   .replace('\n', ' ')
-                   .replace('  ', ' ')
-                   .strip())
+            text = text.replace("&nbsp;", " ").replace("\r", " ").replace("\n", " ").replace("  ", " ").strip()
             cells.append(text)
 
         if cells:
@@ -736,25 +700,21 @@ def _parse_html_table(html: str) -> tuple[list[str], list[list[str]]]:
 
 
 async def bps_search_and_get_data(
-    keyword: str,
-    domain: str = "5300",
-    max_tables: int = 3,
-    format: str = "json",
-    api_key: str | None = None
+    keyword: str, domain: str = "5300", max_tables: int = 3, format: str = "json", api_key: str | None = None
 ) -> str:
     """
     Complete flow: Search for tables then get actual data from each.
-    
+
     This is the main function for getting actual BPS data.
     Flow: search tables -> get table_id -> retrieve actual data!
-    
+
     Args:
         keyword: Search keyword
         domain: Domain code (default "5300" for NTT)
         max_tables: Maximum number of tables to fetch (default 3)
         format: Output format - 'json' or 'csv'
         api_key: Optional BPS API key override
-    
+
     Returns:
         JSON string with search results AND actual data for each table
     """
@@ -804,7 +764,7 @@ async def bps_search_and_get_data(
                     "rows": len(parsed_data),
                     "headers": headers,
                     "data": parsed_data[:50] if parsed_data else [],  # Limit rows
-                    "data_truncated": len(parsed_data) > 50
+                    "data_truncated": len(parsed_data) > 50,
                 }
 
                 if format == "csv" and parsed_data:
@@ -817,18 +777,18 @@ async def bps_search_and_get_data(
                 results.append(table_entry)
 
             except Exception as e:
-                results.append({
-                    "table_id": table_id,
-                    "error": str(e)
-                })
+                results.append({"table_id": table_id, "error": str(e)})
 
-        return success_response({
-            "keyword": keyword,
-            "domain": domain,
-            "tables_found": len(items),
-            "tables_retrieved": len(results),
-            "tables": results
-        }, f"Found {len(items)} tables, retrieved data from {len(results)}")
+        return success_response(
+            {
+                "keyword": keyword,
+                "domain": domain,
+                "tables_found": len(items),
+                "tables_retrieved": len(results),
+                "tables": results,
+            },
+            f"Found {len(items)} tables, retrieved data from {len(results)}",
+        )
     except Exception as e:
         return error_response(f"Search and get data failed: {str(e)}")
 
@@ -858,25 +818,21 @@ async def bps_answer_query(
 async def bps_search_nasional(keyword: str, page: int = 1, api_key: str | None = None) -> str:
     """
     Search BPS data for national level (domain 0000).
-    
+
     Convenience function for bps_search with domain='0000'.
     """
     return await bps_search(keyword, domain="0000", page=page, api_key=api_key)
 
 
-async def bps_get_press_releases(
-    year: int = 2024,
-    domain: str = "0000",
-    api_key: str | None = None
-) -> str:
+async def bps_get_press_releases(year: int = 2024, domain: str = "0000", api_key: str | None = None) -> str:
     """
     Get BPS press releases (Berita Resmi Statistik).
-    
+
     Args:
         year: Year of press releases
         domain: Domain code (default "0000" for national)
         api_key: Optional BPS API key override
-    
+
     Returns:
         JSON string with press releases
     """
@@ -888,19 +844,15 @@ async def bps_get_press_releases(
         return error_response(str(e))
 
 
-async def bps_get_publications(
-    domain: str = "5300",
-    page: int = 1,
-    api_key: str | None = None
-) -> str:
+async def bps_get_publications(domain: str = "5300", page: int = 1, api_key: str | None = None) -> str:
     """
     Get BPS publications for a domain.
-    
+
     Args:
         domain: Domain code (default "5300" for NTT)
         page: Page number
         api_key: Optional BPS API key override
-    
+
     Returns:
         JSON string with publications
     """
@@ -913,10 +865,7 @@ async def bps_get_publications(
 
 
 async def bps_get_indicators(
-    domain: str = "5300",
-    year: int | None = None,
-    page: int = 1,
-    api_key: str | None = None
+    domain: str = "5300", year: int | None = None, page: int = 1, api_key: str | None = None
 ) -> str:
     """
     Get BPS statistical indicators.
@@ -943,11 +892,7 @@ async def bps_get_indicators(
         return error_response(str(e))
 
 
-async def bps_list_subject_categories(
-    domain: str = "5300",
-    lang: str = "ind",
-    api_key: str | None = None
-) -> str:
+async def bps_list_subject_categories(domain: str = "5300", lang: str = "ind", api_key: str | None = None) -> str:
     """
     Get BPS subject categories (subjek statistik).
 
@@ -968,11 +913,7 @@ async def bps_list_subject_categories(
 
 
 async def bps_list_periods(
-    domain: str = "5300",
-    var: int | None = None,
-    lang: str = "ind",
-    page: int = 1,
-    api_key: str | None = None
+    domain: str = "5300", var: int | None = None, lang: str = "ind", page: int = 1, api_key: str | None = None
 ) -> str:
     """
     Get available time periods (tahun) for a variable.
@@ -996,11 +937,7 @@ async def bps_list_periods(
 
 
 async def bps_list_vertical_variables(
-    domain: str = "5300",
-    var: int | None = None,
-    lang: str = "ind",
-    page: int = 1,
-    api_key: str | None = None
+    domain: str = "5300", var: int | None = None, lang: str = "ind", page: int = 1, api_key: str | None = None
 ) -> str:
     """
     Get vertical variables (regional breakdowns) for a variable.
@@ -1024,11 +961,7 @@ async def bps_list_vertical_variables(
 
 
 async def bps_list_derived_variables(
-    domain: str = "5300",
-    var: int | None = None,
-    lang: str = "ind",
-    page: int = 1,
-    api_key: str | None = None
+    domain: str = "5300", var: int | None = None, lang: str = "ind", page: int = 1, api_key: str | None = None
 ) -> str:
     """
     Get derived variables (sub-categories) for a variable.
@@ -1052,11 +985,7 @@ async def bps_list_derived_variables(
 
 
 async def bps_list_derived_periods(
-    domain: str = "5300",
-    var: int | None = None,
-    lang: str = "ind",
-    page: int = 1,
-    api_key: str | None = None
+    domain: str = "5300", var: int | None = None, lang: str = "ind", page: int = 1, api_key: str | None = None
 ) -> str:
     """
     Get derived periods (monthly/quarterly) for a variable.
@@ -1079,12 +1008,7 @@ async def bps_list_derived_periods(
         return error_response(str(e))
 
 
-async def bps_list_units(
-    domain: str = "5300",
-    lang: str = "ind",
-    page: int = 1,
-    api_key: str | None = None
-) -> str:
+async def bps_list_units(domain: str = "5300", lang: str = "ind", page: int = 1, api_key: str | None = None) -> str:
     """
     Get units of measurement for variables.
 
@@ -1106,11 +1030,7 @@ async def bps_list_units(
 
 
 async def bps_list_infographics(
-    domain: str = "5300",
-    keyword: str | None = None,
-    lang: str = "ind",
-    page: int = 1,
-    api_key: str | None = None
+    domain: str = "5300", keyword: str | None = None, lang: str = "ind", page: int = 1, api_key: str | None = None
 ) -> str:
     """
     Get BPS infographics list.
@@ -1134,10 +1054,7 @@ async def bps_list_infographics(
 
 
 async def bps_get_infographic_detail(
-    infographic_id: str,
-    domain: str = "5300",
-    lang: str = "ind",
-    api_key: str | None = None
+    infographic_id: str, domain: str = "5300", lang: str = "ind", api_key: str | None = None
 ) -> str:
     """
     Get detail of a BPS infographic.
@@ -1160,10 +1077,7 @@ async def bps_get_infographic_detail(
 
 
 async def bps_list_glossary(
-    prefix: str | None = None,
-    perpage: int = 10,
-    page: int = 1,
-    api_key: str | None = None
+    prefix: str | None = None, perpage: int = 10, page: int = 1, api_key: str | None = None
 ) -> str:
     """
     Get BPS statistical glossary (glosarium).
@@ -1185,11 +1099,7 @@ async def bps_list_glossary(
         return error_response(str(e))
 
 
-async def bps_get_glossary_detail(
-    glossary_id: int,
-    lang: str = "ind",
-    api_key: str | None = None
-) -> str:
+async def bps_get_glossary_detail(glossary_id: int, lang: str = "ind", api_key: str | None = None) -> str:
     """
     Get detail of a glossary term.
 
@@ -1209,10 +1119,7 @@ async def bps_get_glossary_detail(
         return error_response(str(e))
 
 
-async def bps_list_sdgs(
-    goal: str | None = None,
-    api_key: str | None = None
-) -> str:
+async def bps_list_sdgs(goal: str | None = None, api_key: str | None = None) -> str:
     """
     Get BPS SDGs (Sustainable Development Goals) indicators.
 
@@ -1249,12 +1156,7 @@ async def bps_list_sdds(api_key: str | None = None) -> str:
         return error_response(str(e))
 
 
-async def bps_get_news_detail(
-    news_id: int,
-    domain: str = "5300",
-    lang: str = "ind",
-    api_key: str | None = None
-) -> str:
+async def bps_get_news_detail(news_id: int, domain: str = "5300", lang: str = "ind", api_key: str | None = None) -> str:
     """
     Get detail of a BPS news article.
 
@@ -1275,11 +1177,7 @@ async def bps_get_news_detail(
         return error_response(str(e))
 
 
-async def bps_list_news_categories(
-    domain: str = "5300",
-    lang: str = "ind",
-    api_key: str | None = None
-) -> str:
+async def bps_list_news_categories(domain: str = "5300", lang: str = "ind", api_key: str | None = None) -> str:
     """
     Get BPS news categories.
 
@@ -1299,10 +1197,7 @@ async def bps_list_news_categories(
         return error_response(str(e))
 
 
-async def bps_get_census_topics(
-    kegiatan: str,
-    api_key: str | None = None
-) -> str:
+async def bps_get_census_topics(kegiatan: str, api_key: str | None = None) -> str:
     """
     Get census data topics/topics for a census event.
 
@@ -1321,10 +1216,7 @@ async def bps_get_census_topics(
         return error_response(str(e))
 
 
-async def bps_get_census_areas(
-    kegiatan: str,
-    api_key: str | None = None
-) -> str:
+async def bps_get_census_areas(kegiatan: str, api_key: str | None = None) -> str:
     """
     Get census event areas (wilayah sensus).
 
@@ -1343,11 +1235,7 @@ async def bps_get_census_areas(
         return error_response(str(e))
 
 
-async def bps_get_census_datasets(
-    kegiatan: str,
-    topik: int,
-    api_key: str | None = None
-) -> str:
+async def bps_get_census_datasets(kegiatan: str, topik: int, api_key: str | None = None) -> str:
     """
     Get available census datasets.
 
@@ -1367,12 +1255,7 @@ async def bps_get_census_datasets(
         return error_response(str(e))
 
 
-async def bps_get_census_data(
-    kegiatan: str,
-    wilayah_sensus: int,
-    dataset: int,
-    api_key: str | None = None
-) -> str:
+async def bps_get_census_data(kegiatan: str, wilayah_sensus: int, dataset: int, api_key: str | None = None) -> str:
     """
     Get actual census microdata.
 
@@ -1387,16 +1270,15 @@ async def bps_get_census_data(
     """
     try:
         client = get_api_client(api_key)
-        data = await _run_sync(client.get_census_data, kegiatan=kegiatan, wilayah_sensus=wilayah_sensus, dataset=dataset)
+        data = await _run_sync(
+            client.get_census_data, kegiatan=kegiatan, wilayah_sensus=wilayah_sensus, dataset=dataset
+        )
         return success_response(data, "Census data retrieved")
     except Exception as e:
         return error_response(str(e))
 
 
-async def bps_get_simdasi_regencies(
-    parent: str,
-    api_key: str | None = None
-) -> str:
+async def bps_get_simdasi_regencies(parent: str, api_key: str | None = None) -> str:
     """
     Get SIMDASI regency codes by province.
 
@@ -1417,10 +1299,7 @@ async def bps_get_simdasi_regencies(
         return error_response(str(e))
 
 
-async def bps_get_simdasi_districts(
-    parent: str,
-    api_key: str | None = None
-) -> str:
+async def bps_get_simdasi_districts(parent: str, api_key: str | None = None) -> str:
     """
     Get SIMDASI district codes by regency.
 
@@ -1441,10 +1320,7 @@ async def bps_get_simdasi_districts(
         return error_response(str(e))
 
 
-async def bps_get_simdasi_subjects(
-    wilayah: str,
-    api_key: str | None = None
-) -> str:
+async def bps_get_simdasi_subjects(wilayah: str, api_key: str | None = None) -> str:
     """
     Get SIMDASI subjects for an area.
 
@@ -1481,12 +1357,7 @@ async def bps_get_simdasi_master_tables(api_key: str | None = None) -> str:
         return error_response(str(e))
 
 
-async def bps_get_simdasi_table_detail(
-    wilayah: str,
-    tahun: int,
-    id_tabel: str,
-    api_key: str | None = None
-) -> str:
+async def bps_get_simdasi_table_detail(wilayah: str, tahun: int, id_tabel: str, api_key: str | None = None) -> str:
     """
     Get SIMDASI table detail with data.
 
@@ -1507,10 +1378,7 @@ async def bps_get_simdasi_table_detail(
         return error_response(str(e))
 
 
-async def bps_get_simdasi_tables_by_area(
-    wilayah: str,
-    api_key: str | None = None
-) -> str:
+async def bps_get_simdasi_tables_by_area(wilayah: str, api_key: str | None = None) -> str:
     """
     Get SIMDASI tables for an area.
 
@@ -1529,11 +1397,7 @@ async def bps_get_simdasi_tables_by_area(
         return error_response(str(e))
 
 
-async def bps_get_simdasi_tables_by_area_and_subject(
-    wilayah: str,
-    id_subjek: str,
-    api_key: str | None = None
-) -> str:
+async def bps_get_simdasi_tables_by_area_and_subject(wilayah: str, id_subjek: str, api_key: str | None = None) -> str:
     """
     Get SIMDASI tables for an area and subject.
 
@@ -1553,10 +1417,7 @@ async def bps_get_simdasi_tables_by_area_and_subject(
         return error_response(str(e))
 
 
-async def bps_get_simdasi_master_table_detail(
-    id_tabel: str,
-    api_key: str | None = None
-) -> str:
+async def bps_get_simdasi_master_table_detail(id_tabel: str, api_key: str | None = None) -> str:
     """
     Get SIMDASI master table detail.
 
@@ -1575,10 +1436,7 @@ async def bps_get_simdasi_master_table_detail(
         return error_response(str(e))
 
 
-async def bps_list_csa_categories(
-    domain: str = "5300",
-    api_key: str | None = None
-) -> str:
+async def bps_list_csa_categories(domain: str = "5300", api_key: str | None = None) -> str:
     """
     Get CSA (Custom Statistical Areas) subject categories.
 
@@ -1597,11 +1455,7 @@ async def bps_list_csa_categories(
         return error_response(str(e))
 
 
-async def bps_list_csa_subjects(
-    domain: str = "5300",
-    subcat: str | None = None,
-    api_key: str | None = None
-) -> str:
+async def bps_list_csa_subjects(domain: str = "5300", subcat: str | None = None, api_key: str | None = None) -> str:
     """
     Get CSA subjects.
 
@@ -1622,11 +1476,7 @@ async def bps_list_csa_subjects(
 
 
 async def bps_list_csa_tables(
-    domain: str = "5300",
-    subject: int | None = None,
-    page: int = 1,
-    perpage: int = 10,
-    api_key: str | None = None
+    domain: str = "5300", subject: int | None = None, page: int = 1, perpage: int = 10, api_key: str | None = None
 ) -> str:
     """
     Get CSA table statistics.
@@ -1650,11 +1500,7 @@ async def bps_list_csa_tables(
 
 
 async def bps_get_csa_table_detail(
-    table_id: str,
-    year: int | None = None,
-    lang: str = "ind",
-    domain: str = "5300",
-    api_key: str | None = None
+    table_id: str, year: int | None = None, lang: str = "ind", domain: str = "5300", api_key: str | None = None
 ) -> str:
     """
     Get detail of a CSA table.
@@ -1678,11 +1524,7 @@ async def bps_get_csa_table_detail(
 
 
 async def bps_list_kbli(
-    year: int = 2020,
-    level: str | None = None,
-    page: int = 1,
-    perpage: int = 10,
-    api_key: str | None = None
+    year: int = 2020, level: str | None = None, page: int = 1, perpage: int = 10, api_key: str | None = None
 ) -> str:
     """
     Get KBLI (Indonesian Standard Industrial Classification) codes.
@@ -1705,12 +1547,7 @@ async def bps_list_kbli(
         return error_response(str(e))
 
 
-async def bps_get_kbli_detail(
-    kbli_id: str,
-    year: int = 2020,
-    lang: str = "ind",
-    api_key: str | None = None
-) -> str:
+async def bps_get_kbli_detail(kbli_id: str, year: int = 2020, lang: str = "ind", api_key: str | None = None) -> str:
     """
     Get detail of a KBLI classification.
 
@@ -1731,12 +1568,7 @@ async def bps_get_kbli_detail(
         return error_response(str(e))
 
 
-async def bps_list_kbki(
-    year: int = 2015,
-    page: int = 1,
-    perpage: int = 10,
-    api_key: str | None = None
-) -> str:
+async def bps_list_kbki(year: int = 2015, page: int = 1, perpage: int = 10, api_key: str | None = None) -> str:
     """
     Get KBKI (Indonesian Classification of Education) codes.
 
@@ -1757,12 +1589,7 @@ async def bps_list_kbki(
         return error_response(str(e))
 
 
-async def bps_get_kbki_detail(
-    kbki_id: str,
-    year: int = 2015,
-    lang: str = "ind",
-    api_key: str | None = None
-) -> str:
+async def bps_get_kbki_detail(kbki_id: str, year: int = 2015, lang: str = "ind", api_key: str | None = None) -> str:
     """
     Get detail of a KBKI classification.
 
@@ -1784,12 +1611,7 @@ async def bps_get_kbki_detail(
 
 
 async def bps_get_foreign_trade(
-    sumber: int,
-    kodehs: int,
-    tahun: str,
-    periode: int = 1,
-    jenishs: int = 1,
-    api_key: str | None = None
+    sumber: int, kodehs: int, tahun: str, periode: int = 1, jenishs: int = 1, api_key: str | None = None
 ) -> str:
     """
     Get foreign trade (export/import) data.
@@ -1808,12 +1630,7 @@ async def bps_get_foreign_trade(
     try:
         client = get_api_client(api_key)
         data = await _run_sync(
-            client.get_foreign_trade,
-            sumber=sumber,
-            kodehs=kodehs,
-            tahun=tahun,
-            periode=periode,
-            jenishs=jenishs
+            client.get_foreign_trade, sumber=sumber, kodehs=kodehs, tahun=tahun, periode=periode, jenishs=jenishs
         )
         return success_response(data, f"Foreign trade data retrieved for {tahun}")
     except Exception as e:
@@ -1826,7 +1643,7 @@ async def bps_list_dynamic_tables(
     keyword: str | None = None,
     lang: str = "ind",
     page: int = 1,
-    api_key: str | None = None
+    api_key: str | None = None,
 ) -> str:
     """
     Get dynamic tables list.
@@ -1844,17 +1661,16 @@ async def bps_list_dynamic_tables(
     """
     try:
         client = get_api_client(api_key)
-        result = await _run_sync(client.get_dynamic_tables, domain=domain, year=year, keyword=keyword, lang=lang, page=page)
+        result = await _run_sync(
+            client.get_dynamic_tables, domain=domain, year=year, keyword=keyword, lang=lang, page=page
+        )
         return success_response(result, f"Page {page} of dynamic tables")
     except Exception as e:
         return error_response(str(e))
 
 
 async def bps_get_dynamic_table_detail(
-    table_id: int,
-    domain: str = "5300",
-    lang: str = "ind",
-    api_key: str | None = None
+    table_id: int, domain: str = "5300", lang: str = "ind", api_key: str | None = None
 ) -> str:
     """
     Get dynamic table detail.
@@ -1876,17 +1692,14 @@ async def bps_get_dynamic_table_detail(
         return error_response(str(e))
 
 
-async def bps_list_regencies(
-    prov_id: str | None = None,
-    api_key: str | None = None
-) -> str:
+async def bps_list_regencies(prov_id: str | None = None, api_key: str | None = None) -> str:
     """
     Get list of regency/city (kabupaten/kota) domains.
-    
+
     Args:
         prov_id: Province ID to filter by (4-digit code). If None, returns all regencies.
         api_key: Optional BPS API key override
-    
+
     Returns:
         JSON string with list of regencies/cities
     """
@@ -1906,11 +1719,11 @@ async def bps_list_news(
     keyword: str | None = None,
     lang: str = "ind",
     page: int = 1,
-    api_key: str | None = None
+    api_key: str | None = None,
 ) -> str:
     """
     Get list of BPS news articles.
-    
+
     Args:
         domain: Domain code (default "0000" for national)
         newscat: News category ID filter
@@ -1920,33 +1733,39 @@ async def bps_list_news(
         lang: Language - 'ind' or 'eng'
         page: Page number
         api_key: Optional BPS API key override
-    
+
     Returns:
         JSON string with news articles and pagination
     """
     try:
         client = get_api_client(api_key)
-        result = await _run_sync(client.get_news, domain=domain, newscat=newscat, year=year, month=month, keyword=keyword, lang=lang, page=page)
+        result = await _run_sync(
+            client.get_news,
+            domain=domain,
+            newscat=newscat,
+            year=year,
+            month=month,
+            keyword=keyword,
+            lang=lang,
+            page=page,
+        )
         return success_response(result, f"Page {page} of news")
     except Exception as e:
         return error_response(str(e))
 
 
 async def bps_get_press_release_detail(
-    brs_id: int,
-    domain: str = "0000",
-    lang: str = "ind",
-    api_key: str | None = None
+    brs_id: int, domain: str = "0000", lang: str = "ind", api_key: str | None = None
 ) -> str:
     """
     Get detailed information about a specific BPS press release (Berita Resmi Statistik).
-    
+
     Args:
         brs_id: Press release ID
         domain: Domain code (default "0000" for national)
         lang: Language - 'ind' or 'eng'
         api_key: Optional BPS API key override
-    
+
     Returns:
         JSON string with press release detail including PDF URL
     """
@@ -1966,20 +1785,17 @@ async def bps_get_press_release_detail(
 
 
 async def bps_get_publication_detail(
-    pub_id: str,
-    domain: str = "0000",
-    lang: str = "ind",
-    api_key: str | None = None
+    pub_id: str, domain: str = "0000", lang: str = "ind", api_key: str | None = None
 ) -> str:
     """
     Get detailed information about a specific BPS publication.
-    
+
     Args:
         pub_id: Publication ID
         domain: Domain code (default "0000" for national)
         lang: Language - 'ind' or 'eng'
         api_key: Optional BPS API key override
-    
+
     Returns:
         JSON string with publication detail including PDF and cover URLs
     """
@@ -2000,12 +1816,10 @@ async def bps_get_publication_detail(
         return error_response(str(e))
 
 
-async def bps_list_census_events(
-    api_key: str | None = None
-) -> str:
+async def bps_list_census_events(api_key: str | None = None) -> str:
     """
     Get list of census events (sensus) available in BPS.
-    
+
     Returns:
         JSON string with list of census events (e.g., SP2020, SE2016)
     """
@@ -2017,15 +1831,13 @@ async def bps_list_census_events(
         return error_response(str(e))
 
 
-async def bps_list_simdasi_provinces(
-    api_key: str | None = None
-) -> str:
+async def bps_list_simdasi_provinces(api_key: str | None = None) -> str:
     """
     Get list of SIMDASI province MFD codes.
-    
+
     SIMDASI (Sistem Informasi Manajemen Data Statistik Sektoral Indonesia)
     provides regional statistical data at province/regency/district level.
-    
+
     Returns:
         JSON string with list of SIMDASI provinces
     """
@@ -2038,25 +1850,21 @@ async def bps_list_simdasi_provinces(
 
 
 async def bps_search_generic(
-    keyword: str,
-    domain: str = "0000",
-    lang: str = "ind",
-    page: int = 1,
-    api_key: str | None = None
+    keyword: str, domain: str = "0000", lang: str = "ind", page: int = 1, api_key: str | None = None
 ) -> str:
     """
     Generic search across all BPS WebAPI content types.
-    
+
     This searches across all content types (tables, publications, press releases, etc.)
     using the WebAPI search endpoint.
-    
+
     Args:
         keyword: Search keyword
         domain: Domain code (default "0000" for national)
         lang: Language - 'ind' or 'eng'
         page: Page number
         api_key: Optional BPS API key override
-    
+
     Returns:
         JSON string with search results across all content types
     """
@@ -2071,6 +1879,7 @@ async def bps_search_generic(
 # ============================================================================
 # Main MCP Server (for uvx execution)
 # ============================================================================
+
 
 def build_mcp_server() -> FastMCP:
     """Build the FastMCP server and register core BPS tools."""

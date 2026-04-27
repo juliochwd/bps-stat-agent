@@ -43,6 +43,7 @@ def main():
 def await_bps_answer_query(query: str, domain: str):
     """Sync wrapper for the async BPS query function."""
     import asyncio
+
     return asyncio.run(bps_answer_query(query, domain=domain))
 
 

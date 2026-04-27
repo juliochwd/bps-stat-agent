@@ -79,4 +79,3 @@ description: Test skill for Markdown link processing
 
 if __name__ == "__main__":
     test_markdown_link_processing()
-

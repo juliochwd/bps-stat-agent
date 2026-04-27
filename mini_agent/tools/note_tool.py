@@ -68,7 +68,7 @@ class SessionNoteTool(Tool):
 
     def _load_from_file(self) -> list:
         """Load notes from file.
-        
+
         Returns empty list if file doesn't exist (lazy loading).
         """
         if not self.memory_file.exists():
@@ -78,9 +78,10 @@ class SessionNoteTool(Tool):
             return json.loads(self.memory_file.read_text())
         except Exception as e:
             # Backup corrupted file and warn
-            backup_path = self.memory_file.with_suffix('.json.bak')
+            backup_path = self.memory_file.with_suffix(".json.bak")
             try:
                 import shutil
+
                 shutil.copy2(self.memory_file, backup_path)
             except Exception:
                 pass
@@ -89,7 +90,7 @@ class SessionNoteTool(Tool):
 
     def _save_to_file(self, notes: list):
         """Save notes to file.
-        
+
         Creates parent directory and file if they don't exist (lazy initialization).
         """
         # Ensure parent directory exists when actually saving

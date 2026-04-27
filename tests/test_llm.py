@@ -143,9 +143,7 @@ async def test_wrapper_tool_calling():
 
     # Messages requesting tool use
     messages = [
-        Message(
-            role="system", content="You are a helpful assistant with access to tools."
-        ),
+        Message(role="system", content="You are a helpful assistant with access to tools."),
         Message(role="user", content="Calculate 123 + 456 using the calculator tool."),
     ]
 

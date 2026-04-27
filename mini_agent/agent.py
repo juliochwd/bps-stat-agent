@@ -239,8 +239,12 @@ class Agent:
         self._skip_next_token_check = True
 
         new_tokens = self._estimate_tokens()
-        print(f"{Colors.BRIGHT_GREEN}✓ Summary completed, local tokens: {estimated_tokens} → {new_tokens}{Colors.RESET}")
-        print(f"{Colors.DIM}  Structure: system + {len(user_indices)} user messages + {summary_count} summaries{Colors.RESET}")
+        print(
+            f"{Colors.BRIGHT_GREEN}✓ Summary completed, local tokens: {estimated_tokens} → {new_tokens}{Colors.RESET}"
+        )
+        print(
+            f"{Colors.DIM}  Structure: system + {len(user_indices)} user messages + {summary_count} summaries{Colors.RESET}"
+        )
         print(f"{Colors.DIM}  Note: API token count will update on next LLM call{Colors.RESET}")
 
     async def _create_summary(self, messages: list[Message], round_num: int) -> str:
@@ -362,10 +366,14 @@ Requirements:
             llm_call_start = perf_counter()
             try:
                 response = await self.llm.generate(messages=self.messages, tools=tool_list)
-                LLM_REQUEST_DURATION.labels(provider=_llm_provider, model=_llm_model).observe(perf_counter() - llm_call_start)
+                LLM_REQUEST_DURATION.labels(provider=_llm_provider, model=_llm_model).observe(
+                    perf_counter() - llm_call_start
+                )
                 LLM_REQUESTS_TOTAL.labels(provider=_llm_provider, model=_llm_model, status="success").inc()
             except Exception as e:
-                LLM_REQUEST_DURATION.labels(provider=_llm_provider, model=_llm_model).observe(perf_counter() - llm_call_start)
+                LLM_REQUEST_DURATION.labels(provider=_llm_provider, model=_llm_model).observe(
+                    perf_counter() - llm_call_start
+                )
                 # Check if it's a retry exhausted error
                 from .retry import RetryExhaustedError
 
@@ -385,9 +393,15 @@ Requirements:
             # Accumulate API reported token usage
             if response.usage:
                 self.api_total_tokens = response.usage.total_tokens
-                LLM_TOKENS_TOTAL.labels(provider=_llm_provider, model=_llm_model, type="prompt").inc(response.usage.prompt_tokens)
-                LLM_TOKENS_TOTAL.labels(provider=_llm_provider, model=_llm_model, type="completion").inc(response.usage.completion_tokens)
-                LLM_TOKENS_TOTAL.labels(provider=_llm_provider, model=_llm_model, type="total").inc(response.usage.total_tokens)
+                LLM_TOKENS_TOTAL.labels(provider=_llm_provider, model=_llm_model, type="prompt").inc(
+                    response.usage.prompt_tokens
+                )
+                LLM_TOKENS_TOTAL.labels(provider=_llm_provider, model=_llm_model, type="completion").inc(
+                    response.usage.completion_tokens
+                )
+                LLM_TOKENS_TOTAL.labels(provider=_llm_provider, model=_llm_model, type="total").inc(
+                    response.usage.total_tokens
+                )
 
             # Log LLM response
             self.logger.log_response(
@@ -420,7 +434,9 @@ Requirements:
             if not response.tool_calls:
                 step_elapsed = perf_counter() - step_start_time
                 total_elapsed = perf_counter() - run_start_time
-                print(f"\n{Colors.DIM}⏱️  Step {step + 1} completed in {step_elapsed:.2f}s (total: {total_elapsed:.2f}s){Colors.RESET}")
+                print(
+                    f"\n{Colors.DIM}⏱️  Step {step + 1} completed in {step_elapsed:.2f}s (total: {total_elapsed:.2f}s){Colors.RESET}"
+                )
                 AGENT_RUNS_TOTAL.labels(status="completed").inc()
                 AGENT_RUN_DURATION.observe(total_elapsed)
                 AGENT_ACTIVE_RUNS.dec()
@@ -443,7 +459,9 @@ Requirements:
                 arguments = tool_call.function.arguments
 
                 # Tool call header
-                print(f"\n{Colors.BRIGHT_YELLOW}🔧 Tool Call:{Colors.RESET} {Colors.BOLD}{Colors.CYAN}{function_name}{Colors.RESET}")
+                print(
+                    f"\n{Colors.BRIGHT_YELLOW}🔧 Tool Call:{Colors.RESET} {Colors.BOLD}{Colors.CYAN}{function_name}{Colors.RESET}"
+                )
 
                 # Arguments (formatted display)
                 print(f"{Colors.DIM}   Arguments:{Colors.RESET}")
@@ -527,7 +545,9 @@ Requirements:
 
             step_elapsed = perf_counter() - step_start_time
             total_elapsed = perf_counter() - run_start_time
-            print(f"\n{Colors.DIM}⏱️  Step {step + 1} completed in {step_elapsed:.2f}s (total: {total_elapsed:.2f}s){Colors.RESET}")
+            print(
+                f"\n{Colors.DIM}⏱️  Step {step + 1} completed in {step_elapsed:.2f}s (total: {total_elapsed:.2f}s){Colors.RESET}"
+            )
 
             step += 1
 

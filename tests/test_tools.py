@@ -56,9 +56,7 @@ async def test_edit_tool():
         temp_file.write_text("Hello, World!")
 
         tool = EditTool(workspace_dir=tmpdir)
-        result = await tool.execute(
-            path=str(temp_file), old_str="World", new_str="Agent"
-        )
+        result = await tool.execute(path=str(temp_file), old_str="World", new_str="Agent")
 
         assert result.success, f"Edit failed: {result.error}"
         content = temp_file.read_text()

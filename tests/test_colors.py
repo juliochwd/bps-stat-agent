@@ -18,8 +18,16 @@ class TestColors:
 
     def test_all_bright_colors(self):
         """Verify all bright colors are defined."""
-        for attr in ["BRIGHT_RED", "BRIGHT_GREEN", "BRIGHT_YELLOW", "BRIGHT_BLUE",
-                      "BRIGHT_MAGENTA", "BRIGHT_CYAN", "BRIGHT_WHITE", "BRIGHT_BLACK"]:
+        for attr in [
+            "BRIGHT_RED",
+            "BRIGHT_GREEN",
+            "BRIGHT_YELLOW",
+            "BRIGHT_BLUE",
+            "BRIGHT_MAGENTA",
+            "BRIGHT_CYAN",
+            "BRIGHT_WHITE",
+            "BRIGHT_BLACK",
+        ]:
             assert hasattr(Colors, attr)
             assert "\033[9" in getattr(Colors, attr) or "\033[90" in getattr(Colors, attr)
 

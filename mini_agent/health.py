@@ -43,27 +43,34 @@ class HealthHandler(BaseHTTPRequestHandler):
     def _respond_health(self):
         """Liveness check - is the process alive?"""
         uptime = time.time() - _start_time if _start_time else 0
-        self._respond(200, {
-            "status": "healthy",
-            "uptime_seconds": round(uptime, 2),
-            "timestamp": datetime.now(UTC).isoformat(),
-            "version": _get_version(),
-        })
+        self._respond(
+            200,
+            {
+                "status": "healthy",
+                "uptime_seconds": round(uptime, 2),
+                "timestamp": datetime.now(UTC).isoformat(),
+                "version": _get_version(),
+            },
+        )
 
     def _respond_ready(self):
         """Readiness check - is the service ready to accept work?"""
         if _ready_check and not _ready_check():
             self._respond(503, {"status": "not_ready"})
         else:
-            self._respond(200, {
-                "status": "ready",
-                "timestamp": datetime.now(UTC).isoformat(),
-            })
+            self._respond(
+                200,
+                {
+                    "status": "ready",
+                    "timestamp": datetime.now(UTC).isoformat(),
+                },
+            )
 
     def _respond_metrics(self):
         """Serve Prometheus metrics if available, otherwise 404."""
         try:
             from .metrics import PROMETHEUS_AVAILABLE, get_metrics_text
+
             if PROMETHEUS_AVAILABLE:
                 body_bytes, content_type = get_metrics_text()
                 self.send_response(200)
@@ -89,6 +96,7 @@ class HealthHandler(BaseHTTPRequestHandler):
 def _get_version() -> str:
     try:
         from mini_agent import __version__
+
         return __version__
     except ImportError:
         return "unknown"

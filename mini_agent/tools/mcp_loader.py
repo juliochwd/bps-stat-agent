@@ -107,7 +107,9 @@ class MCPTool(Tool):
 
             is_error = result.isError if hasattr(result, "isError") else False
 
-            return ToolResult(success=not is_error, content=content_str, error=None if not is_error else "Tool returned error")
+            return ToolResult(
+                success=not is_error, content=content_str, error=None if not is_error else "Tool returned error"
+            )
 
         except TimeoutError:
             return ToolResult(
@@ -208,7 +210,9 @@ class MCPServerConnection:
                 self.tools.append(mcp_tool)
 
             conn_info = self.url if self.url else self.command
-            print(f"✓ Connected to MCP server '{self.name}' ({self.connection_type}: {conn_info}) - loaded {len(self.tools)} tools")
+            print(
+                f"✓ Connected to MCP server '{self.name}' ({self.connection_type}: {conn_info}) - loaded {len(self.tools)} tools"
+            )
             for tool in self.tools:
                 desc = tool.description[:60] if len(tool.description) > 60 else tool.description
                 print(f"  - {tool.name}: {desc}...")

@@ -20,6 +20,7 @@ try:
         ConsoleSpanExporter,
     )
     from opentelemetry.semconv.resource import ResourceAttributes
+
     OTEL_AVAILABLE = True
 except ImportError:
     OTEL_AVAILABLE = False
@@ -27,19 +28,35 @@ except ImportError:
 
 # ---- No-op fallbacks ----
 
+
 class _NoOpSpan:
     """No-op span that silently ignores all operations."""
-    def set_attribute(self, key: str, value: Any) -> None: pass
-    def set_status(self, status: Any, description: str | None = None) -> None: pass
-    def record_exception(self, exception: Exception) -> None: pass
-    def add_event(self, name: str, attributes: dict | None = None) -> None: pass
-    def end(self) -> None: pass
-    def __enter__(self): return self
-    def __exit__(self, *args): pass
+
+    def set_attribute(self, key: str, value: Any) -> None:
+        pass
+
+    def set_status(self, status: Any, description: str | None = None) -> None:
+        pass
+
+    def record_exception(self, exception: Exception) -> None:
+        pass
+
+    def add_event(self, name: str, attributes: dict | None = None) -> None:
+        pass
+
+    def end(self) -> None:
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
 
 
 class _NoOpTracer:
     """No-op tracer that returns no-op spans."""
+
     def start_as_current_span(self, name: str, **kwargs) -> Any:
         return _NoOpSpan()
 
@@ -76,10 +93,12 @@ def configure_tracing(
     if exporter == "none":
         return
 
-    resource = Resource.create({
-        ResourceAttributes.SERVICE_NAME: service_name,
-        ResourceAttributes.SERVICE_VERSION: service_version,
-    })
+    resource = Resource.create(
+        {
+            ResourceAttributes.SERVICE_NAME: service_name,
+            ResourceAttributes.SERVICE_VERSION: service_version,
+        }
+    )
 
     provider = TracerProvider(resource=resource)
 
@@ -88,9 +107,8 @@ def configure_tracing(
     elif exporter == "otlp" and otlp_endpoint:
         try:
             from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-            provider.add_span_processor(
-                BatchSpanProcessor(OTLPSpanExporter(endpoint=otlp_endpoint))
-            )
+
+            provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=otlp_endpoint)))
         except ImportError:
             # Fall back to console if OTLP exporter not installed
             provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
@@ -140,10 +158,13 @@ def trace_agent_run(run_id: str | None = None):
 
 def trace_llm_call(provider: str, model: str):
     """Create a span for an LLM API call."""
-    return trace_span("llm.generate", attributes={
-        "llm.provider": provider,
-        "llm.model": model,
-    })
+    return trace_span(
+        "llm.generate",
+        attributes={
+            "llm.provider": provider,
+            "llm.model": model,
+        },
+    )
 
 
 def trace_tool_call(tool_name: str, arguments: dict | None = None):

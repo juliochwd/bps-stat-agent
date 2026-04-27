@@ -153,11 +153,7 @@ def test_message_statistics(mock_llm_client, temp_workspace):
     agent.add_user_message("User message 1")
     agent.messages.append(Message(role="assistant", content="Assistant response 1"))
     agent.add_user_message("User message 2")
-    agent.messages.append(
-        Message(
-            role="tool", content="Tool result", tool_call_id="123", name="test_tool"
-        )
-    )
+    agent.messages.append(Message(role="tool", content="Tool result", tool_call_id="123", name="test_tool"))
 
     # Count different types of messages
     user_msgs = sum(1 for m in agent.messages if m.role == "user")

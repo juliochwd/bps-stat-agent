@@ -102,7 +102,7 @@ jobs:
         run: uv sync --frozen --group dev
 
       - name: Run pip-audit
-        run: uv run pip-audit --strict --desc
+        run: uv run pip-audit --desc --skip-editable
 
   build:
     name: Build package

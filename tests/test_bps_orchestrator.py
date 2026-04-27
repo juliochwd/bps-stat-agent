@@ -111,9 +111,7 @@ async def test_answer_query_uses_allstats_first_then_normalizes():
 
     result = await orchestrator.answer_query("inflasi NTT", domain="5300")
 
-    assert search_client.calls == [
-        {"keyword": "inflasi NTT", "domain": "5300", "content": "all"}
-    ]
+    assert search_client.calls == [{"keyword": "inflasi NTT", "domain": "5300", "content": "all"}]
     assert retriever.calls[0]["query"] == "inflasi NTT"
     assert result["query"] == "inflasi NTT"
     assert result["retrieval_method"] == "webapi_structured"

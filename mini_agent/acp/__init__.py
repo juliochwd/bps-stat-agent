@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 try:
+
     class InitializeRequestPatch(InitializeRequest):
         @field_validator("protocolVersion", mode="before")
         @classmethod
@@ -100,7 +101,13 @@ class BPSStatACPAgent:
             workspace = workspace.resolve()
         tools = list(self._base_tools)
         add_workspace_tools(tools, self._config, workspace)
-        agent = Agent(llm_client=self._llm, system_prompt=self._system_prompt, tools=tools, max_steps=self._config.agent.max_steps, workspace_dir=str(workspace))
+        agent = Agent(
+            llm_client=self._llm,
+            system_prompt=self._system_prompt,
+            tools=tools,
+            max_steps=self._config.agent.max_steps,
+            workspace_dir=str(workspace),
+        )
         self._sessions[session_id] = SessionState(agent=agent)
         return NewSessionResponse(sessionId=session_id)
 
@@ -110,7 +117,9 @@ class BPSStatACPAgent:
             logger.warning("Session '%s' not found", params.sessionId)
             return PromptResponse(stopReason="refusal")
         state.cancelled = False
-        user_text = "\n".join(block.get("text", "") if isinstance(block, dict) else getattr(block, "text", "") for block in params.prompt)
+        user_text = "\n".join(
+            block.get("text", "") if isinstance(block, dict) else getattr(block, "text", "") for block in params.prompt
+        )
         state.agent.messages.append(Message(role="user", content=user_text))
         stop_reason = await self._run_turn(state, params.sessionId)
         return PromptResponse(stopReason=stop_reason)
@@ -136,13 +145,24 @@ class BPSStatACPAgent:
                 await self._send(session_id, update_agent_thought(text_block(response.thinking)))
             if response.content:
                 await self._send(session_id, update_agent_message(text_block(response.content)))
-            agent.messages.append(Message(role="assistant", content=response.content, thinking=response.thinking, tool_calls=response.tool_calls))
+            agent.messages.append(
+                Message(
+                    role="assistant",
+                    content=response.content,
+                    thinking=response.thinking,
+                    tool_calls=response.tool_calls,
+                )
+            )
             if not response.tool_calls:
                 return "end_turn"
             for call in response.tool_calls:
                 name, args = call.function.name, call.function.arguments
                 # Show tool name with key arguments for better visibility
-                args_preview = ", ".join(f"{k}={repr(v)[:50]}" for k, v in list(args.items())[:2]) if isinstance(args, dict) else ""
+                args_preview = (
+                    ", ".join(f"{k}={repr(v)[:50]}" for k, v in list(args.items())[:2])
+                    if isinstance(args, dict)
+                    else ""
+                )
                 label = f"🔧 {name}({args_preview})" if args_preview else f"🔧 {name}()"
                 await self._send(session_id, start_tool_call(call.id, label, kind="execute", raw_input=args))
                 tool = agent.tools.get(name)
@@ -153,10 +173,15 @@ class BPSStatACPAgent:
                         result = await tool.execute(**args)
                         status = "completed" if result.success else "failed"
                         prefix = "[OK]" if result.success else "[ERROR]"
-                        text = f"{prefix} {result.content if result.success else result.error or 'Tool execution failed'}"
+                        text = (
+                            f"{prefix} {result.content if result.success else result.error or 'Tool execution failed'}"
+                        )
                     except Exception as exc:
                         status, text = "failed", f"[ERROR] Tool error: {exc}"
-                await self._send(session_id, update_tool_call(call.id, status=status, content=[tool_content(text_block(text))], raw_output=text))
+                await self._send(
+                    session_id,
+                    update_tool_call(call.id, status=status, content=[tool_content(text_block(text))], raw_output=text),
+                )
                 agent.messages.append(Message(role="tool", content=text, tool_call_id=call.id, name=name))
         return "max_turn_requests"
 
@@ -195,7 +220,18 @@ async def run_acp_server(config: Config | None = None) -> None:
         if meta:
             system_prompt = f"{system_prompt.rstrip()}\n\n{meta}"
     rcfg = config.llm.retry
-    llm = LLMClient(api_key=config.llm.api_key, api_base=config.llm.api_base, model=config.llm.model, retry_config=RetryConfigBase(enabled=rcfg.enabled, max_retries=rcfg.max_retries, initial_delay=rcfg.initial_delay, max_delay=rcfg.max_delay, exponential_base=rcfg.exponential_base))
+    llm = LLMClient(
+        api_key=config.llm.api_key,
+        api_base=config.llm.api_base,
+        model=config.llm.model,
+        retry_config=RetryConfigBase(
+            enabled=rcfg.enabled,
+            max_retries=rcfg.max_retries,
+            initial_delay=rcfg.initial_delay,
+            max_delay=rcfg.max_delay,
+            exponential_base=rcfg.exponential_base,
+        ),
+    )
     reader, writer = await stdio_streams()
     AgentSideConnection(lambda conn: BPSStatACPAgent(conn, config, llm, base_tools, system_prompt), writer, reader)
     logger.info("BPS Stat Agent ACP server running")

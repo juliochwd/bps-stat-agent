@@ -54,6 +54,7 @@ def llm():
 # AUDIT 1: AllStats Ranking Accuracy
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestAllStatsRanking:
     """Verify the ranking algorithm selects the most relevant result."""
 
@@ -110,6 +111,7 @@ class TestAllStatsRanking:
 # ─────────────────────────────────────────────────────────────────────────────
 # AUDIT 2: Data Retrieval Accuracy
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestDataRetrievalAccuracy:
     """Verify data retrieved matches what was promised in search results."""
@@ -174,6 +176,7 @@ class TestDataRetrievalAccuracy:
 # ─────────────────────────────────────────────────────────────────────────────
 # AUDIT 3: LLM Comprehension of BPS Data
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestLLMComprehension:
     """Verify LLM can understand and answer questions about BPS data."""
@@ -264,6 +267,7 @@ Respond with "DATA NOT AVAILABLE" if the data doesn't support the question.""",
 # AUDIT 4: Content Type Coverage
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestContentTypeCoverage:
     """Verify all content types can be retrieved successfully."""
 
@@ -309,6 +313,7 @@ class TestContentTypeCoverage:
 # AUDIT 5: Error Handling & Edge Cases
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestErrorHandling:
     """Verify graceful error handling."""
 
@@ -340,4 +345,6 @@ class TestErrorHandling:
         except Exception as e:
             # Exception is also acceptable for invalid key
             err_str = str(e).lower()
-            assert any(kw in err_str for kw in ["not allowed", "401", "unauthorized", "invalid", "error"]), f"Unexpected error: {e}"
+            assert any(kw in err_str for kw in ["not allowed", "401", "unauthorized", "invalid", "error"]), (
+                f"Unexpected error: {e}"
+            )

@@ -161,9 +161,7 @@ class BPSAPI:
         params = {"model": model, "domain": self._format_domain(domain), **kwargs}
         return self._request(f"{self.BASE_URL}/v1/api/list", params)
 
-    def _view(
-        self, model: str, id: Any, domain: str = "0000", lang: str = "ind", **kwargs
-    ) -> dict[str, Any]:
+    def _view(self, model: str, id: Any, domain: str = "0000", lang: str = "ind", **kwargs) -> dict[str, Any]:
         """Generic view/detail endpoint caller.
 
         Args:
@@ -286,9 +284,7 @@ class BPSAPI:
     # SUBJECT ENDPOINTS
     # ================================================================
 
-    def get_subject_categories(
-        self, domain: str = "0000", lang: str = "ind"
-    ) -> list[dict]:
+    def get_subject_categories(self, domain: str = "0000", lang: str = "ind") -> list[dict]:
         """Get subject categories."""
         return self._extract_data(self._list("subcat", domain, lang=lang))
 
@@ -461,8 +457,7 @@ class BPSAPI:
             - data: List of (region_id, region_label, value) tuples
             - raw_data: Original datacontent dict
         """
-        result = self.get_data(var=var, th=th, domain=domain, turvar=turvar,
-                               vervar=vervar, turth=turth, lang=lang)
+        result = self.get_data(var=var, th=th, domain=domain, turvar=turvar, vervar=vervar, turth=turth, lang=lang)
 
         if result.get("status") != "OK":
             return result
@@ -484,20 +479,24 @@ class BPSAPI:
                 # Extract region_id by finding it at start of key
                 region_id = self._extract_region_id(key_str, var)
                 if region_id:
-                    decoded_data.append({
-                        "region_id": region_id,
-                        "region_label": region_map.get(region_id, f"Unknown({region_id})"),
-                        "value": float(value)
-                    })
+                    decoded_data.append(
+                        {
+                            "region_id": region_id,
+                            "region_label": region_map.get(region_id, f"Unknown({region_id})"),
+                            "value": float(value),
+                        }
+                    )
         elif isinstance(datacontent, list):
             # List format: [region_id, value, ...] interleaved or as tuples
             for i in range(0, len(datacontent) - 1, 2):
                 if i + 1 < len(datacontent):
-                    decoded_data.append({
-                        "region_id": datacontent[i],
-                        "region_label": region_map.get(datacontent[i], f"Unknown({datacontent[i]})"),
-                        "value": float(datacontent[i + 1])
-                    })
+                    decoded_data.append(
+                        {
+                            "region_id": datacontent[i],
+                            "region_label": region_map.get(datacontent[i], f"Unknown({datacontent[i]})"),
+                            "value": float(datacontent[i + 1]),
+                        }
+                    )
 
         # Sort by region_id
         decoded_data.sort(key=lambda x: x["region_id"])
@@ -562,9 +561,7 @@ class BPSAPI:
             params["keyword"] = keyword
         return self._extract_paginated(self._list("statictable", domain, **params))
 
-    def get_static_table_detail(
-        self, table_id: int, domain: str = "0000", lang: str = "ind"
-    ) -> dict:
+    def get_static_table_detail(self, table_id: int, domain: str = "0000", lang: str = "ind") -> dict:
         """Get static table detail with HTML content."""
         return self._view("statictable", table_id, domain, lang)
 
@@ -588,9 +585,7 @@ class BPSAPI:
             params["keyword"] = keyword
         return self._extract_paginated(self._list("dynamictable", domain, **params))
 
-    def get_dynamic_table_detail(
-        self, table_id: int, domain: str = "0000", lang: str = "ind"
-    ) -> dict:
+    def get_dynamic_table_detail(self, table_id: int, domain: str = "0000", lang: str = "ind") -> dict:
         """Get dynamic table detail."""
         return self._view("dynamictable", table_id, domain, lang)
 
@@ -617,9 +612,7 @@ class BPSAPI:
             params["keyword"] = keyword
         return self._extract_paginated(self._list("pressrelease", domain, **params))
 
-    def get_press_release_detail(
-        self, brs_id: int, domain: str = "0000", lang: str = "ind"
-    ) -> BPSMaterial:
+    def get_press_release_detail(self, brs_id: int, domain: str = "0000", lang: str = "ind") -> BPSMaterial:
         """Get press release detail as BPSMaterial.
 
         Args:
@@ -656,9 +649,7 @@ class BPSAPI:
             params["keyword"] = keyword
         return self._extract_paginated(self._list("publication", domain, **params))
 
-    def get_publication_detail(
-        self, pub_id: str, domain: str = "0000", lang: str = "ind"
-    ) -> BPSMaterial:
+    def get_publication_detail(self, pub_id: str, domain: str = "0000", lang: str = "ind") -> BPSMaterial:
         """Get publication detail as BPSMaterial.
 
         Args:
@@ -702,9 +693,7 @@ class BPSAPI:
             params["keyword"] = keyword
         return self._extract_paginated(self._list("infographic", domain, **params))
 
-    def get_infographic_detail(
-        self, infographic_id: str, domain: str = "0000", lang: str = "ind"
-    ) -> dict:
+    def get_infographic_detail(self, infographic_id: str, domain: str = "0000", lang: str = "ind") -> dict:
         """Get infographic detail with image URL and description."""
         return self._view("infographic", infographic_id, domain, lang)
 
@@ -712,18 +701,14 @@ class BPSAPI:
     # GLOSARIUM
     # ================================================================
 
-    def get_glossary(
-        self, prefix: str | None = None, perpage: int = 10, page: int = 1
-    ) -> dict:
+    def get_glossary(self, prefix: str | None = None, perpage: int = 10, page: int = 1) -> dict:
         """Get glossary terms."""
         params = {"perpage": perpage, "page": page}
         if prefix:
             params["prefix"] = prefix
         return self._extract_paginated(self._list("glosarium", "0000", **params))
 
-    def get_glossary_detail(
-        self, glossary_id: int, lang: str = "ind"
-    ) -> dict:
+    def get_glossary_detail(self, glossary_id: int, lang: str = "ind") -> dict:
         """Get glossary term detail."""
         return self._view("glosarium", glossary_id, "0000", lang)
 
@@ -772,15 +757,11 @@ class BPSAPI:
             params["keyword"] = keyword
         return self._extract_paginated(self._list("news", domain, **params))
 
-    def get_news_detail(
-        self, news_id: int, domain: str = "0000", lang: str = "ind"
-    ) -> dict:
+    def get_news_detail(self, news_id: int, domain: str = "0000", lang: str = "ind") -> dict:
         """Get news detail."""
         return self._view("news", news_id, domain, lang)
 
-    def get_news_categories(
-        self, domain: str = "0000", lang: str = "ind"
-    ) -> list[dict]:
+    def get_news_categories(self, domain: str = "0000", lang: str = "ind") -> list[dict]:
         """Get news categories."""
         return self._extract_data(self._list("newscategory", domain, lang=lang))
 
@@ -792,9 +773,7 @@ class BPSAPI:
         """Get CSA subject categories."""
         return self._extract_data(self._list("subcatcsa", domain))
 
-    def get_csa_subjects(
-        self, domain: str = "0000", subcat: str | None = None
-    ) -> dict:
+    def get_csa_subjects(self, domain: str = "0000", subcat: str | None = None) -> dict:
         """Get CSA subjects."""
         params = {}
         if subcat:
@@ -874,9 +853,7 @@ class BPSAPI:
             params["level"] = level
         return self._extract_paginated(self._list(model, "0000", **params))
 
-    def get_kbli_detail(
-        self, kbli_id: str, year: int = 2020, lang: str = "ind"
-    ) -> dict:
+    def get_kbli_detail(self, kbli_id: str, year: int = 2020, lang: str = "ind") -> dict:
         """Get KBLI classification detail."""
         model = f"kbli{year}"
         return self._view(model, kbli_id, "0000", lang)
@@ -887,9 +864,7 @@ class BPSAPI:
 
     def get_census_events(self) -> list[dict]:
         """Get list of census events."""
-        resp = self._request(
-            f"{self.BASE_URL}/v1/api/interoperabilitas/datasource/sensus/id/37/"
-        )
+        resp = self._request(f"{self.BASE_URL}/v1/api/interoperabilitas/datasource/sensus/id/37/")
         return self._extract_data(resp)
 
     def get_census_topics(self, kegiatan: str) -> list[dict]:
@@ -937,9 +912,7 @@ class BPSAPI:
 
     def get_simdasi_provinces(self) -> list[dict]:
         """Get SIMDASI province MFD codes."""
-        resp = self._request(
-            f"{self.BASE_URL}/v1/api/interoperabilitas/datasource/simdasi/id/26/"
-        )
+        resp = self._request(f"{self.BASE_URL}/v1/api/interoperabilitas/datasource/simdasi/id/26/")
         return self._extract_data(resp)
 
     def get_simdasi_regencies(self, parent: str) -> list[dict]:
@@ -968,14 +941,10 @@ class BPSAPI:
 
     def get_simdasi_master_tables(self) -> list[dict]:
         """Get SIMDASI master tables."""
-        resp = self._request(
-            f"{self.BASE_URL}/v1/api/interoperabilitas/datasource/simdasi/id/34/"
-        )
+        resp = self._request(f"{self.BASE_URL}/v1/api/interoperabilitas/datasource/simdasi/id/34/")
         return self._extract_data(resp)
 
-    def get_simdasi_table_detail(
-        self, wilayah: str, tahun: int, id_tabel: str
-    ) -> dict:
+    def get_simdasi_table_detail(self, wilayah: str, tahun: int, id_tabel: str) -> dict:
         """Get SIMDASI table detail with data."""
         return self._request(
             f"{self.BASE_URL}/v1/api/interoperabilitas/datasource/simdasi/id/25/",
@@ -990,9 +959,7 @@ class BPSAPI:
         )
         return self._extract_data(resp)
 
-    def get_simdasi_tables_by_area_and_subject(
-        self, wilayah: str, id_subjek: str
-    ) -> list[dict]:
+    def get_simdasi_tables_by_area_and_subject(self, wilayah: str, id_subjek: str) -> list[dict]:
         """Get SIMDASI tables based on area and subject."""
         resp = self._request(
             f"{self.BASE_URL}/v1/api/interoperabilitas/datasource/simdasi/id/24/",
@@ -1007,25 +974,17 @@ class BPSAPI:
             {"id_tabel": id_tabel},
         )
 
-    def get_kbki(
-        self, year: int = 2020, page: int = 1, perpage: int = 10
-    ) -> dict:
+    def get_kbki(self, year: int = 2020, page: int = 1, perpage: int = 10) -> dict:
         """Get KBKI (Indonesian Standard Classification of Education)."""
         model = f"kbki{year}"
-        return self._extract_paginated(
-            self._list(model, "0000", page=page, perpage=perpage)
-        )
+        return self._extract_paginated(self._list(model, "0000", page=page, perpage=perpage))
 
-    def get_kbki_detail(
-        self, kbki_id: str, year: int = 2020, lang: str = "ind"
-    ) -> dict:
+    def get_kbki_detail(self, kbki_id: str, year: int = 2020, lang: str = "ind") -> dict:
         """Get KBKI classification detail."""
         model = f"kbki{year}"
         return self._view(model, kbki_id, "0000", lang)
 
-    def search_generic(
-        self, keyword: str, domain: str = "0000", lang: str = "ind", page: int = 1
-    ) -> dict:
+    def search_generic(self, keyword: str, domain: str = "0000", lang: str = "ind", page: int = 1) -> dict:
         """Generic search across BPS WebAPI by querying multiple content models.
 
         Since BPS API has no unified 'search' model, this searches across
@@ -1043,9 +1002,7 @@ class BPSAPI:
         combined = {"keyword": keyword, "domain": domain, "results_by_type": {}}
         for model in ["statictable", "publication", "pressrelease", "news"]:
             try:
-                result = self._extract_paginated(
-                    self._list(model, domain, keyword=keyword, lang=lang, page=page)
-                )
+                result = self._extract_paginated(self._list(model, domain, keyword=keyword, lang=lang, page=page))
                 items = result.get("items", [])
                 if items:
                     combined["results_by_type"][model] = {

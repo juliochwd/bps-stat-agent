@@ -110,7 +110,9 @@ def async_retry(
 
                     # If this is the last attempt, don't retry
                     if attempt >= config.max_retries:
-                        logger.error(f"Function {func.__name__} retry failed, reached maximum retry count {config.max_retries}")
+                        logger.error(
+                            f"Function {func.__name__} retry failed, reached maximum retry count {config.max_retries}"
+                        )
                         raise RetryExhaustedError(e, attempt + 1)
 
                     # Calculate delay time

@@ -12,6 +12,7 @@ class TestNoopMetricsWhenNotInstalled:
         try:
             with patch.dict(sys.modules, {"prometheus_client": None}):
                 import mini_agent.metrics as m
+
                 importlib.reload(m)
 
                 assert m.PROMETHEUS_AVAILABLE is False
@@ -47,6 +48,7 @@ class TestMetricsWithPrometheus:
     )
     def test_counter_increment(self):
         from mini_agent.metrics import AGENT_STEPS_TOTAL, PROMETHEUS_AVAILABLE
+
         assert PROMETHEUS_AVAILABLE is True
 
         before = AGENT_STEPS_TOTAL._value.get()
@@ -60,6 +62,7 @@ class TestMetricsWithPrometheus:
     )
     def test_histogram_observe(self):
         from mini_agent.metrics import AGENT_RUN_DURATION, get_metrics_text
+
         AGENT_RUN_DURATION.observe(5.0)
         AGENT_RUN_DURATION.observe(10.0)
 
@@ -72,6 +75,7 @@ class TestMetricsWithPrometheus:
     )
     def test_track_duration_context_manager(self):
         from mini_agent.metrics import AGENT_RUN_DURATION, get_metrics_text, track_duration
+
         with track_duration(AGENT_RUN_DURATION):
             time.sleep(0.05)
 
@@ -84,6 +88,7 @@ class TestMetricsWithPrometheus:
     )
     def test_get_metrics_text(self):
         from mini_agent.metrics import get_metrics_text
+
         body, content_type = get_metrics_text()
         assert isinstance(body, bytes)
         assert "text/plain" in content_type
@@ -94,6 +99,7 @@ class TestMetricsWithPrometheus:
     )
     def test_init_app_info(self):
         from mini_agent.metrics import get_metrics_text, init_app_info
+
         init_app_info("0.1.3")
         body, _ = get_metrics_text()
         assert b"bps_stat_agent_info" in body
@@ -104,6 +110,7 @@ class TestMetricsWithPrometheus:
     )
     def test_labels(self):
         from mini_agent.metrics import AGENT_RUNS_TOTAL, LLM_REQUESTS_TOTAL, get_metrics_text
+
         labeled = AGENT_RUNS_TOTAL.labels(status="completed")
         labeled.inc()
         chained = LLM_REQUESTS_TOTAL.labels(provider="openai", model="gpt-4", status="success")
@@ -117,6 +124,7 @@ class TestMetricsWithPrometheus:
 class TestNoopFallbackBehavior:
     def test_noop_labels_chaining(self):
         from mini_agent.metrics import _NoOpMetric
+
         m = _NoOpMetric()
         result = m.labels(foo="bar").labels(baz="qux")
         assert isinstance(result, _NoOpMetric)
@@ -127,6 +135,7 @@ class TestNoopFallbackBehavior:
 
     def test_noop_timer(self):
         from mini_agent.metrics import _NoOpMetric
+
         m = _NoOpMetric()
         with m.time():
             pass

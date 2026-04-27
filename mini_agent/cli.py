@@ -206,7 +206,9 @@ def print_session_info(agent: Agent, workspace_dir: Path, model: str):
     header_padding_total = BOX_WIDTH - 1 - header_width  # -1 for leading space
     header_padding_left = header_padding_total // 2
     header_padding_right = header_padding_total - header_padding_left
-    print(f"{Colors.DIM}│{Colors.RESET} {' ' * header_padding_left}{header_text}{' ' * header_padding_right}{Colors.DIM}│{Colors.RESET}")
+    print(
+        f"{Colors.DIM}│{Colors.RESET} {' ' * header_padding_left}{header_text}{' ' * header_padding_right}{Colors.DIM}│{Colors.RESET}"
+    )
 
     # Divider
     print(f"{Colors.DIM}├{'─' * BOX_WIDTH}┤{Colors.RESET}")
@@ -220,7 +222,9 @@ def print_session_info(agent: Agent, workspace_dir: Path, model: str):
     # Bottom border
     print(f"{Colors.DIM}└{'─' * BOX_WIDTH}┘{Colors.RESET}")
     print()
-    print(f"{Colors.DIM}Type {Colors.BRIGHT_GREEN}/help{Colors.DIM} for help, {Colors.BRIGHT_GREEN}/exit{Colors.DIM} to quit{Colors.RESET}")
+    print(
+        f"{Colors.DIM}Type {Colors.BRIGHT_GREEN}/help{Colors.DIM} for help, {Colors.BRIGHT_GREEN}/exit{Colors.DIM} to quit{Colors.RESET}"
+    )
     print()
 
 
@@ -554,7 +558,9 @@ async def run_agent(workspace_dir: Path, task: str = None):
     # Set retry callback
     if config.llm.retry.enabled:
         llm_client.retry_callback = on_retry
-        print(f"{Colors.GREEN}✅ LLM retry mechanism enabled (max {config.llm.retry.max_retries} retries){Colors.RESET}")
+        print(
+            f"{Colors.GREEN}✅ LLM retry mechanism enabled (max {config.llm.retry.max_retries} retries){Colors.RESET}"
+        )
 
     # 3. Initialize base tools (independent of workspace)
     tools, skill_loader = await initialize_base_tools(config)
@@ -577,7 +583,9 @@ async def run_agent(workspace_dir: Path, task: str = None):
         if skills_metadata:
             # Replace placeholder with actual metadata
             system_prompt = system_prompt.replace("{SKILLS_METADATA}", skills_metadata)
-            print(f"{Colors.GREEN}✅ Injected {len(skill_loader.loaded_skills)} skills metadata into system prompt{Colors.RESET}")
+            print(
+                f"{Colors.GREEN}✅ Injected {len(skill_loader.loaded_skills)} skills metadata into system prompt{Colors.RESET}"
+            )
         else:
             # Remove placeholder if no skills
             system_prompt = system_prompt.replace("{SKILLS_METADATA}", "")
@@ -601,7 +609,9 @@ async def run_agent(workspace_dir: Path, task: str = None):
 
     # 8.5 Non-interactive mode: execute task and exit
     if task:
-        print(f"\n{Colors.BRIGHT_BLUE}Agent{Colors.RESET} {Colors.DIM}›{Colors.RESET} {Colors.DIM}Executing task...{Colors.RESET}\n")
+        print(
+            f"\n{Colors.BRIGHT_BLUE}Agent{Colors.RESET} {Colors.DIM}›{Colors.RESET} {Colors.DIM}Executing task...{Colors.RESET}\n"
+        )
         agent.add_user_message(task)
         try:
             await agent.run()

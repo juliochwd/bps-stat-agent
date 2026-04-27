@@ -33,11 +33,7 @@ def test_from_yaml_parses_logging_config(tmp_path):
     """Config.from_yaml should parse logging section."""
     config_file = tmp_path / "config.yaml"
     config_file.write_text(
-        "api_key: sk-test-real-key-12345\n"
-        "logging:\n"
-        "  level: DEBUG\n"
-        "  json_output: true\n"
-        "  log_file: /tmp/test.log\n",
+        "api_key: sk-test-real-key-12345\nlogging:\n  level: DEBUG\n  json_output: true\n  log_file: /tmp/test.log\n",
         encoding="utf-8",
     )
     config = Config.from_yaml(config_file)

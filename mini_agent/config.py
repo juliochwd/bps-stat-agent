@@ -103,7 +103,9 @@ class Config(BaseModel):
         """Load configuration from the default search path."""
         config_path = cls.get_default_config_path()
         if not config_path.exists():
-            raise FileNotFoundError("Configuration file not found. Run scripts/setup-config.sh or place config.yaml in bps-stat-agent/config/.")
+            raise FileNotFoundError(
+                "Configuration file not found. Run scripts/setup-config.sh or place config.yaml in bps-stat-agent/config/."
+            )
         return cls.from_yaml(config_path)
 
     @classmethod
@@ -145,11 +147,7 @@ class Config(BaseModel):
             or os.environ.get("OPENAI_API_KEY")
             or ""
         )
-        api_key = (
-            env_api_key
-            if configured_api_key in cls.INVALID_API_KEYS and env_api_key
-            else configured_api_key
-        )
+        api_key = env_api_key if configured_api_key in cls.INVALID_API_KEYS and env_api_key else configured_api_key
 
         if api_key in cls.INVALID_API_KEYS:
             raise ValueError("Please configure a valid API Key")

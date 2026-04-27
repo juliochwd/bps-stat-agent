@@ -74,9 +74,7 @@ async def test_basic_agent_usage():
         try:
             # MCP tools are disabled by default to prevent test hangs
             # Enable specific MCP servers in mcp.json if needed
-            mcp_tools = await load_mcp_tools_async(
-                config_path="mini_agent/config/mcp.json"
-            )
+            mcp_tools = await load_mcp_tools_async(config_path="mini_agent/config/mcp.json")
             if mcp_tools:
                 print(f"✓ Loaded {len(mcp_tools)} MCP tools")
                 tools.extend(mcp_tools)
