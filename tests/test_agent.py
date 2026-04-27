@@ -15,10 +15,13 @@ from mini_agent.tools import BashTool, EditTool, ReadTool, WriteTool
 @pytest.mark.asyncio
 async def test_agent_simple_task():
     """Test agent with a simple file creation task."""
+    config_path = Path("mini_agent/config/config.yaml")
+    if not config_path.exists():
+        pytest.skip("config.yaml not found (requires API key)")
+
     print("\n=== Testing Agent with Simple File Task ===")
 
     # Load config
-    config_path = Path("mini_agent/config/config.yaml")
     config = Config.from_yaml(config_path)
 
     # Create temp workspace
@@ -97,10 +100,13 @@ async def test_agent_simple_task():
 @pytest.mark.asyncio
 async def test_agent_bash_task():
     """Test agent with a bash command task."""
+    config_path = Path("mini_agent/config/config.yaml")
+    if not config_path.exists():
+        pytest.skip("config.yaml not found (requires API key)")
+
     print("\n=== Testing Agent with Bash Task ===")
 
     # Load config
-    config_path = Path("mini_agent/config/config.yaml")
     config = Config.from_yaml(config_path)
 
     # Create temp workspace

@@ -17,6 +17,8 @@ async def test_wrapper_anthropic_provider():
 
     # Load config
     config_path = Path("mini_agent/config/config.yaml")
+    if not config_path.exists():
+        pytest.skip("config.yaml not found (requires API key)")
     with open(config_path, encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
@@ -64,6 +66,8 @@ async def test_wrapper_openai_provider():
 
     # Load config
     config_path = Path("mini_agent/config/config.yaml")
+    if not config_path.exists():
+        pytest.skip("config.yaml not found (requires API key)")
     with open(config_path, encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
@@ -110,6 +114,8 @@ async def test_wrapper_default_provider():
 
     # Load config
     config_path = Path("mini_agent/config/config.yaml")
+    if not config_path.exists():
+        pytest.skip("config.yaml not found (requires API key)")
     with open(config_path, encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
@@ -131,6 +137,8 @@ async def test_wrapper_tool_calling():
 
     # Load config
     config_path = Path("mini_agent/config/config.yaml")
+    if not config_path.exists():
+        pytest.skip("config.yaml not found (requires API key)")
     with open(config_path, encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
