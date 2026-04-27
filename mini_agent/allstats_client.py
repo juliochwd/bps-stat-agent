@@ -13,7 +13,6 @@ Usage:
 """
 
 import asyncio
-import re
 import sys
 from dataclasses import dataclass, field
 from typing import Any
@@ -142,7 +141,7 @@ class AllStatsClient:
                     "Cache-Control": "max-age=0",
                 }
             )
-            
+
             # Apply stealth anti-detection scripts
             await self._context.add_init_script("""
                 Object.defineProperty(navigator, 'webdriver', {
@@ -156,7 +155,7 @@ class AllStatsClient:
                 });
                 window.chrome = { runtime: {} };
             """)
-            
+
             self._page = await self._context.new_page()
             self._page.set_default_timeout(self.timeout * 1000)
 
@@ -234,7 +233,7 @@ class AllStatsClient:
             print(f"[AllStatsClient] Rate-limiting: waiting {wait_time:.1f}s to avoid Cloudflare block...")
             await asyncio.sleep(wait_time)
         self._last_search_time = time.time()
-        
+
         await self._ensure_browser()
         url = self._build_url(keyword, domain, content, page, sort)
         print(f"[AllStatsClient] Navigating to: {url}")
@@ -498,7 +497,7 @@ class AllStatsClient:
                     await asyncio.sleep(1)
                     print("[AllStatsClient] Popup closed")
                     return True
-            except Exception as e:
+            except Exception:
                 continue
 
         # Also try Escape key

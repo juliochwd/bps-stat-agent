@@ -73,7 +73,7 @@ class SessionNoteTool(Tool):
         """
         if not self.memory_file.exists():
             return []
-        
+
         try:
             return json.loads(self.memory_file.read_text())
         except Exception as e:

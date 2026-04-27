@@ -18,7 +18,6 @@ import sys
 import threading
 from datetime import datetime
 from pathlib import Path
-from typing import List
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
@@ -27,7 +26,7 @@ from prompt_toolkit.history import FileHistory
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.styles import Style
 
-from mini_agent import LLMClient
+from mini_agent import LLMClient, __version__
 from mini_agent.agent import Agent
 from mini_agent.config import Config
 from mini_agent.schema import LLMProvider
@@ -38,7 +37,6 @@ from mini_agent.tools.mcp_loader import cleanup_mcp_connections, load_mcp_tools_
 from mini_agent.tools.note_tool import RecallNoteTool, SessionNoteTool
 from mini_agent.tools.skill_tool import create_skill_tools
 from mini_agent.utils import calculate_display_width
-
 
 from .colors import Colors
 
@@ -127,7 +125,7 @@ def read_log_file(filename: str) -> None:
     print(f"{Colors.DIM}{'─' * 80}{Colors.RESET}")
 
     try:
-        with open(log_file, "r", encoding="utf-8") as f:
+        with open(log_file, encoding="utf-8") as f:
             content = f.read()
         print(content)
         print(f"{Colors.DIM}{'─' * 80}{Colors.RESET}")
@@ -285,7 +283,7 @@ Examples:
         "--version",
         "-v",
         action="version",
-        version="bps-stat-agent 0.1.3",
+        version=f"bps-stat-agent {__version__}",
     )
 
     # Subcommands
@@ -399,7 +397,7 @@ async def initialize_base_tools(config: Config):
     return tools, skill_loader
 
 
-def add_workspace_tools(tools: List[Tool], config: Config, workspace_dir: Path):
+def add_workspace_tools(tools: list[Tool], config: Config, workspace_dir: Path):
     """Add workspace-dependent tools
 
     These tools need to know the workspace directory.
@@ -517,7 +515,7 @@ async def run_agent(workspace_dir: Path, task: str = None):
     if config.tracing.enabled:
         configure_tracing(
             service_name="bps-stat-agent",
-            service_version="0.1.3",
+            service_version=__version__,
             exporter=config.tracing.exporter,
             otlp_endpoint=config.tracing.otlp_endpoint,
         )

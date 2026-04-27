@@ -27,9 +27,8 @@ try:
 except ImportError:
     from bps_api import BPSAPI
 from mini_agent.bps_orchestrator import BPSOrchestrator
-from mini_agent.bps_resource_retriever import BPSResourceRetriever
 from mini_agent.bps_resolution import classify_search_result
-
+from mini_agent.bps_resource_retriever import BPSResourceRetriever
 
 # MCP Server metadata
 MCP_SERVER_NAME = "bps"
@@ -512,13 +511,13 @@ async def bps_search(
     """
     try:
         client = get_api_client(api_key)
-        
+
         # Search static tables by keyword
         result = await _run_sync(client.get_static_tables, domain=domain, keyword=keyword, page=page)
-        
+
         items = result.get("items", [])
         pagination = result.get("pagination", {})
-        
+
         # Extract safe info (don't expose the encrypted download URLs directly)
         tables = []
         for item in items:
@@ -529,7 +528,7 @@ async def bps_search(
                 "update_date": item.get("updt_date"),
                 "size": item.get("size"),
             })
-        
+
         return success_response({
             "keyword": keyword,
             "domain": domain,
@@ -567,10 +566,10 @@ async def bps_search_allstats(
     try:
         # Import here to avoid dependency if not needed
         from mini_agent.allstats_client import AllStatsClient
-        
+
         async with AllStatsClient(headless=True, search_delay=3) as client:
             result = await client.search(keyword=keyword, domain=domain, content=content, page=page)
-            
+
             results_data = []
             for r in result.results:
                 results_data.append({
@@ -582,7 +581,7 @@ async def bps_search_allstats(
                     "domain_code": r.domain_code,
                     "year": r.year,
                 })
-            
+
             return success_response({
                 "keyword": keyword,
                 "domain": domain,
@@ -633,26 +632,25 @@ async def bps_get_table_data(
     """
     try:
         client = get_api_client(api_key)
-        
+
         # Get table detail with data
         result = await _run_sync(client.get_static_table_detail, table_id=table_id, domain=domain)
-        
+
         data_section = result.get("data", {})
         title = data_section.get("title", "")
         subject = data_section.get("subcsa", "")
         update_date = data_section.get("updt_date", "")
-        
+
         # Parse HTML table
-        import re
         html_content = data_section.get("table", "")
         headers, data_rows = _parse_html_table(html_content)
-        
+
         if not headers or not data_rows:
             return error_response("No data found in table", {
                 "table_id": table_id,
                 "title": title
             })
-        
+
         # Convert to list of dicts
         data = []
         for row in data_rows:
@@ -661,7 +659,7 @@ async def bps_get_table_data(
                 if i < len(row):
                     row_dict[header] = row[i]
             data.append(row_dict)
-        
+
         response_data = {
             "table_id": table_id,
             "title": title,
@@ -673,7 +671,7 @@ async def bps_get_table_data(
             "headers": headers,
             "data": data,
         }
-        
+
         if format == "csv":
             # Add CSV representation
             csv_lines = [",".join(headers)]
@@ -681,7 +679,7 @@ async def bps_get_table_data(
                 values = [str(row.get(h, "")) for h in headers]
                 csv_lines.append(",".join(values))
             response_data["csv"] = "\n".join(csv_lines)
-        
+
         return success_response(response_data, f"Retrieved {len(data)} rows from table {table_id}")
     except Exception as e:
         return error_response(f"Failed to get data: {str(e)}")
@@ -700,15 +698,15 @@ def _parse_html_table(html: str) -> tuple[list[str], list[list[str]]]:
     import re
     # Unescape HTML entities
     html = html.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"').replace('&amp;', '&')
-    
+
     # Find all rows
     row_matches = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL | re.IGNORECASE)
-    
+
     rows = []
     for row_html in row_matches:
         # Find all cells
         cell_matches = re.findall(r'<t[hd][^>]*>(.*?)</t[hd]>', row_html, re.DOTALL | re.IGNORECASE)
-        
+
         # Clean cells
         cells = []
         for cell in cell_matches:
@@ -721,19 +719,19 @@ def _parse_html_table(html: str) -> tuple[list[str], list[list[str]]]:
                    .replace('  ', ' ')
                    .strip())
             cells.append(text)
-        
+
         if cells:
             rows.append(cells)
-    
+
     # First row with actual content is headers (typically row 3)
     headers = []
     data_rows = []
-    
+
     if len(rows) > 3:
         potential_headers = rows[3]
         headers = [h for h in potential_headers if h.strip()]
         data_rows = rows[4:]
-    
+
     return headers, data_rows
 
 
@@ -762,33 +760,32 @@ async def bps_search_and_get_data(
     """
     try:
         client = get_api_client(api_key)
-        
+
         # Step 1: Search for tables
         search_result = await _run_sync(client.get_static_tables, domain=domain, keyword=keyword, page=1)
         items = search_result.get("items", [])
-        
+
         if not items:
             return error_response(f"No tables found for keyword '{keyword}'")
-        
+
         # Step 2: Get data from first N tables
         results = []
         for item in items[:max_tables]:
             table_id = item.get("table_id")
             if not table_id:
                 continue
-                
+
             try:
                 table_result = await _run_sync(client.get_static_table_detail, table_id=table_id, domain=domain)
                 data_section = table_result.get("data", {})
                 title = data_section.get("title", "")
                 subject = data_section.get("subcsa", "")
                 update_date = data_section.get("updt_date", "")
-                
+
                 # Parse HTML table
-                import re
                 html_content = data_section.get("table", "")
                 headers, data_rows = _parse_html_table(html_content)
-                
+
                 # Convert to list of dicts
                 parsed_data = []
                 for row in data_rows:
@@ -797,7 +794,7 @@ async def bps_search_and_get_data(
                         if i < len(row):
                             row_dict[header] = row[i]
                     parsed_data.append(row_dict)
-                
+
                 table_entry = {
                     "table_id": table_id,
                     "title": title,
@@ -809,22 +806,22 @@ async def bps_search_and_get_data(
                     "data": parsed_data[:50] if parsed_data else [],  # Limit rows
                     "data_truncated": len(parsed_data) > 50
                 }
-                
+
                 if format == "csv" and parsed_data:
                     csv_lines = [",".join(headers)]
                     for row in parsed_data[:100]:
                         values = [str(row.get(h, "")) for h in headers]
                         csv_lines.append(",".join(values))
                     table_entry["csv_sample"] = "\n".join(csv_lines)
-                
+
                 results.append(table_entry)
-                
+
             except Exception as e:
                 results.append({
                     "table_id": table_id,
                     "error": str(e)
                 })
-        
+
         return success_response({
             "keyword": keyword,
             "domain": domain,

@@ -8,16 +8,15 @@ If prometheus_client is not installed, all metric operations become no-ops.
 
 import time
 from contextlib import contextmanager
-from typing import Any
 
 try:
     from prometheus_client import (
+        CONTENT_TYPE_LATEST,
         Counter,
-        Histogram,
         Gauge,
+        Histogram,
         Info,
         generate_latest,
-        CONTENT_TYPE_LATEST,
     )
     PROMETHEUS_AVAILABLE = True
 except ImportError:

@@ -47,7 +47,7 @@ FROM python:3.11-slim AS runtime
 
 # -- Metadata ----------------------------------------------------------------
 LABEL maintainer="Julio Christian Wadu Doko <juliochwd@gmail.com>" \
-      version="0.1.3" \
+      version="0.2.0" \
       description="BPS Indonesia Statistical Data Agent — search and query BPS data via AllStats Search Engine and WebAPI"
 
 # -- Environment -------------------------------------------------------------

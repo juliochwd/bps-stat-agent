@@ -1,11 +1,9 @@
 """Tests for AgentLogger module."""
 
-import json
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from mini_agent.logger import AgentLogger
-from mini_agent.schema import Message, ToolCall, FunctionCall
+from mini_agent.schema import Message
 
 
 class TestAgentLogger:

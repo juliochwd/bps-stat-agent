@@ -15,11 +15,11 @@ Usage:
 """
 
 import asyncio
-import os
 import json
+import os
 import re
-from html import unescape
 from dataclasses import dataclass
+from html import unescape
 
 try:
     from mini_agent.bps_api import BPSAPI
@@ -38,7 +38,7 @@ class BPSDataResult:
     data: list[dict]
     raw_rows: list[list[str]]
     source: str = "webapi"
-    
+
     def to_json(self) -> str:
         """Convert to JSON string."""
         return json.dumps({
@@ -50,7 +50,7 @@ class BPSDataResult:
             "data": self.data,
             "source": self.source
         }, indent=2, ensure_ascii=False)
-    
+
     def to_csv(self) -> str:
         """Convert to CSV string."""
         import csv
@@ -62,7 +62,7 @@ class BPSDataResult:
             values = [str(row.get(h, "")) for h in self.headers]
             writer.writerow(values)
         return output.getvalue().strip()
-    
+
     def summary(self) -> str:
         """Get human-readable summary."""
         return f"""Table {self.table_id}: {self.title}
@@ -72,7 +72,7 @@ Rows: {len(self.data)}
 Columns: {len(self.headers)}
 Preview:
 {self._preview()}"""
-    
+
     def _preview(self, max_rows: int = 5) -> str:
         """Get data preview."""
         lines = [" | ".join(self.headers[:5])]
@@ -93,7 +93,7 @@ class BPSDataRetriever:
         # Get actual data from first table
         data = await retriever.get_table_data(tables[0]['table_id'], domain="5300")
     """
-    
+
     def __init__(self, api_key: str | None = None):
         self.api_key = (
             api_key
@@ -103,7 +103,7 @@ class BPSDataRetriever:
         if not self.api_key:
             raise ValueError("BPS API key required. Set BPS_API_KEY environment variable or pass api_key parameter.")
         self._api = BPSAPI(self.api_key)
-    
+
     async def search(
         self,
         keyword: str,
@@ -126,7 +126,7 @@ class BPSDataRetriever:
             keyword=keyword,
             page=page
         )
-        
+
         items = result.get("items", [])
         return [
             {
@@ -138,7 +138,7 @@ class BPSDataRetriever:
             }
             for item in items
         ]
-    
+
     async def get_table_data(
         self,
         table_id: int,
@@ -158,16 +158,16 @@ class BPSDataRetriever:
             table_id=table_id,
             domain=domain
         )
-        
+
         data_section = result.get("data", {})
         title = data_section.get("title", "")
         subject = data_section.get("subcsa", "")
         update_date = data_section.get("updt_date", "")
-        
+
         # Parse HTML table
         html_content = data_section.get("table", "")
         headers, raw_rows = self._parse_html_table(html_content)
-        
+
         # Convert to list of dicts
         data_rows = []
         for row in raw_rows:
@@ -176,7 +176,7 @@ class BPSDataRetriever:
                 if i < len(row):
                     row_dict[header] = row[i]
             data_rows.append(row_dict)
-        
+
         return BPSDataResult(
             table_id=table_id,
             title=title,
@@ -187,7 +187,7 @@ class BPSDataRetriever:
             raw_rows=raw_rows,
             source="webapi"
         )
-    
+
     def _parse_html_table(self, html: str) -> tuple[list[str], list[list[str]]]:
         """
         Parse HTML table to headers and data rows.
@@ -249,7 +249,7 @@ class BPSDataRetriever:
     def _normalize_cell(text: str) -> str:
         """Normalize a cell's whitespace and non-breaking spaces."""
         return " ".join(text.replace("\xa0", " ").split()).strip()
-    
+
     async def search_and_get_data(
         self,
         keyword: str,
@@ -269,7 +269,7 @@ class BPSDataRetriever:
         """
         # Search for tables
         tables = await self.search(keyword, domain)
-        
+
         results = []
         for table_info in tables[:max_tables]:
             table_id = table_info.get("table_id")
@@ -279,7 +279,7 @@ class BPSDataRetriever:
                     results.append(data)
                 except Exception as e:
                     print(f"Error fetching table {table_id}: {e}")
-        
+
         return results
 
 
@@ -289,42 +289,42 @@ async def main():
     if not os.environ.get("BPS_API_KEY"):
         print("ERROR: BPS_API_KEY environment variable is not set.")
         return
-    
+
     print("=" * 70)
     print("BPS Data Retriever - Full Flow Test")
     print("=" * 70)
-    
+
     retriever = BPSDataRetriever()
-    
+
     # Step 1: Search
     print("\n[Step 1] Searching for 'inflasi' tables...")
     tables = await retriever.search("inflasi", domain="5300")
     print(f"Found {len(tables)} tables")
-    
+
     if tables:
         print(f"\nFirst table: {tables[0]['title'][:60]}")
         print(f"Table ID: {tables[0]['table_id']}")
-        
+
         # Step 2: Get actual data
         print("\n[Step 2] Fetching actual data...")
         data = await retriever.get_table_data(tables[0]['table_id'], domain="5300")
-        
-        print(f"\n[Step 3] Data Retrieved Successfully!")
+
+        print("\n[Step 3] Data Retrieved Successfully!")
         print(data.summary())
-        
+
         # Show JSON output
         print("\n[Step 4] JSON output:")
         print(data.to_json()[:1000] + "...")
-        
+
         # Show CSV output
         print("\n[Step 5] CSV output:")
         print(data.to_csv()[:800])
-    
+
     # Test complete flow
     print("\n" + "=" * 70)
     print("Testing search_and_get_data (complete flow)")
     print("=" * 70)
-    
+
     all_results = await retriever.search_and_get_data("kemiskinan", domain="5300")
     print(f"\nGot {len(all_results)} data results")
     for result in all_results:

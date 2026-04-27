@@ -2,8 +2,6 @@ import json
 import logging
 import sys
 
-import pytest
-
 from mini_agent.config import LoggingConfig
 from mini_agent.logging_config import JSONFormatter, configure_logging
 

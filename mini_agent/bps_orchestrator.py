@@ -1,7 +1,8 @@
 """AllStats-first orchestration for BPS retrieval flows."""
 
 import re
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 class BPSOrchestrator:

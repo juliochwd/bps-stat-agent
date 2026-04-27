@@ -4,24 +4,26 @@ import asyncio
 import json
 from pathlib import Path
 from time import perf_counter
-from typing import Optional
 
 import tiktoken
 
+from .colors import Colors
 from .llm import LLMClient
 from .logger import AgentLogger
+from .metrics import (
+    AGENT_ACTIVE_RUNS,
+    AGENT_RUN_DURATION,
+    AGENT_RUNS_TOTAL,
+    AGENT_STEPS_TOTAL,
+    LLM_REQUEST_DURATION,
+    LLM_REQUESTS_TOTAL,
+    LLM_TOKENS_TOTAL,
+    TOOL_CALL_DURATION,
+    TOOL_CALLS_TOTAL,
+)
 from .schema import Message
 from .tools.base import Tool, ToolResult
 from .utils import calculate_display_width
-
-
-from .colors import Colors
-from .metrics import (
-    AGENT_RUNS_TOTAL, AGENT_STEPS_TOTAL, AGENT_RUN_DURATION,
-    AGENT_ACTIVE_RUNS, LLM_REQUESTS_TOTAL, LLM_REQUEST_DURATION,
-    LLM_TOKENS_TOTAL, TOOL_CALLS_TOTAL, TOOL_CALL_DURATION,
-    track_duration,
-)
 
 
 class Agent:
@@ -42,7 +44,7 @@ class Agent:
         self.token_limit = token_limit
         self.workspace_dir = Path(workspace_dir)
         # Cancellation event for interrupting agent execution (set externally, e.g., by Esc key)
-        self.cancel_event: Optional[asyncio.Event] = None
+        self.cancel_event: asyncio.Event | None = None
 
         # Ensure workspace exists
         self.workspace_dir.mkdir(parents=True, exist_ok=True)
@@ -300,7 +302,7 @@ Requirements:
             # Use simple text summary on failure
             return summary_content
 
-    async def run(self, cancel_event: Optional[asyncio.Event] = None) -> str:
+    async def run(self, cancel_event: asyncio.Event | None = None) -> str:
         """Execute agent loop until task is complete or max steps reached.
 
         Args:

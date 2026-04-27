@@ -28,9 +28,10 @@ from acp import (
     update_agent_thought,
     update_tool_call,
 )
+from acp.schema import AgentCapabilities, Implementation
 from pydantic import field_validator
-from acp.schema import AgentCapabilities, Implementation, McpCapabilities
 
+from mini_agent import __version__
 from mini_agent.agent import Agent
 from mini_agent.cli import add_workspace_tools, initialize_base_tools
 from mini_agent.config import Config
@@ -89,7 +90,7 @@ class BPSStatACPAgent:
         return InitializeResponse(
             protocolVersion=PROTOCOL_VERSION,
             agentCapabilities=AgentCapabilities(loadSession=False),
-            agentInfo=Implementation(name="bps-stat-agent", title="BPS Stat Agent", version="0.1.3"),
+            agentInfo=Implementation(name="bps-stat-agent", title="BPS Stat Agent", version=__version__),
         )
 
     async def newSession(self, params: NewSessionRequest) -> NewSessionResponse:
@@ -178,7 +179,7 @@ async def run_acp_server(config: Config | None = None) -> None:
     if config.tracing.enabled:
         configure_tracing(
             service_name="bps-stat-agent-acp",
-            service_version="0.1.3",
+            service_version=__version__,
             exporter=config.tracing.exporter,
             otlp_endpoint=config.tracing.otlp_endpoint,
         )

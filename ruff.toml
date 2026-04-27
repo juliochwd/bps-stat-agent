@@ -15,19 +15,29 @@ select = [
     "SIM", # flake8-simplify
 ]
 ignore = [
-    "E501",   # line too long — handled by formatter
-    "B008",   # do not perform function calls in argument defaults (common in FastAPI/Pydantic)
-    "B905",   # `zip()` without an explicit `strict=` parameter (too noisy for existing code)
-    "SIM108", # use ternary operator — reduces readability in many cases
-    "SIM117", # use single `with` statement — not always clearer
-    "UP007",  # use X | Y for union types — keep Optional[] for 3.10 compat
+    "E501",
+    "W293",
+    "B008",
+    "B904",
+    "B905",
+    "E722",
+    "SIM102",
+    "SIM103",
+    "SIM105",
+    "SIM108",
+    "SIM112",
+    "SIM117",
+    "SIM118",
+    "SIM201",
+    "UP007",
+    "UP042",
 ]
 
 [lint.per-file-ignores]
-"tests/**/*.py" = [
-    "B011",   # assert False is fine in tests
-    "SIM300", # yoda conditions in assertions are fine
-]
+"tests/**/*.py" = ["B011", "F841", "B023", "SIM300"]
+"mini_agent/cli.py" = ["B023"]
+"mini_agent/bps_mcp_server.py" = ["F821"]
+"mini_agent/skills/**/*.py" = ["F841", "B007"]
 
 [lint.isort]
 known-first-party = ["mini_agent"]

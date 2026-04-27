@@ -1,7 +1,8 @@
 """Tests for the edit_file fix - should only replace single occurrences."""
 
+
 import pytest
-from pathlib import Path
+
 from mini_agent.tools.file_tools import EditTool
 
 

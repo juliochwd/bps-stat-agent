@@ -8,7 +8,6 @@ import pytest
 from mini_agent.bps_api import BPSAPI
 from mini_agent.bps_mcp_server import bps_answer_query
 
-
 pytestmark = pytest.mark.live
 
 

@@ -2,7 +2,6 @@
 
 import json
 import urllib.request
-from unittest.mock import patch
 
 import pytest
 

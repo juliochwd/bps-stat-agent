@@ -14,7 +14,6 @@ from mini_agent.bps_mcp_server import BPSAPI, bps_answer_query
 from mini_agent.llm.llm_wrapper import LLMClient
 from mini_agent.schema import Message
 
-
 pytestmark = pytest.mark.live
 
 

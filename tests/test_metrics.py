@@ -93,7 +93,7 @@ class TestMetricsWithPrometheus:
         reason="prometheus_client not installed",
     )
     def test_init_app_info(self):
-        from mini_agent.metrics import init_app_info, get_metrics_text
+        from mini_agent.metrics import get_metrics_text, init_app_info
         init_app_info("0.1.3")
         body, _ = get_metrics_text()
         assert b"bps_stat_agent_info" in body

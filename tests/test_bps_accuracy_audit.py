@@ -18,7 +18,6 @@ from mini_agent.bps_mcp_server import BPSAPI, bps_answer_query
 from mini_agent.llm.llm_wrapper import LLMClient
 from mini_agent.schema import Message
 
-
 pytestmark = pytest.mark.live
 
 
@@ -149,7 +148,7 @@ class TestDataRetrievalAccuracy:
         assert payload["success"]
         method = payload["data"].get("retrieval_method")
         assert method is not None, "No retrieval_method documented"
-        assert method != "", f"Empty retrieval_method"
+        assert method != "", "Empty retrieval_method"
 
     @pytest.mark.asyncio
     async def test_source_url_is_valid(self):

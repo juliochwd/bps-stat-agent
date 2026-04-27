@@ -16,9 +16,9 @@ Usage:
 import json
 import threading
 import time
-from datetime import datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Callable
 
 # Global state
 _server: HTTPServer | None = None
@@ -46,7 +46,7 @@ class HealthHandler(BaseHTTPRequestHandler):
         self._respond(200, {
             "status": "healthy",
             "uptime_seconds": round(uptime, 2),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "version": _get_version(),
         })
 
@@ -57,21 +57,13 @@ class HealthHandler(BaseHTTPRequestHandler):
         else:
             self._respond(200, {
                 "status": "ready",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             })
-
-    def _respond_metrics(self):
-        from mini_agent.metrics import get_metrics_text
-        body, content_type = get_metrics_text()
-        self.send_response(200)
-        self.send_header("Content-Type", content_type)
-        self.end_headers()
-        self.wfile.write(body)
 
     def _respond_metrics(self):
         """Serve Prometheus metrics if available, otherwise 404."""
         try:
-            from .metrics import get_metrics_text, PROMETHEUS_AVAILABLE
+            from .metrics import PROMETHEUS_AVAILABLE, get_metrics_text
             if PROMETHEUS_AVAILABLE:
                 body_bytes, content_type = get_metrics_text()
                 self.send_response(200)

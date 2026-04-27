@@ -7,7 +7,6 @@ Supports loading skills from SKILL.md files and providing them to Agent
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import yaml
 
@@ -19,10 +18,10 @@ class Skill:
     name: str
     description: str
     content: str
-    license: Optional[str] = None
-    allowed_tools: Optional[List[str]] = None
-    metadata: Optional[Dict[str, str]] = None
-    skill_path: Optional[Path] = None
+    license: str | None = None
+    allowed_tools: list[str] | None = None
+    metadata: dict[str, str] | None = None
+    skill_path: Path | None = None
 
     def to_prompt(self) -> str:
         """Convert skill to prompt format"""
@@ -55,9 +54,9 @@ class SkillLoader:
             skills_dir: Skills directory path
         """
         self.skills_dir = Path(skills_dir)
-        self.loaded_skills: Dict[str, Skill] = {}
+        self.loaded_skills: dict[str, Skill] = {}
 
-    def load_skill(self, skill_path: Path) -> Optional[Skill]:
+    def load_skill(self, skill_path: Path) -> Skill | None:
         """
         Load single skill from SKILL.md file
 
@@ -191,7 +190,7 @@ class SkillLoader:
 
         return content
 
-    def discover_skills(self) -> List[Skill]:
+    def discover_skills(self) -> list[Skill]:
         """
         Discover and load all skills in the skills directory
 
@@ -213,7 +212,7 @@ class SkillLoader:
 
         return skills
 
-    def get_skill(self, name: str) -> Optional[Skill]:
+    def get_skill(self, name: str) -> Skill | None:
         """
         Get loaded skill
 
@@ -225,7 +224,7 @@ class SkillLoader:
         """
         return self.loaded_skills.get(name)
 
-    def list_skills(self) -> List[str]:
+    def list_skills(self) -> list[str]:
         """
         List all loaded skill names
 

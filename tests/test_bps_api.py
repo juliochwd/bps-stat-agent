@@ -4,12 +4,12 @@ Tests all 23 data types and their endpoints using mocked responses.
 Run with: python -m pytest tests/test_bps_api.py -v
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 import requests
 
 from mini_agent.bps_api import BPSAPI, BPSAPIError, BPSMaterial
-
 
 # ============================================================================
 # FIXTURES
@@ -1781,7 +1781,7 @@ class TestBPSMaterial:
 
     def test_bps_material_content_raises_without_pdf(self):
         """BPSMaterial.content should raise BPSAPIError if no PDF URL."""
-        from mini_agent.bps_api import BPSMaterial, BPSAPIError
+        from mini_agent.bps_api import BPSAPIError, BPSMaterial
         mat = BPSMaterial({"title": "Test"})  # No PDF URL
         with pytest.raises(BPSAPIError) as exc_info:
             _ = mat.content

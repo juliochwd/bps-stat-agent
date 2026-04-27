@@ -1073,7 +1073,7 @@ if __name__ == "__main__":
         print("Error: WEBAPI_APP_ID environment variable is not set")
         print("Please set it with: export WEBAPI_APP_ID=your_api_key_here")
         sys.exit(1)
-    
+
     api = BPSAPI(app_id)
 
     print("=== BPS API Client Demo ===\n")
