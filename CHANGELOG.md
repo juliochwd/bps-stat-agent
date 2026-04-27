@@ -5,12 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.1.3] - 2026-04-26
+## [v0.1.3] - 2026-04-27
 
 ### Added
 - **BPS data retriever** with comprehensive statistics support (poverty, unemployment, HDI, life expectancy, GDP, population, inflation)
 - **ANSI color module** (`colors.py`) for consistent terminal output styling
 - **JSON-structured logger** for agent run tracing and debugging
+- **Logo & branding** — project logo (`docs/assets/logo.png`), social preview banner, shields.io badges in README
 
 ### Changed
 - MCP tools expanded from 55 to **62 registered tools**
@@ -20,6 +21,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - File tools edge cases for edit operations
+
+### Security
+- Fixed **18 Dependabot vulnerabilities** across all dependencies:
+  - `mcp` ≥1.23.0 — DNS rebinding protection (HIGH)
+  - `requests` ≥2.33.0 — insecure temp file reuse (MODERATE)
+  - `pytest` ≥9.0.3 — vulnerable tmpdir handling (MODERATE)
+  - `python-dotenv` ≥1.2.2 — symlink following in set_key (MODERATE)
+  - `Pygments` ≥2.20.0 — ReDoS via GUID matching (LOW)
+  - `urllib3` ≥2.6.3 — decompression bomb bypass (HIGH)
+  - `python-multipart` ≥0.0.26 — arbitrary file write (HIGH)
+  - `starlette` ≥0.49.0 — O(n²) DoS via Range header (HIGH)
+  - `pip` — interpretation conflict with tar/ZIP files (MODERATE)
 
 ## [v0.1.2] - 2026-04-24
 
