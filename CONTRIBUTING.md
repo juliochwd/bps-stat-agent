@@ -34,6 +34,8 @@ If you have an idea for a new feature, please create an Issue first to discuss i
    ```bash
    git clone https://github.com/juliochwd/bps-stat-agent.git
    cd bps-stat-agent
+   make install-dev    # Install all dependencies + Playwright
+   bpsagent setup      # Configure API keys
    ```
 
 3. Create a new branch:
@@ -95,10 +97,17 @@ If you have an idea for a new feature, please create an Issue first to discuss i
 
 #### Pull Request Checklist
 
-Before submitting a PR, please ensure:
+Before submitting a PR, run the quality gate and formatter:
 
+```bash
+make format          # Auto-format code
+make check           # Run lint + tests — must pass before submitting
+```
+
+Please ensure:
+
+- [ ] `make check` passes (lint + tests).
 - [ ] The code follows the project's style guide.
-- [ ] All tests pass.
 - [ ] Necessary tests have been added.
 - [ ] Relevant documentation has been updated.
 - [ ] The commit message is clear and concise.

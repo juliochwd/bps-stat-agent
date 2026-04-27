@@ -34,6 +34,11 @@ bps-stat-agent/
 │   ├── colors.py                  # ANSI 终端颜色常量
 │   ├── logger.py                  # JSON 结构化 Agent 运行日志
 │   ├── retry.py                   # 异步重试（指数退避）
+│   ├── setup_wizard.py            # 交互式设置向导（bpsagent setup）
+│   ├── health.py                  # HTTP 健康检查服务器（/health、/ready、/metrics）
+│   ├── metrics.py                 # Prometheus 指标（可选，优雅降级）
+│   ├── tracing.py                 # OpenTelemetry 追踪（可选，优雅降级）
+│   ├── logging_config.py          # 集中式 JSON 结构化日志
 │   │
 │   ├── bps_api.py                 # BPS WebAPI 客户端（59 端点）
 │   ├── bps_mcp_server.py          # FastMCP 服务器（62 个工具）
@@ -78,11 +83,17 @@ bps-stat-agent/
 │   └── skills/                    # Agent 技能（git 子模块）
 │       └── bps-master/            # BPS 领域技能（含工具文档）
 │
-├── tests/                         # 379 个测试（29 个文件）
+├── tests/                         # 418+ 个测试
 ├── examples/                      # 6 个使用示例
 ├── docs/                          # 开发与生产指南
 ├── scripts/                       # 安装脚本（macOS/Linux/Windows）
 ├── pyproject.toml                 # 包定义
+├── Dockerfile                     # 多阶段 Docker 构建
+├── docker-compose.yml             # 3 个服务（CLI、MCP、ACP）
+├── Makefile                       # 20 个开发目标
+├── .github/workflows/ci.yml      # CI 管道（lint、test、security、build）
+├── ruff.toml                      # Linter 配置
+├── .env.example                   # 环境变量模板
 └── README.md
 ```
 
@@ -90,7 +101,7 @@ bps-stat-agent/
 
 ### 2.1 交互式命令
 
-在交互模式 (通过 `bps-stat-agent` 启动) 下运行 Agent 时，您可以使用以下命令：
+在交互模式（通过 `bpsagent` 启动）下运行 Agent 时，您可以使用以下命令：
 
 | 命令                   | 说明                                             |
 | ---------------------- | ------------------------------------------------ |
@@ -105,11 +116,12 @@ bps-stat-agent/
 
 | 命令 | 说明 |
 |------|------|
-| `bps-stat-agent` | 交互式 CLI Agent，用于查询 BPS 数据 |
-| `bps-stat-agent --task "query"` | 非交互式模式，执行单个查询 |
-| `bps-stat-agent --workspace DIR` | 指定自定义工作目录 |
+| `bpsagent setup` | 交互式设置向导（安装后首先运行） |
+| `bpsagent` | 交互式 CLI Agent，用于查询 BPS 数据 |
+| `bpsagent --task "query"` | 非交互式模式，执行单个查询 |
+| `bpsagent --workspace DIR` | 指定自定义工作目录 |
 | `bps-mcp-server` | 通过 STDIO 运行的 MCP 服务器（62 个工具） |
-| `bps-stat-agent-acp` | ACP 服务器，用于 Agent 间通信 |
+| `bpsagent-acp` | ACP 服务器，用于 Agent 间通信 |
 
 ### 2.3 BPS 数据管道
 

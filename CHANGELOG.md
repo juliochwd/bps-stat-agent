@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.2.0 — Production Infrastructure
 
 ### Added
+- **Setup wizard** (`bpsagent setup`) — interactive configuration wizard for first-time users
+- **`bpsagent` command** — primary CLI entry point (alias for bps-stat-agent)
+- **Auto-redirect to setup** — running `bpsagent` without config auto-launches setup wizard
+- **`platform.minimax.io`** added to recognized MiniMax API domains
 - **Dockerfile** — Multi-stage build (builder + runtime) with Python 3.11, uv, Playwright chromium, non-root user
 - **docker-compose.yml** — 3 services (CLI, MCP, ACP) with profiles, resource limits, tmpfs, env_file
 - **.dockerignore** — Excludes secrets, dev artifacts, documentation
@@ -24,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Optional dependency groups** — `metrics`, `tracing`, `observability` for production monitoring
 
 ### Changed
+- **Default provider** changed from Anthropic to MiniMax (platform.minimax.io, MiniMax-M2.5, openai)
+- **mcp-example.json** now uses `bps-mcp-server` directly instead of `uvx`
 - **`enable_bash` default changed to `false`** — Bash tool disabled by default for security (enable explicitly in config.yaml)
 - **Config** — Added `LoggingConfig` and `TracingConfig` sections
 - **config-example.yaml** — Added logging and tracing configuration sections

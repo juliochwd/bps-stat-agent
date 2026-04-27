@@ -33,6 +33,11 @@ bps-stat-agent/
 │   ├── colors.py                  # ANSI terminal color constants
 │   ├── logger.py                  # JSON-structured agent run logger
 │   ├── retry.py                   # Async retry with exponential backoff
+│   ├── setup_wizard.py            # Interactive setup wizard (bpsagent setup)
+│   ├── health.py                  # HTTP health check server (/health, /ready, /metrics)
+│   ├── metrics.py                 # Prometheus metrics (optional, graceful no-op)
+│   ├── tracing.py                 # OpenTelemetry tracing (optional, graceful no-op)
+│   ├── logging_config.py          # Centralized JSON structured logging
 │   │
 │   ├── bps_api.py                 # BPS WebAPI client (59 endpoints)
 │   ├── bps_mcp_server.py          # FastMCP server (62 tools)
@@ -82,6 +87,12 @@ bps-stat-agent/
 ├── docs/                          # Development & production guides
 ├── scripts/                       # Setup scripts (macOS/Linux/Windows)
 ├── pyproject.toml                 # Package definition
+├── Dockerfile                     # Multi-stage Docker build
+├── docker-compose.yml             # 3 services (CLI, MCP, ACP)
+├── Makefile                       # 20 development targets
+├── .github/workflows/ci.yml      # CI pipeline (lint, test, security, build)
+├── ruff.toml                      # Linter configuration
+├── .env.example                   # Environment variable template
 └── README.md
 ```
 
@@ -89,7 +100,7 @@ bps-stat-agent/
 
 ### 2.1 Interactive Commands
 
-When running the agent in interactive mode (`bps-stat-agent`), the following commands are available:
+When running the agent in interactive mode (`bpsagent`), the following commands are available:
 
 | Command                | Description                                                 |
 | ---------------------- | ----------------------------------------------------------- |
@@ -104,11 +115,12 @@ When running the agent in interactive mode (`bps-stat-agent`), the following com
 
 | Command | Description |
 |---------|-------------|
-| `bps-stat-agent` | Interactive CLI agent for querying BPS data |
-| `bps-stat-agent --task "query"` | Non-interactive mode with a single query |
-| `bps-stat-agent --workspace DIR` | Specify custom workspace directory |
+| `bpsagent setup` | Interactive setup wizard (run first after install) |
+| `bpsagent` | Interactive CLI agent for querying BPS data |
+| `bpsagent --task "query"` | Non-interactive mode with a single query |
+| `bpsagent --workspace DIR` | Specify custom workspace directory |
 | `bps-mcp-server` | MCP server over STDIO (62 tools) |
-| `bps-stat-agent-acp` | ACP server for agent-to-agent communication |
+| `bpsagent-acp` | ACP server for agent-to-agent communication |
 
 ### 2.3 BPS Data Pipeline
 
@@ -411,12 +423,9 @@ Failed to load MCP server
 
 ```python
 # At the beginning of cli.py or a test file
-import logging
+from mini_agent.logging_config import configure_logging
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+configure_logging(level="DEBUG", json_output=False)
 ```
 
 #### Using the Python Debugger

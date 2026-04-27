@@ -109,10 +109,11 @@ python examples/04_full_agent.py
 ### 1. Configure API Key
 
 ```bash
-# Copy configuration template
-cp mini_agent/config/config-example.yaml mini_agent/config/config.yaml
+# Recommended: use the interactive setup wizard
+bpsagent setup
 
-# Edit config file and fill in your MiniMax API Key
+# Or manually copy and edit the configuration template
+cp mini_agent/config/config-example.yaml mini_agent/config/config.yaml
 vim mini_agent/config/config.yaml
 ```
 
@@ -154,7 +155,7 @@ These examples are all refined from test cases in the `tests/` directory:
 ### Path 1: Quick Start
 1. Run `01_basic_tools.py` - Learn about tools
 2. Run `02_simple_agent.py` - Run your first Agent
-3. Go directly to interactive mode with `bps-stat-agent`
+3. Go directly to interactive mode with `bpsagent`
 
 ### Path 2: Deep Understanding
 1. Read and run all examples (01 → 04)

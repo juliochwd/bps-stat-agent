@@ -109,10 +109,11 @@ python examples/04_full_agent.py
 ### 1. 配置 API Key
 
 ```bash
-# 复制配置模板
-cp mini_agent/config/config-example.yaml mini_agent/config/config.yaml
+# 推荐：使用交互式配置向导
+bpsagent setup
 
-# 编辑配置文件，填入你的 MiniMax API Key
+# 或手动复制并编辑配置模板
+cp mini_agent/config/config-example.yaml mini_agent/config/config.yaml
 vim mini_agent/config/config.yaml
 ```
 
@@ -154,7 +155,7 @@ python examples/02_simple_agent.py
 ### 路径 1: 快速上手
 1. 运行 `01_basic_tools.py` - 了解工具
 2. 运行 `02_simple_agent.py` - 运行第一个 Agent
-3. 直接使用 `bps-stat-agent` 进入交互模式
+3. 直接使用 `bpsagent` 进入交互模式
 
 ### 路径 2: 深入理解
 1. 阅读并运行所有示例 (01 → 04)

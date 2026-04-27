@@ -34,6 +34,8 @@
    ```bash
    git clone https://github.com/juliochwd/bps-stat-agent.git
    cd bps-stat-agent
+   make install-dev    # Install all dependencies + Playwright
+   bpsagent setup      # Configure API keys
    ```
 
 3. 创建新分支：
@@ -95,10 +97,17 @@
 
 #### Pull Request 检查清单
 
-在提交 PR 之前，请确保：
+在提交 PR 之前，请运行质量门禁和代码格式化：
 
+```bash
+make format          # 自动格式化代码
+make check           # 运行 lint + 测试 — 提交前必须通过
+```
+
+请确保：
+
+- [ ] `make check` 通过（lint + 测试）
 - [ ] 代码遵循项目规范
-- [ ] 所有测试通过
 - [ ] 添加了必要的测试
 - [ ] 更新了相关文档
 - [ ] 提交消息清晰明确

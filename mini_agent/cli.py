@@ -263,10 +263,12 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  bps-stat-agent                              # Use current directory as workspace
-  bps-stat-agent --workspace /path/to/dir     # Use specific workspace directory
-  bps-stat-agent log                          # Show log directory and recent files
-  bps-stat-agent log agent_run_xxx.log        # Read a specific log file
+  bpsagent                                    # Interactive mode
+  bpsagent setup                              # Run setup wizard
+  bpsagent --task "Cari data inflasi NTT"     # Non-interactive mode
+  bpsagent --workspace /path/to/dir           # Use specific workspace
+  bpsagent log                                # Show log directory
+  bpsagent log agent_run_xxx.log              # Read a specific log file
         """,
     )
     parser.add_argument(
@@ -479,28 +481,7 @@ async def run_agent(workspace_dir: Path, task: str = None):
 
     if not config_path.exists():
         print(f"{Colors.RED}❌ Configuration file not found{Colors.RESET}")
-        print()
-        print(f"{Colors.BRIGHT_CYAN}📦 Configuration Search Path:{Colors.RESET}")
-        print(f"  {Colors.DIM}1) mini_agent/config/config.yaml{Colors.RESET} (development)")
-        print(f"  {Colors.DIM}2) ~/.bps-stat-agent/config/config.yaml{Colors.RESET} (user)")
-        print(f"  {Colors.DIM}3) <package>/config/config.yaml{Colors.RESET} (installed)")
-        print()
-        print(f"{Colors.BRIGHT_YELLOW}🚀 Quick Setup (Recommended):{Colors.RESET}")
-        print(
-            f"  {Colors.BRIGHT_GREEN}curl -fsSL https://raw.githubusercontent.com/juliochwd/bps-stat-agent/main/scripts/setup-config.sh | bash{Colors.RESET}"
-        )
-        print()
-        print(f"{Colors.DIM}  This will automatically:{Colors.RESET}")
-        print(f"{Colors.DIM}    • Create ~/.bps-stat-agent/config/{Colors.RESET}")
-        print(f"{Colors.DIM}    • Download configuration files{Colors.RESET}")
-        print(f"{Colors.DIM}    • Guide you to add your API Key{Colors.RESET}")
-        print()
-        print(f"{Colors.BRIGHT_YELLOW}📝 Manual Setup:{Colors.RESET}")
-        user_config_dir = Path.home() / ".bps-stat-agent" / "config"
-        example_config = Config.get_package_dir() / "config" / "config-example.yaml"
-        print(f"  {Colors.DIM}mkdir -p {user_config_dir}{Colors.RESET}")
-        print(f"  {Colors.DIM}cp {example_config} {user_config_dir}/config.yaml{Colors.RESET}")
-        print(f"  {Colors.DIM}# Then edit {user_config_dir}/config.yaml to add your API Key{Colors.RESET}")
+        print(f"{Colors.BRIGHT_YELLOW}   Run 'bpsagent setup' to configure.{Colors.RESET}")
         print()
         return
 

@@ -48,6 +48,9 @@ BPS Stat Agent 提供了生产级的基础设施支持：
 git clone https://github.com/juliochwd/bps-stat-agent.git
 cd bps-stat-agent
 
+# 1b. 运行配置向导（交互式配置 API Key）
+bpsagent setup
+
 # 2. 创建环境变量文件
 cp .env.example .env
 # 编辑 .env — 至少设置一个 LLM API Key
@@ -90,7 +93,7 @@ docker compose --profile acp up -d                   # ACP 服务器（后台运
 
 | 服务          | Profile | 命令                 | 说明                           |
 | ------------- | ------- | -------------------- | ------------------------------ |
-| `agent`       | `cli`   | `bps-stat-agent`     | 交互式 CLI 会话               |
+| `agent`       | `cli`   | `bpsagent`           | 交互式 CLI 会话               |
 | `mcp-server`  | `mcp`   | `bps-mcp-server`     | MCP 服务器（stdio，长驻进程） |
 | `acp-server`  | `acp`   | `bps-stat-agent-acp` | ACP 服务器（长驻进程）        |
 
@@ -168,6 +171,16 @@ API Key 通过环境变量传入。compose 文件支持两种方式：
 ---
 
 ## 5. 配置
+
+### 配置向导
+
+配置 Agent 最快捷的方式是使用交互式配置向导：
+
+```bash
+bpsagent setup
+```
+
+该向导将引导你完成 API Key 配置、提供商选择和配置文件生成。如果在没有现有配置的情况下运行 `bpsagent`，配置向导会自动启动。
 
 ### 配置文件位置（按优先级排序）
 

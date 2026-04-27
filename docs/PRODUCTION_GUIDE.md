@@ -48,6 +48,9 @@ BPS Stat Agent ships with production-grade infrastructure:
 git clone https://github.com/juliochwd/bps-stat-agent.git
 cd bps-stat-agent
 
+# 1b. Run the setup wizard (configures API keys interactively)
+bpsagent setup
+
 # 2. Create environment file
 cp .env.example .env
 # Edit .env — set at least one LLM API key
@@ -90,7 +93,7 @@ The `docker-compose.yml` defines three services, activated via **profiles**:
 
 | Service       | Profile | Command              | Description                    |
 | ------------- | ------- | -------------------- | ------------------------------ |
-| `agent`       | `cli`   | `bps-stat-agent`     | Interactive CLI session        |
+| `agent`       | `cli`   | `bpsagent`           | Interactive CLI session        |
 | `mcp-server`  | `mcp`   | `bps-mcp-server`     | MCP server (stdio, long-lived) |
 | `acp-server`  | `acp`   | `bps-stat-agent-acp` | ACP server (long-lived)        |
 
@@ -168,6 +171,16 @@ Run `make help` to see all targets. Summary:
 ---
 
 ## 5. Configuration
+
+### Setup Wizard
+
+The fastest way to configure the agent is the interactive setup wizard:
+
+```bash
+bpsagent setup
+```
+
+This walks you through API key configuration, provider selection, and config file generation. If you run `bpsagent` without an existing config, the setup wizard launches automatically.
 
 ### Config File Locations (priority order)
 

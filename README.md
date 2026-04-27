@@ -58,6 +58,16 @@ uv tool install git+https://github.com/juliochwd/bps-stat-agent.git
 pip install git+https://github.com/juliochwd/bps-stat-agent.git
 ```
 
+### Quick Setup
+
+After installation, run the setup wizard:
+
+```bash
+bpsagent setup
+```
+
+This will guide you through configuring your AI API key, BPS API key, and install Playwright.
+
 ## 🐳 Docker
 
 ### Quick Start
@@ -88,9 +98,25 @@ cp .env.example .env
 # Edit .env with your API keys
 ```
 
+> 💡 **Tip:** If running locally before Docker, run `bpsagent setup` first to generate config files, then mount `~/.bps-stat-agent/config/` into the container. Alternatively, pass API keys via environment variables in `.env`.
+
 ## Configuration
 
-### 1. Run Setup Script
+### Automatic Setup (Recommended)
+
+```bash
+bpsagent setup
+```
+
+The setup wizard will:
+- Prompt for your AI API key and BPS API key
+- Write config files to `~/.bps-stat-agent/config/`
+- Install Playwright chromium browser
+- Configure MCP tools (62 BPS data tools)
+
+### Manual Setup
+
+#### 1. Run Setup Script
 
 ```bash
 # macOS/Linux:
@@ -101,7 +127,7 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/juliochwd/bps-stat-age
 powershell -ExecutionPolicy Bypass -File "$env:TEMP\setup-config.ps1"
 ```
 
-### 2. Add Your API Key
+#### 2. Add Your API Key
 
 Edit `~/.bps-stat-agent/config/config.yaml` and add your LLM API key:
 
@@ -128,14 +154,23 @@ Config files are loaded in priority order:
 ### CLI Mode
 
 ```bash
-# Start interactive session
-bps-stat-agent
+# Interactive mode
+bpsagent
 
-# With specific workspace
-bps-stat-agent --workspace /path/to/project
+# Specific workspace
+bpsagent --workspace /path/to/project
+
+# Non-interactive
+bpsagent --task "Cari data inflasi NTT 2024"
+
+# Setup wizard
+bpsagent setup
+
+# Show log files
+bpsagent log
 
 # Show help
-bps-stat-agent --help
+bpsagent --help
 ```
 
 ### MCP Server Mode
@@ -350,7 +385,12 @@ The client automatically retries with fresh browser context. If you see repeated
 
 ### "API key not found"
 
-Make sure you've configured your API key in `config.yaml` or MCP environment:
+Run the setup wizard to configure your API keys:
+```bash
+bpsagent setup
+```
+
+Or manually add your API key in `config.yaml`:
 ```yaml
 api_key: "your_api_key_here"
 ```
@@ -416,8 +456,10 @@ The project includes GitHub Actions workflows:
 
 | Command | Description |
 |:--------|:------------|
-| `bps-stat-agent` | Interactive CLI agent for querying BPS data |
-| `bps-stat-agent --task "query"` | Non-interactive mode with a single query |
+| `bpsagent` | Interactive CLI agent for querying BPS data |
+| `bpsagent setup` | Run interactive setup wizard |
+| `bpsagent --task "query"` | Non-interactive mode with a single query |
+| `bpsagent log` | Show log files |
 | `bps-mcp-server` | MCP server over STDIO (62 tools) |
 | `bps-stat-agent-acp` | ACP server for agent-to-agent communication |
 
