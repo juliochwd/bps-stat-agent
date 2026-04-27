@@ -1,6 +1,33 @@
-# BPS Stat Agent
+<p align="center">
+  <a href="https://github.com/juliochwd/bps-stat-agent">
+    <img src="https://raw.githubusercontent.com/juliochwd/bps-stat-agent/main/docs/assets/logo.png" alt="BPS Stat Agent" width="180">
+  </a>
+</p>
 
-**BPS Indonesia Statistical Data Agent** — Agen AI untuk cari data BPS (Badan Pusat Statistik) seperti inflasi, PDB, IPM, angka harapan hidup, pengangguran, kemiskinan di Indonesia. Dilengkapi **62 MCP tools** untuk akses lengkap ke BPS WebAPI dan AllStats Search Engine.
+<h1 align="center">BPS Stat Agent</h1>
+
+<p align="center">
+  <strong>BPS Indonesia Statistical Data Agent</strong><br>
+  Agen AI untuk cari data BPS (Badan Pusat Statistik) — inflasi, PDB, IPM, angka harapan hidup, pengangguran, kemiskinan di Indonesia.<br>
+  Dilengkapi <strong>62 MCP tools</strong> untuk akses lengkap ke BPS WebAPI dan AllStats Search Engine.
+</p>
+
+<p align="center">
+  <a href="https://github.com/juliochwd/bps-stat-agent/releases/latest"><img src="https://img.shields.io/github/v/release/juliochwd/bps-stat-agent?color=blue&label=release" alt="Release"></a>
+  <a href="https://github.com/juliochwd/bps-stat-agent/blob/main/LICENSE"><img src="https://img.shields.io/github/license/juliochwd/bps-stat-agent?color=green" alt="License: MIT"></a>
+  <img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/tests-379%20passing-brightgreen" alt="Tests: 379 passing">
+  <img src="https://img.shields.io/badge/MCP%20tools-62-orange" alt="MCP Tools: 62">
+</p>
+
+<p align="center">
+  <a href="#installation"><strong>Installation</strong></a> ·
+  <a href="#usage"><strong>Usage</strong></a> ·
+  <a href="https://github.com/juliochwd/bps-stat-agent/releases"><strong>Releases</strong></a> ·
+  <a href="#architecture"><strong>Architecture</strong></a>
+</p>
+
+---
 
 > Query contoh: "inflasi NTT terbaru", "PDRB kabupaten kota Jawa Timur", "angka harapan hidup menurut provinsi", "IPM nasional 2024"
 
