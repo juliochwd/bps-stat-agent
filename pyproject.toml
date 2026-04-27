@@ -21,8 +21,8 @@ classifiers = [
 dependencies = [
     "pydantic>=2.0.0",
     "pyyaml>=6.0.0",
-    "mcp>=1.9.0",
-    "requests>=2.32.0",
+    "mcp>=1.23.0",
+    "requests>=2.33.0",
     "tiktoken>=0.5.0",
     "prompt-toolkit>=3.0.0",
     "anthropic>=0.39.0",
@@ -33,6 +33,8 @@ dependencies = [
     "urllib3>=2.6.3",           # CVE-2026-21441, CVE-2025-66471, CVE-2025-66418
     "python-multipart>=0.0.26", # CVE-2026-24486, CVE-2026-40347
     "starlette>=0.49.0",        # CVE-2025-62727
+    "python-dotenv>=1.2.2",     # Symlink following in set_key
+    "Pygments>=2.20.0",         # ReDoS via GUID matching
 ]
 
 [project.scripts]
@@ -42,7 +44,7 @@ bps-mcp-server = "mini_agent.bps_mcp_server:main"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0.0",
+    "pytest>=9.0.3",
     "pytest-asyncio>=1.2.0",
 ]
 
