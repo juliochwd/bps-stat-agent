@@ -1,6 +1,6 @@
-# Mini Agent Examples
+# BPS Stat Agent Examples
 
-This directory contains a series of progressive examples to help you understand how to use the Mini Agent framework.
+This directory contains a series of progressive examples to help you understand how to use the BPS Stat Agent framework.
 
 ## 📚 Example List
 
@@ -102,6 +102,53 @@ python examples/04_full_agent.py
 - API key configured
 - (Optional) MCP tools configured
 
+
+### 05_provider_selection.py - Multi-Provider LLM Support
+
+**Difficulty**: ⭐⭐⭐ Intermediate
+
+**Content**:
+- Using LLMClient with different providers (Anthropic, OpenAI)
+- Provider routing and API base configuration
+- Comparing responses across providers
+
+**Run**:
+```bash
+python examples/05_provider_selection.py
+```
+
+**Key Learnings**:
+- How the unified LLMClient routes to different backends
+- MiniMax API domain handling and suffix auto-detection
+- Provider-specific features (thinking, reasoning)
+
+**Prerequisites**:
+- API key configured in `mini_agent/config/config.yaml`
+
+---
+
+### 06_tool_schema_demo.py - Tool Schema System
+
+**Difficulty**: ⭐⭐⭐ Intermediate
+
+**Content**:
+- Creating custom tools with the Tool base class
+- Tool schema generation (Anthropic and OpenAI formats)
+- Using tools with LLM for function calling
+
+**Run**:
+```bash
+python examples/06_tool_schema_demo.py
+```
+
+**Key Learnings**:
+- Tool base class structure (name, description, parameters, execute)
+- `to_schema()` for Anthropic format, `to_openai_schema()` for OpenAI format
+- How LLM selects and calls tools based on schemas
+
+**Prerequisites**:
+- API key configured in `mini_agent/config/config.yaml`
+
 ---
 
 ## 🚀 Quick Start
@@ -134,6 +181,8 @@ Recommended to learn in numerical order:
 2. **02_simple_agent.py** - Understand Agent
 3. **03_session_notes.py** - Understand memory management
 4. **04_full_agent.py** - Understand complete system
+5. **05_provider_selection.py** - Understand multi-provider LLM support
+6. **06_tool_schema_demo.py** - Understand tool schema system
 
 ---
 
@@ -147,6 +196,8 @@ These examples are all refined from test cases in the `tests/` directory:
 | 02_simple_agent.py  | tests/test_agent.py                                  | Agent basic functionality tests |
 | 03_session_notes.py | tests/test_note_tool.py<br>tests/test_integration.py | Session Note tool tests         |
 | 04_full_agent.py    | tests/test_integration.py                            | Complete integration tests      |
+| 05_provider_selection.py | tests/test_llm.py<br>tests/test_llm_clients.py | LLM provider routing tests |
+| 06_tool_schema_demo.py | tests/test_tool_schema.py | Tool schema generation tests |
 
 ---
 

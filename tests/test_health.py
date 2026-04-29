@@ -83,8 +83,22 @@ class TestRouting:
         assert body["error"] == "not_found"
 
     def test_metrics_endpoint(self, health_server):
-        status, body = _get(health_server, "/metrics")
+        url = f"http://127.0.0.1:{health_server}/metrics"
+        try:
+            with urllib.request.urlopen(url) as resp:
+                status = resp.status
+                content_type = resp.headers.get("Content-Type", "")
+                body = resp.read()
+        except urllib.error.HTTPError as exc:
+            status = exc.code
+            body = exc.read()
+            content_type = ""
+
         assert status in (200, 404)
+        if status == 200:
+            # Prometheus metrics are returned as text, not JSON
+            assert len(body) > 0
+            assert "text/" in content_type
 
 
 class TestLifecycle:

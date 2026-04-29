@@ -62,6 +62,14 @@ CLAUDE.md
 .agent_memory.json
 *.whl
 
+# Coverage / test artifacts
+.coverage
+coverage.json
+coverage.lcov
+coverage.xml
+htmlcov/
+*.py,cover
+
 # Environment
 .env
 .env.local

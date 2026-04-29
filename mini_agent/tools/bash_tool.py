@@ -106,10 +106,23 @@ class BackgroundShell:
 
 
 class BackgroundShellManager:
-    """Manager for all background shell processes."""
+    """Manager for all background shell processes.
+
+    Uses class-level state as a deliberate singleton — all methods are @classmethod.
+    Call reset() to clear state between test runs.
+    """
 
     _shells: dict[str, BackgroundShell] = {}
     _monitor_tasks: dict[str, asyncio.Task] = {}
+
+    @classmethod
+    def reset(cls) -> None:
+        """Clear all state. Intended for test teardown — does NOT terminate processes."""
+        cls._shells.clear()
+        for task in cls._monitor_tasks.values():
+            if not task.done():
+                task.cancel()
+        cls._monitor_tasks.clear()
 
     @classmethod
     def add(cls, shell: BackgroundShell) -> None:

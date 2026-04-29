@@ -62,6 +62,12 @@ class Agent:
         # Initialize logger
         self.logger = AgentLogger()
 
+        # Cache tiktoken encoding to avoid repeated disk I/O
+        try:
+            self._encoding = tiktoken.get_encoding("cl100k_base")
+        except Exception:
+            self._encoding = None
+
         # Token usage from last API response (updated after each LLM call)
         self.api_total_tokens: int = 0
         # Flag to skip token check right after summary (avoid consecutive triggers)
@@ -109,11 +115,8 @@ class Agent:
 
         Uses cl100k_base encoder (GPT-4/Claude/M2 compatible)
         """
-        try:
-            # Use cl100k_base encoder (used by GPT-4 and most modern models)
-            encoding = tiktoken.get_encoding("cl100k_base")
-        except Exception:
-            # Fallback: if tiktoken initialization fails, use simple estimation
+        encoding = self._encoding
+        if encoding is None:
             return self._estimate_tokens_fallback()
 
         total_tokens = 0

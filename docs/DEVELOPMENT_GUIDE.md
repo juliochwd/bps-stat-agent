@@ -82,7 +82,7 @@ bps-stat-agent/
 │   └── skills/                    # Agent skills (git submodule)
 │       └── bps-master/            # BPS domain skill with tool docs
 │
-├── tests/                         # 379 tests across 29 files
+├── tests/                         # 417 tests across 34 files
 ├── examples/                      # 6 usage examples
 ├── docs/                          # Development & production guides
 ├── scripts/                       # Setup scripts (macOS/Linux/Windows)
@@ -120,7 +120,7 @@ When running the agent in interactive mode (`bpsagent`), the following commands 
 | `bpsagent --task "query"` | Non-interactive mode with a single query |
 | `bpsagent --workspace DIR` | Specify custom workspace directory |
 | `bps-mcp-server` | MCP server over STDIO (62 tools) |
-| `bpsagent-acp` | ACP server for agent-to-agent communication |
+| `bps-stat-agent-acp` | ACP server for agent-to-agent communication |
 
 ### 2.3 BPS Data Pipeline
 

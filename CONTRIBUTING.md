@@ -47,7 +47,7 @@ If you have an idea for a new feature, please create an Issue first to discuss i
 
 4. Install development dependencies:
    ```bash
-   uv sync
+   uv sync --frozen --group dev
    ```
 
 #### Development Process
@@ -159,11 +159,11 @@ class myclass:  # Class names should be PascalCase
 Use Python type hints:
 
 ```python
-from typing import List, Dict, Optional, Any
+from typing import Any
 
 async def process_messages(
-    messages: List[Dict[str, Any]],
-    max_tokens: Optional[int] = None
+    messages: list[dict[str, Any]],
+    max_tokens: int | None = None
 ) -> str:
     """Process a list of messages."""
     pass

@@ -7,6 +7,9 @@ import tiktoken
 
 from .base import Tool, ToolResult
 
+# Cache tiktoken encoding at module level to avoid repeated disk I/O
+_ENCODING = tiktoken.get_encoding("cl100k_base")
+
 
 def truncate_text_by_tokens(
     text: str,
@@ -29,7 +32,7 @@ def truncate_text_by_tokens(
         >>> truncated = truncate_text_by_tokens(text, 64000)
         >>> print(truncated)
     """
-    encoding = tiktoken.get_encoding("cl100k_base")
+    encoding = _ENCODING
     token_count = len(encoding.encode(text))
 
     # Return original text if under limit
@@ -116,7 +119,7 @@ class ReadTool(Tool):
             # Path traversal protection
             resolved = file_path.resolve()
             workspace_resolved = self.workspace_dir.resolve()
-            if not str(resolved).startswith(str(workspace_resolved)):
+            if not resolved.is_relative_to(workspace_resolved):
                 return ToolResult(
                     success=False,
                     content="",
@@ -213,7 +216,7 @@ class WriteTool(Tool):
             # Path traversal protection
             resolved = file_path.resolve()
             workspace_resolved = self.workspace_dir.resolve()
-            if not str(resolved).startswith(str(workspace_resolved)):
+            if not resolved.is_relative_to(workspace_resolved):
                 return ToolResult(
                     success=False,
                     content="",
@@ -284,7 +287,7 @@ class EditTool(Tool):
             # Path traversal protection
             resolved = file_path.resolve()
             workspace_resolved = self.workspace_dir.resolve()
-            if not str(resolved).startswith(str(workspace_resolved)):
+            if not resolved.is_relative_to(workspace_resolved):
                 return ToolResult(
                     success=False,
                     content="",

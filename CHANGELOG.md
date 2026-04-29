@@ -46,6 +46,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bash command execution disabled by default (P0 security hardening)
 - Non-root Docker user (`agent`)
 - .env files excluded from git and Docker builds
+- **Path traversal vulnerability fixed** — `str.startswith()` replaced with `Path.is_relative_to()` in ReadTool, WriteTool, EditTool
+- **Error message truncation** — retry error messages truncated to 500 chars to prevent sensitive data leakage in logs
+- **Bounded API client cache** — `bps_mcp_server` API cache limited to 8 entries with LRU eviction (prevents memory leak)
+- **OpenAI finish_reason** — now reads actual `finish_reason` from API response (was hardcoded to `"stop"`)
+- **tiktoken encoding cached** — module-level and Agent instance-level caching eliminates repeated disk I/O per step
+- **BackgroundShellManager.reset()** — new classmethod for safe state cleanup between test runs
+- **test_integration.py** — marked as `@pytest.mark.live` (requires API key, no longer fails in CI)
+- **test_acp.py** — graceful skip when `agent-client-protocol` not installed
+- **test_health.py** — fixed metrics endpoint test for Prometheus text format
+- **.gitignore** — added coverage artifacts (`.coverage`, `coverage.json`, `coverage.lcov`, `*.py,cover`)
+
+### Changed
+- Test suite expanded from 379 to **417 tests** across **34 test files** (was 29)
 
 ## [v0.1.3] - 2026-04-27
 

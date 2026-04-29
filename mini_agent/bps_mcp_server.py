@@ -40,6 +40,7 @@ DEFAULT_SEARCH_DELAY = float(os.environ.get("BPS_SEARCH_DELAY", "3"))
 
 
 _api_client_cache: dict[str, BPSAPI] = {}
+_API_CLIENT_CACHE_MAX_SIZE = 8
 
 
 def get_api_client(api_key: str | None = None) -> BPSAPI:
@@ -48,6 +49,9 @@ def get_api_client(api_key: str | None = None) -> BPSAPI:
     if not key:
         raise ValueError("BPS API key not provided. Set BPS_API_KEY environment variable or api_key parameter.")
     if key not in _api_client_cache:
+        if len(_api_client_cache) >= _API_CLIENT_CACHE_MAX_SIZE:
+            oldest_key = next(iter(_api_client_cache))
+            del _api_client_cache[oldest_key]
         _api_client_cache[key] = BPSAPI(key)
     return _api_client_cache[key]
 
@@ -653,48 +657,54 @@ async def bps_get_table_data(
 
 
 def _parse_html_table(html: str) -> tuple[list[str], list[list[str]]]:
-    """
-    Parse HTML table to headers and data rows.
-
-    Args:
-        html: HTML content with table
-
-    Returns:
-        Tuple of (headers list, data rows list)
-    """
+    """Parse HTML table to headers and data rows using th/td heuristic detection."""
     import re
+    from html import unescape
 
-    # Unescape HTML entities
-    html = html.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", '"').replace("&amp;", "&")
-
-    # Find all rows
+    html = unescape(html)
     row_matches = re.findall(r"<tr[^>]*>(.*?)</tr>", html, re.DOTALL | re.IGNORECASE)
 
-    rows = []
+    parsed_rows: list[tuple[list[str], bool]] = []
     for row_html in row_matches:
-        # Find all cells
-        cell_matches = re.findall(r"<t[hd][^>]*>(.*?)</t[hd]>", row_html, re.DOTALL | re.IGNORECASE)
-
-        # Clean cells
+        cell_matches = re.findall(
+            r"<(th|td)[^>]*>(.*?)</(?:th|td)>",
+            row_html,
+            re.DOTALL | re.IGNORECASE,
+        )
         cells = []
-        for cell in cell_matches:
-            # Remove HTML tags but preserve text
+        has_td = False
+        for cell_type, cell in cell_matches:
+            has_td = has_td or cell_type.lower() == "td"
             text = re.sub(r"<[^>]+>", "", cell)
-            # Decode HTML entities and clean whitespace
-            text = text.replace("&nbsp;", " ").replace("\r", " ").replace("\n", " ").replace("  ", " ").strip()
+            text = " ".join(unescape(text).replace("\xa0", " ").split()).strip()
             cells.append(text)
-
         if cells:
-            rows.append(cells)
+            parsed_rows.append((cells, has_td))
 
-    # First row with actual content is headers (typically row 3)
-    headers = []
-    data_rows = []
+    header_index = -1
+    first_data_index = None
+    for index, (cells, has_td) in enumerate(parsed_rows):
+        if has_td:
+            first_data_index = index
+            break
+        if len(cells) > 1:
+            header_index = index
 
-    if len(rows) > 3:
-        potential_headers = rows[3]
-        headers = [h for h in potential_headers if h.strip()]
-        data_rows = rows[4:]
+    if header_index == -1:
+        for index, (cells, _) in enumerate(parsed_rows):
+            if len(cells) > 1:
+                header_index = index
+                break
+
+    if header_index == -1:
+        return [], []
+
+    headers = parsed_rows[header_index][0]
+    if first_data_index is not None and first_data_index > header_index:
+        data_start = first_data_index
+    else:
+        data_start = header_index + 1
+    data_rows = [cells for cells, _ in parsed_rows[data_start:] if cells]
 
     return headers, data_rows
 

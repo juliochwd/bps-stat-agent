@@ -4,10 +4,18 @@ from types import SimpleNamespace
 
 import pytest
 
-from mini_agent.acp import MiniMaxACPAgent
+try:
+    from mini_agent.acp import MiniMaxACPAgent
+
+    _ACP_AVAILABLE = True
+except ImportError:
+    _ACP_AVAILABLE = False
+
 from mini_agent.config import AgentConfig, Config, LLMConfig, ToolsConfig
 from mini_agent.schema import FunctionCall, LLMResponse, ToolCall
 from mini_agent.tools.base import Tool, ToolResult
+
+pytestmark = pytest.mark.skipif(not _ACP_AVAILABLE, reason="agent-client-protocol not installed")
 
 
 class DummyConn:

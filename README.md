@@ -16,7 +16,7 @@
   <a href="https://github.com/juliochwd/bps-stat-agent/releases/latest"><img src="https://img.shields.io/github/v/release/juliochwd/bps-stat-agent?color=blue&label=release" alt="Release"></a>
   <a href="https://github.com/juliochwd/bps-stat-agent/blob/main/LICENSE"><img src="https://img.shields.io/github/license/juliochwd/bps-stat-agent?color=green" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+">
-  <img src="https://img.shields.io/badge/tests-379%20passing-brightgreen" alt="Tests: 379 passing">
+  <img src="https://img.shields.io/badge/tests-417%20passing-brightgreen" alt="Tests: 417 passing">
   <img src="https://img.shields.io/badge/MCP%20tools-62-orange" alt="MCP Tools: 62">
 </p>
 
@@ -41,7 +41,7 @@
 - 🔧 **MCP Server** - 62 tools running as real MCP server over STDIO
 - 🤖 **ACP Server** - Agent Client Protocol bridge for agent-to-agent communication
 - ⚡ **Fast Installation** - Single command install via uv/pip
-- ✅ **Production Ready** - 379 tests across 29 test files, comprehensive coverage
+- ✅ **Production Ready** - 417 tests across 34 test files, comprehensive coverage
 
 ## Installation
 
@@ -319,7 +319,7 @@ bps-stat-agent/
 │   └── skills/                 # Agent skills (git submodule)
 │       └── bps-master/         # BPS domain skill with tool docs
 │
-├── tests/                      # 379 tests across 29 files
+├── tests/                      # 417 tests across 34 files
 ├── examples/                   # 6 usage examples
 ├── docs/                       # Development & production guides
 ├── scripts/                    # Setup scripts (macOS/Linux/Windows)
@@ -417,21 +417,24 @@ which uv          # or pip
 git clone https://github.com/juliochwd/bps-stat-agent.git
 cd bps-stat-agent
 
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+# Install all dependencies + Playwright (recommended)
+make install-dev
 
-# Install dependencies
-pip install -e .
+# Or manually with uv:
+uv sync --frozen --group dev
+uv run playwright install --with-deps chromium
 
-# Install Playwright browser (required for AllStats search)
-playwright install chromium
+# Run setup wizard to configure API keys
+bpsagent setup
 
 # Run tests
-pytest tests/
+make test
 
 # Run tests with coverage
-pytest tests/ --cov=mini_agent --cov-report=term-missing
+make test-cov
+
+# Lint + test quality gate
+make check
 ```
 
 ### Makefile
