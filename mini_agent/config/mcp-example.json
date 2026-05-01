@@ -11,8 +11,36 @@
             },
             "disabled": false
         },
+        "papers": {
+            "description": "Academic Paper Search - 22 sources (arXiv, PubMed, Semantic Scholar, CrossRef, OpenAlex, CORE, Europe PMC, DBLP, DOAJ, BASE, Zenodo, HAL, SSRN, Unpaywall, bioRxiv, medRxiv, Google Scholar, OpenAIRE, CiteSeerX, IACR, IEEE, ACM)",
+            "command": "npx",
+            "args": ["-y", "@openags/paper-search-mcp"],
+            "env": {},
+            "disabled": false
+        },
+        "pdf": {
+            "description": "PDF Processing - 46 tools: text extraction, OCR, tables, forms, annotations, merge/split",
+            "command": "uvx",
+            "args": ["mcp-pdf"],
+            "env": {},
+            "disabled": false
+        },
+        "markitdown": {
+            "description": "MarkItDown (Microsoft) - Convert any file to Markdown: PDF, DOCX, PPTX, XLSX, HTML, images, audio, video, ZIP",
+            "command": "uvx",
+            "args": ["markitdown-mcp"],
+            "env": {},
+            "disabled": false
+        },
+        "memory": {
+            "description": "Memory - Knowledge graph memory system (long-term memory based on graph database)",
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-memory"],
+            "env": {},
+            "disabled": false
+        },
         "minimax_search": {
-            "description": "MiniMax Search - Powerful web search and intelligent browsing ⭐",
+            "description": "MiniMax Search - Powerful web search and intelligent browsing",
             "type": "stdio",
             "command": "uvx",
             "args": [
@@ -21,19 +49,8 @@
                 "minimax-search"
             ],
             "env": {
-                "JINA_API_KEY": "",
-                "SERPER_API_KEY": "",
                 "MINIMAX_API_KEY": ""
             },
-            "disabled": true
-        },
-        "memory": {
-            "description": "Memory - Knowledge graph memory system (long-term memory based on graph database)",
-            "command": "npx",
-            "args": [
-                "-y",
-                "@modelcontextprotocol/server-memory"
-            ],
             "disabled": true
         }
     }

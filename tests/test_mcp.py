@@ -330,6 +330,7 @@ async def test_mixed_config_loading():
             Path(f.name).unlink()
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_mcp_tools_loading():
     """Test loading MCP tools from mcp.json."""
@@ -356,6 +357,7 @@ async def test_mcp_tools_loading():
         await cleanup_mcp_connections()
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_git_mcp_loading(mcp_config):
     """Test loading MCP Server from Git repository (minimax_search)."""
@@ -418,6 +420,7 @@ async def test_git_mcp_loading(mcp_config):
         await cleanup_mcp_connections()
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_git_mcp_tool_availability():
     """Test Git MCP tool availability."""
@@ -444,6 +447,7 @@ async def test_git_mcp_tool_availability():
         await cleanup_mcp_connections()
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_mcp_tool_execution():
     """Test executing an MCP tool if available (memory server)."""

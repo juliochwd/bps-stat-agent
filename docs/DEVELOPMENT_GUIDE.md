@@ -16,6 +16,7 @@
     - [3.4 Initialize Claude Skills (Recommended)](#34-initialize-claude-skills-recommended)
     - [3.5 Adding a New Skill](#35-adding-a-new-skill)
     - [3.6 Customizing System Prompt](#36-customizing-system-prompt)
+    - [3.7 Research Mode Development](#37-research-mode-development)
   - [4. Troubleshooting](#4-troubleshooting)
     - [4.1 Common Issues](#41-common-issues)
     - [4.2 Debugging Tips](#42-debugging-tips)
@@ -49,11 +50,30 @@ bps-stat-agent/
 │   ├── bps_normalization.py       # Canonical response payload builder
 │   ├── allstats_client.py         # Playwright browser automation for AllStats
 │   │
+│   ├── research/                  # Academic Research Pipeline (v1.0)
+│   │   ├── orchestrator.py        # ResearchOrchestrator (phase-gated agent)
+│   │   ├── phase_manager.py       # 5-phase workflow manager
+│   │   ├── project_state.py       # YAML-persisted project state
+│   │   ├── workspace.py           # IMRaD workspace scaffolder
+│   │   ├── session_resume.py      # Checkpoint-based session recovery
+│   │   ├── approval_gates.py      # Quality gate evaluator
+│   │   ├── sub_agents.py          # 6 specialized sub-agents
+│   │   ├── tool_registry.py       # Phase-aware tool registry (max 15/phase)
+│   │   ├── llm_gateway.py         # LiteLLM multi-provider gateway
+│   │   ├── constants.py           # Research constants & config
+│   │   ├── exceptions.py          # Research-specific exceptions
+│   │   ├── apa_formatter.py       # APA citation formatting
+│   │   ├── dspy_modules/          # DSPy signatures & modules
+│   │   ├── models/                # CostTracker, DecisionLog
+│   │   ├── quality/               # Citation verifier, peer reviewer, stat validator
+│   │   └── writing/               # Bibliography, LaTeX compiler, section writer
+│   │
 │   ├── llm/                       # LLM abstraction layer
 │   │   ├── base.py                # Abstract LLMClientBase (ABC)
 │   │   ├── llm_wrapper.py         # Unified LLMClient (provider routing)
 │   │   ├── anthropic_client.py    # Anthropic SDK (thinking, tool_use, caching)
-│   │   └── openai_client.py       # OpenAI SDK (reasoning, tool_calls)
+│   │   ├── openai_client.py       # OpenAI SDK (reasoning, tool_calls)
+│   │   └── litellm_client.py      # LiteLLM multi-provider client
 │   │
 │   ├── schema/                    # Pydantic data models
 │   │   └── schema.py              # Message, ToolCall, LLMResponse, TokenUsage
@@ -65,7 +85,17 @@ bps-stat-agent/
 │   │   ├── note_tool.py           # SessionNoteTool + RecallNoteTool
 │   │   ├── skill_tool.py          # GetSkillTool (progressive disclosure)
 │   │   ├── skill_loader.py        # SkillLoader (YAML frontmatter parser)
-│   │   └── mcp_loader.py          # MCPTool + MCPServerConnection
+│   │   ├── mcp_loader.py          # MCPTool + MCPServerConnection
+│   │   ├── statistics_tools.py    # Descriptive, regression, hypothesis, visualization
+│   │   ├── analysis_tools.py      # TimeSeries, Bayesian, Causal, Survival, EDA
+│   │   ├── citation_tools.py      # Literature search, citation manager, verify
+│   │   ├── writing_tools.py       # Section writer, LaTeX compile, tables, diagrams
+│   │   ├── quality_tools.py       # Grammar, style, readability, peer review
+│   │   ├── sandbox_tools.py       # PythonREPL (local/Docker/E2B)
+│   │   ├── document_tools.py      # Convert, parse PDF, extract references
+│   │   ├── knowledge_tools.py     # Chunk, embed, vector search, knowledge graph
+│   │   ├── research_tools.py      # Project init, status, switch phase
+│   │   └── config_tools.py        # LiteLLM config, DSPy optimize
 │   │
 │   ├── acp/                       # Agent Client Protocol bridge
 │   │   ├── __init__.py            # BPSStatACPAgent
@@ -82,7 +112,7 @@ bps-stat-agent/
 │   └── skills/                    # Agent skills (git submodule)
 │       └── bps-master/            # BPS domain skill with tool docs
 │
-├── tests/                         # 417 tests across 34 files
+├── tests/                         # 471 tests across 34 files
 ├── examples/                      # 6 usage examples
 ├── docs/                          # Development & production guides
 ├── scripts/                       # Setup scripts (macOS/Linux/Windows)
@@ -375,6 +405,38 @@ The system prompt (`system_prompt.md`) defines the Agent's behavior, capabilitie
 5. **Task Priorities**: Set preferences for how tasks should be approached
 
 After modifying `system_prompt.md`, be sure to restart the Agent to apply changes
+
+### 3.7 Research Mode Development
+
+The research module (`mini_agent/research/`) implements a phase-gated academic research pipeline:
+
+```
+PLAN → COLLECT → ANALYZE → WRITE → REVIEW
+```
+
+Each phase loads a maximum of 15 tools relevant to that phase. Core tools (read, write, bash, project_status) are always available.
+
+#### Adding Research Tools
+
+1. Create tool in `mini_agent/tools/your_tool.py`
+2. Register in `mini_agent/research/phase_manager.py` PHASE_TOOLS mapping
+3. Add import and instantiation in `mini_agent/cli.py` (in the tool loading section)
+4. Add tests in `tests/test_your_tool.py`
+
+#### Running Research Mode
+
+```bash
+bpsagent research --title "Your Research Title"
+bpsagent research --resume ./workspace/project.yaml
+```
+
+#### Research Configuration
+
+Research-specific config lives in `mini_agent/config/`:
+- `research_config.yaml` — Phase settings, quality thresholds, model routing
+- `mcp-research.json` — 13 MCP server configurations
+- `system_prompt_research.md` — Research-mode system prompt
+- `system_prompts/` — Sub-agent prompts (5 files)
 
 ## 4. Troubleshooting
 

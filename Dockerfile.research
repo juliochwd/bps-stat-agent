@@ -1,0 +1,26 @@
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gfortran \
+    libopenblas-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install scientific Python stack
+RUN pip install --no-cache-dir \
+    numpy==1.26.4 \
+    pandas==2.1.4 \
+    scipy==1.12.0 \
+    statsmodels==0.14.1 \
+    matplotlib==3.8.2 \
+    seaborn==0.13.1 \
+    scikit-learn==1.4.0 \
+    && pip cache purge
+
+# Create non-root user
+RUN useradd -m -s /bin/bash sandbox
+USER sandbox
+WORKDIR /workspace
+
+VOLUME ["/output"]

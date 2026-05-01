@@ -1,0 +1,244 @@
+# =============================================================================
+# BPS Academic Research Agent — Default Research Configuration
+# =============================================================================
+# This file provides sensible defaults for all research-agent subsystems.
+# Override values via environment variables or a project-local config.
+
+# ---------------------------------------------------------------------------
+# LLM gateway
+# ---------------------------------------------------------------------------
+llm:
+  default_model: "claude-sonnet-4-20250514"
+  provider: litellm
+  fallback_chain:
+    - "claude-sonnet-4-20250514"
+    - "gpt-4o"
+    - "gpt-4o-mini"
+
+  # Model routing by task type
+  routing:
+    planning:
+      primary: "claude-sonnet-4-20250514"
+      fallback: "gpt-4o"
+    literature_search:
+      primary: "gpt-4o"
+      fallback: "gpt-4o-mini"
+    data_analysis:
+      primary: "claude-sonnet-4-20250514"
+      fallback: "gpt-4o"
+    writing:
+      primary: "claude-sonnet-4-20250514"
+      fallback: "gpt-4o"
+    review:
+      primary: "claude-sonnet-4-20250514"
+      fallback: "gpt-4o"
+    summarization:
+      primary: "gpt-4o-mini"
+      fallback: "claude-haiku-4-20250414"
+    embedding:
+      primary: "text-embedding-3-small"
+      fallback: "text-embedding-3-small"
+
+  # Cost controls
+  cost:
+    budget_limit_usd: 50.0
+    alert_threshold_usd: 10.0
+    log_every_n_calls: 10
+
+  # Token limits
+  token_limit: 120000
+  max_steps: 100
+
+# ---------------------------------------------------------------------------
+# Analysis
+# ---------------------------------------------------------------------------
+analysis:
+  # Statistical defaults
+  default_alpha: 0.05
+  effect_size_thresholds:
+    small: 0.2
+    medium: 0.5
+    large: 0.8
+  confidence_interval: 0.95
+  require_effect_size_reporting: true
+  require_confidence_intervals: true
+
+  # Sandbox configuration
+  sandbox:
+    type: docker
+    docker:
+      image: "bps-research-sandbox:latest"
+      memory_limit: "2g"
+      cpu_limit: 2.0
+      network_mode: "none"
+      timeout_seconds: 300
+    e2b:
+      template: "python-3.11"
+      timeout_seconds: 300
+      api_key_env: "E2B_API_KEY"
+
+  # Supported data formats
+  data_formats:
+    - csv
+    - xlsx
+    - json
+    - stata
+    - spss
+    - parquet
+
+  # Figure generation
+  figure_dpi: 300
+  figure_formats:
+    - pdf
+    - png
+    - svg
+    - eps
+
+# ---------------------------------------------------------------------------
+# Writing
+# ---------------------------------------------------------------------------
+writing:
+  default_template: elsevier
+  compiler: tectonic
+  citation_style: apa
+  bibliography_format: bibtex
+
+  # Word count targets per section
+  word_count_targets:
+    abstract: 250
+    introduction: 1500
+    literature_review: 3000
+    methodology: 2000
+    results: 2500
+    discussion: 2500
+    conclusion: 800
+
+  # Supported journal templates
+  templates:
+    ieee:
+      document_class: "IEEEtran"
+      options: ["conference"]
+      columns: 2
+      font_size: 10
+    elsevier:
+      document_class: "elsarticle"
+      options: ["preprint", "12pt"]
+      columns: 1
+      font_size: 12
+    springer:
+      document_class: "svjour3"
+      options: []
+      columns: 1
+      font_size: 10
+    springer_lncs:
+      document_class: "llncs"
+      options: []
+      columns: 1
+      font_size: 10
+    mdpi:
+      document_class: "mdpi"
+      options: []
+      columns: 1
+      font_size: 10
+    apa7:
+      document_class: "apa7"
+      options: ["man"]
+      columns: 1
+      font_size: 12
+
+  # APA formatting
+  apa:
+    date_format: "%Y, %B %d"
+    decimal_places: 2
+
+# ---------------------------------------------------------------------------
+# Quality gates
+# ---------------------------------------------------------------------------
+quality:
+  # Threshold values
+  thresholds:
+    max_unverified_citations: 0
+    max_grammar_warnings: 5
+    max_style_issues: 3
+    plagiarism_threshold: 0.05
+    min_citation_confidence: 0.85
+    min_statistical_power: 0.80
+    min_section_coherence: 0.70
+    min_citation_coverage: 0.90
+    max_self_citation_ratio: 0.20
+    min_recency_ratio: 0.30
+    recency_window_years: 5
+
+  # Auto-approve settings per phase
+  auto_approve:
+    plan: false
+    collect: false
+    analyze: false
+    write: false
+    review: false
+
+  # Peer review
+  min_peer_review_score: 3.0
+  max_peer_review_score: 5.0
+
+# ---------------------------------------------------------------------------
+# Literature
+# ---------------------------------------------------------------------------
+literature:
+  max_papers: 200
+  max_key_papers: 30
+
+  # Search sources (in priority order)
+  search_sources:
+    - semantic_scholar
+    - openalex
+    - crossref
+    - core
+    - unpaywall
+
+  # Deduplication strategy
+  dedup_strategy: doi_title_fuzzy
+  dedup_similarity_threshold: 0.90
+
+  # API configuration
+  apis:
+    semantic_scholar:
+      base_url: "https://api.semanticscholar.org/graph/v1"
+      api_key_env: "SEMANTIC_SCHOLAR_API_KEY"
+      rate_limit_rps: 10
+      cache_ttl_days: 7
+    crossref:
+      base_url: "https://api.crossref.org/works"
+      mailto_env: "CROSSREF_MAILTO"
+      rate_limit_rps: 15
+      cache_ttl_days: 14
+    openalex:
+      base_url: "https://api.openalex.org"
+      mailto_env: "OPENALEX_MAILTO"
+      rate_limit_rps: 10
+      cache_ttl_days: 7
+    core:
+      base_url: "https://api.core.ac.uk/v3"
+      api_key_env: "CORE_API_KEY"
+      rate_limit_rps: 5
+      cache_ttl_days: 7
+    unpaywall:
+      base_url: "https://api.unpaywall.org/v2"
+      email_env: "UNPAYWALL_EMAIL"
+      rate_limit_rps: 10
+      cache_ttl_days: 30
+
+  # Embedding models for literature
+  embeddings:
+    paper_level:
+      model: "specter2"
+      dimensions: 768
+    chunk_level:
+      model: "nomic-embed-text"
+      dimensions: 768
+      prefix_document: "search_document: "
+      prefix_query: "search_query: "
+
+  # Chunking
+  chunk_size_tokens: 768
+  chunk_overlap_tokens: 128

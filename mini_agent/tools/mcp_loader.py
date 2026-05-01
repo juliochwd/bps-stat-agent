@@ -221,18 +221,21 @@ class MCPServerConnection:
         except TimeoutError:
             print(f"✗ Connection to MCP server '{self.name}' timed out after {connect_timeout}s")
             if self.exit_stack:
-                await self.exit_stack.aclose()
+                try:
+                    await self.exit_stack.aclose()
+                except BaseException:
+                    pass
                 self.exit_stack = None
             return False
 
         except Exception as e:
             print(f"✗ Failed to connect to MCP server '{self.name}': {e}")
             if self.exit_stack:
-                await self.exit_stack.aclose()
+                try:
+                    await self.exit_stack.aclose()
+                except BaseException:
+                    pass
                 self.exit_stack = None
-            import traceback
-
-            traceback.print_exc()
             return False
 
     async def _connect_stdio(self):
@@ -275,10 +278,10 @@ class MCPServerConnection:
         if self.exit_stack:
             try:
                 await self.exit_stack.aclose()
-            except Exception:
-                # anyio cancel scope may raise RuntimeError or ExceptionGroup
-                # when stdio_client's task group is closed from a different
-                # task context during shutdown.
+            except BaseException:
+                # anyio cancel scope may raise CancelledError, RuntimeError,
+                # or ExceptionGroup when stdio_client's task group is closed
+                # from a different task context during shutdown.
                 pass
             finally:
                 self.exit_stack = None
@@ -430,8 +433,13 @@ async def load_mcp_tools_async(config_path: str = "mcp.json") -> list[Tool]:
 
 
 async def cleanup_mcp_connections():
-    """Clean up all MCP connections."""
+    """Clean up all MCP connections gracefully."""
     global _mcp_connections
     for connection in _mcp_connections:
-        await connection.disconnect()
+        try:
+            await connection.disconnect()
+        except BaseException:
+            # Swallow all errors during cleanup — CancelledError, RuntimeError,
+            # ExceptionGroup from anyio task group teardown, etc.
+            pass
     _mcp_connections.clear()

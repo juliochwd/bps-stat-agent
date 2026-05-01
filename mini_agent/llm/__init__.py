@@ -1,4 +1,4 @@
-"""LLM clients package supporting both Anthropic and OpenAI protocols."""
+"""LLM clients package supporting Anthropic, OpenAI, and LiteLLM protocols."""
 
 from .anthropic_client import AnthropicClient
 from .base import LLMClientBase

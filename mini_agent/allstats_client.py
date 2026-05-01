@@ -336,7 +336,7 @@ class AllStatsClient:
             parsed = await self._page.evaluate("""
                 () => {
                     const results = [];
-                    
+
                     // The correct selector for BPS search results
                     const items = document.querySelectorAll('.card-result');
 

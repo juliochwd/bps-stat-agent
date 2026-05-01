@@ -4,19 +4,19 @@
   </a>
 </p>
 
-<h1 align="center">BPS Stat Agent</h1>
+<h1 align="center">BPS Academic Research Agent</h1>
 
 <p align="center">
-  <strong>BPS Indonesia Statistical Data Agent</strong><br>
-  Agen AI untuk cari data BPS (Badan Pusat Statistik) — inflasi, PDB, IPM, angka harapan hidup, pengangguran, kemiskinan di Indonesia.<br>
-  Dilengkapi <strong>62 MCP tools</strong> untuk akses lengkap ke BPS WebAPI dan AllStats Search Engine.
+  <strong>AI Agent untuk Riset Akademik & Data Statistik BPS Indonesia</strong><br>
+  Dari pencarian data hingga paper siap submit — dilengkapi <strong>50+ native tools</strong>, <strong>13 MCP servers</strong>, dan pipeline riset 5 fase.<br>
+  Mendukung <strong>22+ sumber akademik</strong> (arXiv, PubMed, Semantic Scholar, CrossRef, OpenAlex) + <strong>62 BPS tools</strong>.
 </p>
 
 <p align="center">
   <a href="https://github.com/juliochwd/bps-stat-agent/releases/latest"><img src="https://img.shields.io/github/v/release/juliochwd/bps-stat-agent?color=blue&label=release" alt="Release"></a>
   <a href="https://github.com/juliochwd/bps-stat-agent/blob/main/LICENSE"><img src="https://img.shields.io/github/license/juliochwd/bps-stat-agent?color=green" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+">
-  <img src="https://img.shields.io/badge/tests-417%20passing-brightgreen" alt="Tests: 417 passing">
+  <img src="https://img.shields.io/badge/tests-471%20passing-brightgreen" alt="Tests: 471 passing">
   <img src="https://img.shields.io/badge/MCP%20tools-62-orange" alt="MCP Tools: 62">
 </p>
 
@@ -33,6 +33,17 @@
 
 ## Features
 
+### 🎓 Academic Research Pipeline
+- 🎓 **Research Mode** - Phase-gated pipeline: PLAN → COLLECT → ANALYZE → WRITE → REVIEW
+- 📊 **Statistical Analysis** - Descriptive stats, regression, hypothesis testing, time series, Bayesian, causal inference
+- 📝 **Paper Writing** - LaTeX compilation, section writing, tables, diagrams, TikZ figures
+- ✅ **Quality Assurance** - Grammar, style, readability, peer review simulation, plagiarism detection
+- 📚 **Literature Search** - 22+ academic sources (arXiv, PubMed, Semantic Scholar, CrossRef, OpenAlex)
+- 🧠 **Knowledge Management** - Document processing, embeddings, knowledge graphs, vector search
+- 🐍 **Python Sandbox** - Isolated code execution (local/Docker/E2B)
+- 🔌 **13 MCP Servers** - Papers, PDF, Jupyter, MarkItDown, ChromaDB, PubMed, R, Memory + BPS
+
+### 📈 BPS Indonesia Data
 - 🔍 **BPS AllStats Search** - Search 1.6M+ statistical data points across all BPS domains
 - 🔁 **AllStats-First Fallback Pipeline** - Search via AllStats, then retrieve structured detail through WebAPI
 - 🌏 **Multi-domain Support** - Query national (0000) or provincial data (e.g., 5300=NTT)
@@ -40,8 +51,12 @@
 - 🔄 **Auto-retry** - Automatic retry with fresh browser context on Cloudflare blocks
 - 🔧 **MCP Server** - 62 tools running as real MCP server over STDIO
 - 🤖 **ACP Server** - Agent Client Protocol bridge for agent-to-agent communication
+
+### ⚙️ Infrastructure
 - ⚡ **Fast Installation** - Single command install via uv/pip
-- ✅ **Production Ready** - 417 tests across 34 test files, comprehensive coverage
+- ✅ **Production Ready** - 471 tests across 34 test files, comprehensive coverage
+- 🐳 **Docker** - Multi-stage build with 3 service profiles (CLI/MCP/ACP)
+- 📊 **Observability** - Prometheus metrics + OpenTelemetry tracing (optional)
 
 ## Installation
 
@@ -56,6 +71,20 @@ uv tool install git+https://github.com/juliochwd/bps-stat-agent.git
 
 ```bash
 pip install git+https://github.com/juliochwd/bps-stat-agent.git
+```
+
+### Option 3: Install with Research Extras
+
+```bash
+# Full research capabilities (numpy, scipy, statsmodels, sklearn, matplotlib, seaborn)
+pip install 'bps-stat-agent[research-core]'
+
+# All extras (research + metrics + tracing)
+pip install 'bps-stat-agent[research-all]'
+
+# Individual extras
+pip install 'bps-stat-agent[metrics]'    # Prometheus monitoring
+pip install 'bps-stat-agent[tracing]'    # OpenTelemetry tracing
 ```
 
 ### Quick Setup
@@ -169,6 +198,12 @@ bpsagent setup
 # Show log files
 bpsagent log
 
+# Research mode - start new project
+bpsagent research --title "Analisis Hubungan IPM dan Kemiskinan di NTT 2019-2023"
+
+# Resume existing research project
+bpsagent research --resume ./workspace/project.yaml
+
 # Show help
 bpsagent --help
 ```
@@ -263,6 +298,29 @@ response = await client.search("penduduk", domain="5300", content="publication")
 response = await client.search("inflasi", domain="5300", page=2)
 ```
 
+## 🔌 MCP Server Ecosystem
+
+The agent ships with **13 MCP servers** pre-configured (9 enabled by default):
+
+| # | Server | Tools | Status | Description |
+|---|--------|-------|--------|-------------|
+| 1 | **bps** | 62 | ✅ Enabled | BPS Indonesia statistical data (AllStats + WebAPI) |
+| 2 | **papers** | 22 sources | ✅ Enabled | Academic paper search (arXiv, PubMed, Semantic Scholar, CrossRef, OpenAlex, etc.) |
+| 3 | **pdf** | 46 | ✅ Enabled | PDF processing (text, OCR, tables, annotations, merge/split) |
+| 4 | **jupyter** | — | ✅ Enabled | Jupyter code execution (real-time, multimodal output) |
+| 5 | **markitdown** | 29+ formats | ✅ Enabled | Microsoft universal file → Markdown converter |
+| 6 | **memory** | — | ✅ Enabled | Knowledge graph memory (persistent research context) |
+| 7 | **chroma** | — | ✅ Enabled | ChromaDB vector search (semantic + full-text) |
+| 8 | **pubmed** | 40 | ✅ Enabled | PubMed biomedical search (PubMed, Europe PMC, CORE, OpenAlex) |
+| 9 | **rmcp** | 52 | ✅ Enabled | R statistical computing (429 R packages) |
+| 10 | **zotero** | — | 🔧 Disabled | Zotero citation manager (needs `ZOTERO_API_KEY`) |
+| 11 | **overleaf** | 18 | 🔧 Disabled | Overleaf LaTeX editor (needs credentials) |
+| 12 | **qdrant** | — | 🔧 Disabled | Qdrant vector search (needs running server) |
+| 13 | **neo4j** | — | 🔧 Disabled | Neo4j knowledge graph (needs running server) |
+
+> 💡 Disabled servers can be enabled by adding credentials in `~/.bps-stat-agent/config/mcp.json`
+
+
 ## Architecture
 
 ```
@@ -289,16 +347,42 @@ bps-stat-agent/
 │   ├── llm/                    # LLM abstraction layer
 │   │   ├── base.py             # Abstract LLMClientBase (ABC)
 │   │   ├── llm_wrapper.py      # Unified LLMClient (provider routing)
+│   │   ├── litellm_client.py   # LiteLLM multi-provider gateway
 │   │   ├── anthropic_client.py # Anthropic SDK (thinking, tool_use, caching)
 │   │   └── openai_client.py    # OpenAI SDK (reasoning, tool_calls)
+│   │
+│   ├── research/               # Academic Research Pipeline (v1.0)
+│   │   ├── orchestrator.py     # ResearchOrchestrator (phase-gated agent)
+│   │   ├── phase_manager.py    # 5-phase workflow (PLAN→COLLECT→ANALYZE→WRITE→REVIEW)
+│   │   ├── project_state.py    # YAML-persisted project state
+│   │   ├── workspace.py        # IMRaD workspace scaffolder
+│   │   ├── session_resume.py   # Checkpoint-based session recovery
+│   │   ├── approval_gates.py   # Quality gate evaluator
+│   │   ├── sub_agents.py       # 6 specialized sub-agents
+│   │   ├── tool_registry.py    # Phase-aware tool registry (max 15/phase)
+│   │   ├── llm_gateway.py      # LiteLLM cost tracking + fallback chains
+│   │   ├── constants.py        # Research constants & config
+│   │   ├── dspy_modules/       # DSPy signatures & modules
+│   │   ├── models/             # CostTracker, DecisionLog
+│   │   ├── quality/            # Citation verifier, peer reviewer, stat validator
+│   │   └── writing/            # Bibliography, LaTeX compiler, section writer
 │   │
 │   ├── schema/                 # Pydantic data models
 │   │   └── schema.py           # Message, ToolCall, LLMResponse, TokenUsage
 │   │
-│   ├── tools/                  # Tool implementations
+│   ├── tools/                  # Tool implementations (50+ tools)
 │   │   ├── base.py             # Tool ABC + ToolResult
 │   │   ├── bash_tool.py        # BashTool (fg/bg), BashOutputTool, BashKillTool
 │   │   ├── file_tools.py       # ReadTool, WriteTool, EditTool
+│   │   ├── statistics_tools.py # Descriptive, regression, hypothesis, visualization
+│   │   ├── analysis_tools.py   # TimeSeries, Bayesian, Causal, Survival, EDA
+│   │   ├── citation_tools.py   # Literature search, citation manager, verify
+│   │   ├── writing_tools.py    # Section writer, LaTeX compile, tables, diagrams
+│   │   ├── quality_tools.py    # Grammar, style, readability, peer review
+│   │   ├── sandbox_tools.py    # PythonREPL (local/Docker/E2B)
+│   │   ├── document_tools.py   # Convert, parse PDF, extract references
+│   │   ├── knowledge_tools.py  # Chunk, embed, vector search, knowledge graph
+│   │   ├── research_tools.py   # Project init, status, switch phase
 │   │   ├── note_tool.py        # SessionNoteTool + RecallNoteTool
 │   │   ├── skill_tool.py       # GetSkillTool (progressive disclosure)
 │   │   ├── skill_loader.py     # SkillLoader (YAML frontmatter parser)
@@ -319,7 +403,7 @@ bps-stat-agent/
 │   └── skills/                 # Agent skills (git submodule)
 │       └── bps-master/         # BPS domain skill with tool docs
 │
-├── tests/                      # 417 tests across 34 files
+├── tests/                      # 471 tests across 34 files
 ├── examples/                   # 6 usage examples
 ├── docs/                       # Development & production guides
 ├── scripts/                    # Setup scripts (macOS/Linux/Windows)
@@ -459,11 +543,13 @@ The project includes GitHub Actions workflows:
 
 | Command | Description |
 |:--------|:------------|
-| `bpsagent` | Interactive CLI agent for querying BPS data |
-| `bpsagent setup` | Run interactive setup wizard |
+| `bpsagent` | Interactive CLI agent (BPS data + research) |
+| `bpsagent setup` | Run interactive setup wizard (API keys + 13 MCP servers) |
 | `bpsagent --task "query"` | Non-interactive mode with a single query |
+| `bpsagent research --title "..."` | Start a new academic research project |
+| `bpsagent research --resume path` | Resume an existing research project |
 | `bpsagent log` | Show log files |
-| `bps-mcp-server` | MCP server over STDIO (62 tools) |
+| `bps-mcp-server` | MCP server over STDIO (62 BPS tools) |
 | `bps-stat-agent-acp` | ACP server for agent-to-agent communication |
 
 ## License

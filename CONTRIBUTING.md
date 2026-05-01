@@ -61,7 +61,9 @@ If you have an idea for a new feature, please create an Issue first to discuss i
    - Add test cases for new features.
    - Ensure all tests pass:
      ```bash
-     pytest tests/ -v
+     make test              # Unit tests (excludes live/network tests)
+     make test-live         # BPS integration tests (requires BPS_API_KEY)
+     make test-all          # All tests (unit + live)
      ```
 
 3. **Update Documentation**
@@ -121,6 +123,17 @@ All Pull Requests will be reviewed:
 - We may request some changes.
 - Please be patient and responsive to feedback.
 - Once approved, your PR will be merged into the main branch.
+
+
+### Research Module Contributions
+
+When contributing to the research module (`mini_agent/research/`):
+
+- **New tools**: Create in `mini_agent/tools/`, register in `phase_manager.py` PHASE_TOOLS, add to `cli.py`
+- **Phase changes**: Update `constants.py` and ensure max 15 tools per phase
+- **Sub-agents**: Add config in `sub_agents.py` AGENT_CONFIGS and prompt in `config/system_prompts/`
+- **MCP servers**: Add to `setup_wizard.py` `_write_mcp_json()` and `config/mcp-research.json`
+- **Optional deps**: Use try/except with graceful degradation (return helpful ToolResult error)
 
 ## Code Style Guide
 

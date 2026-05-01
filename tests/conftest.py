@@ -5,6 +5,25 @@ from unittest.mock import MagicMock
 import pytest
 
 
+def pytest_addoption(parser):
+    """Add --run-live CLI option to pytest."""
+    parser.addoption(
+        "--run-live",
+        action="store_true",
+        default=False,
+        help="Run live tests that require network access and API keys",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    """Auto-skip tests marked 'live' unless --run-live is passed."""
+    if not config.getoption("--run-live", default=False):
+        skip_live = pytest.mark.skip(reason="Live tests require --run-live flag and network access")
+        for item in items:
+            if "live" in item.keywords:
+                item.add_marker(skip_live)
+
+
 @pytest.fixture
 def tmp_workspace(tmp_path):
     """Create a temporary workspace directory."""

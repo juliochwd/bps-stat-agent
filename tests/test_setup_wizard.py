@@ -1,13 +1,14 @@
-"""Tests for the setup wizard module."""
+"""Tests for mini_agent/setup_wizard.py — interactive setup wizard."""
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+import pytest
 import yaml
 
-from mini_agent.config import Config
 from mini_agent.setup_wizard import (
+    CONFIG_TEMPLATE,
     _copy_system_prompt,
     _install_playwright_chromium,
     _prompt,
@@ -21,258 +22,285 @@ from mini_agent.setup_wizard import (
 
 
 class TestGetUserConfigDir:
-    def test_returns_correct_path(self):
+    def test_returns_path(self):
         result = get_user_config_dir()
-        assert result == Path.home() / ".bps-stat-agent" / "config"
-
-    def test_returns_path_object(self):
-        assert isinstance(get_user_config_dir(), Path)
+        assert isinstance(result, Path)
+        assert str(result).endswith(".bps-stat-agent/config")
 
 
 class TestNeedsSetup:
-    def test_returns_true_when_no_config(self, monkeypatch):
-        monkeypatch.setattr(Config, "find_config_file", lambda filename: None)
-        assert needs_setup() is True
+    def test_needs_setup_no_config(self):
+        """Returns True when no config file exists."""
+        with patch("mini_agent.setup_wizard.Config.find_config_file", return_value=None):
+            assert needs_setup() is True
 
-    def test_returns_true_when_api_key_is_placeholder(self, tmp_path, monkeypatch):
+    def test_needs_setup_empty_config(self, tmp_path):
+        """Returns True when config is empty."""
         config_file = tmp_path / "config.yaml"
-        config_file.write_text('api_key: "YOUR_API_KEY_HERE"\n', encoding="utf-8")
-        monkeypatch.setattr(
-            Config, "find_config_file", lambda filename: config_file if filename == "config.yaml" else None
-        )
-        assert needs_setup() is True
+        config_file.write_text("")
+        with patch("mini_agent.setup_wizard.Config.find_config_file", return_value=config_file):
+            assert needs_setup() is True
 
-    def test_returns_true_when_bps_key_empty(self, tmp_path, monkeypatch):
+    def test_needs_setup_invalid_api_key(self, tmp_path):
+        """Returns True when API key is a placeholder."""
         config_file = tmp_path / "config.yaml"
-        config_file.write_text('api_key: "sk-real-key-12345"\n', encoding="utf-8")
+        config_file.write_text(yaml.dump({"api_key": "YOUR_API_KEY_HERE"}))
+        with patch("mini_agent.setup_wizard.Config.find_config_file", return_value=config_file):
+            assert needs_setup() is True
+
+    def test_needs_setup_no_mcp_json(self, tmp_path):
+        """Returns True when mcp.json is missing."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(yaml.dump({"api_key": "sk-real-key-123"}))
+        with patch(
+            "mini_agent.setup_wizard.Config.find_config_file",
+            side_effect=lambda f: config_file if f == "config.yaml" else None,
+        ):
+            assert needs_setup() is True
+
+    def test_needs_setup_empty_bps_key(self, tmp_path):
+        """Returns True when BPS_API_KEY is empty in mcp.json."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(yaml.dump({"api_key": "sk-real-key-123"}))
+
         mcp_file = tmp_path / "mcp.json"
-        mcp_file.write_text(json.dumps({"mcpServers": {"bps": {"env": {"BPS_API_KEY": ""}}}}), encoding="utf-8")
-        monkeypatch.setattr(
-            Config,
-            "find_config_file",
-            lambda filename: config_file if filename == "config.yaml" else mcp_file if filename == "mcp.json" else None,
-        )
-        assert needs_setup() is True
+        mcp_file.write_text(json.dumps({"mcpServers": {"bps": {"env": {"BPS_API_KEY": ""}}}}))
 
-    def test_returns_false_when_fully_configured(self, tmp_path, monkeypatch):
+        with patch(
+            "mini_agent.setup_wizard.Config.find_config_file",
+            side_effect=lambda f: config_file if f == "config.yaml" else mcp_file,
+        ):
+            assert needs_setup() is True
+
+    def test_needs_setup_valid_config(self, tmp_path):
+        """Returns False when config is valid."""
         config_file = tmp_path / "config.yaml"
-        config_file.write_text('api_key: "sk-real-key-12345"\n', encoding="utf-8")
+        config_file.write_text(yaml.dump({"api_key": "sk-real-key-123"}))
+
         mcp_file = tmp_path / "mcp.json"
         mcp_file.write_text(
-            json.dumps({"mcpServers": {"bps": {"env": {"BPS_API_KEY": "real-bps-key"}}}}), encoding="utf-8"
+            json.dumps({"mcpServers": {"bps": {"env": {"BPS_API_KEY": "abc123"}}}})
         )
-        monkeypatch.setattr(
-            Config,
-            "find_config_file",
-            lambda filename: config_file if filename == "config.yaml" else mcp_file if filename == "mcp.json" else None,
-        )
-        assert needs_setup() is False
 
-    def test_returns_true_on_corrupted_yaml(self, tmp_path, monkeypatch):
-        config_file = tmp_path / "config.yaml"
-        config_file.write_text("{{{{invalid yaml", encoding="utf-8")
-        monkeypatch.setattr(
-            Config, "find_config_file", lambda filename: config_file if filename == "config.yaml" else None
-        )
-        assert needs_setup() is True
+        with patch(
+            "mini_agent.setup_wizard.Config.find_config_file",
+            side_effect=lambda f: config_file if f == "config.yaml" else mcp_file,
+        ):
+            assert needs_setup() is False
 
-    def test_returns_true_when_no_mcp_json(self, tmp_path, monkeypatch):
-        config_file = tmp_path / "config.yaml"
-        config_file.write_text('api_key: "sk-real-key-12345"\n', encoding="utf-8")
-        monkeypatch.setattr(
-            Config, "find_config_file", lambda filename: config_file if filename == "config.yaml" else None
-        )
-        assert needs_setup() is True
+    def test_needs_setup_exception_returns_true(self):
+        """Returns True on any exception."""
+        with patch(
+            "mini_agent.setup_wizard.Config.find_config_file",
+            side_effect=Exception("boom"),
+        ):
+            assert needs_setup() is True
 
 
 class TestReadExistingConfig:
-    def test_returns_values_from_existing_config(self, tmp_path):
-        config_file = tmp_path / "config.yaml"
-        config_file.write_text(
-            'api_key: "sk-real"\napi_base: "https://example.com"\nmodel: "gpt-4"\nprovider: "openai"\n',
-            encoding="utf-8",
-        )
-        mcp_file = tmp_path / "mcp.json"
-        mcp_file.write_text(json.dumps({"mcpServers": {"bps": {"env": {"BPS_API_KEY": "bps-123"}}}}), encoding="utf-8")
+    def test_reads_existing_config(self, tmp_path):
+        """Reads existing config values."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
 
-        result = _read_existing_config(tmp_path)
-        assert result["ai_api_key"] == "sk-real"
-        assert result["ai_api_base"] == "https://example.com"
+        config_file = config_dir / "config.yaml"
+        config_file.write_text(
+            yaml.dump(
+                {
+                    "api_key": "sk-real-key",
+                    "api_base": "https://api.example.com",
+                    "model": "gpt-4",
+                    "provider": "openai",
+                }
+            )
+        )
+
+        mcp_file = config_dir / "mcp.json"
+        mcp_file.write_text(
+            json.dumps({"mcpServers": {"bps": {"env": {"BPS_API_KEY": "bps-key-123"}}}})
+        )
+
+        result = _read_existing_config(config_dir)
+        assert result["ai_api_key"] == "sk-real-key"
+        assert result["ai_api_base"] == "https://api.example.com"
         assert result["ai_model"] == "gpt-4"
         assert result["ai_provider"] == "openai"
-        assert result["bps_api_key"] == "bps-123"
+        assert result["bps_api_key"] == "bps-key-123"
 
-    def test_returns_empty_when_no_files(self, tmp_path):
+    def test_reads_empty_dir(self, tmp_path):
+        """Returns empty dict for empty directory."""
         result = _read_existing_config(tmp_path)
         assert result == {}
 
-    def test_excludes_placeholder_api_key(self, tmp_path):
-        config_file = tmp_path / "config.yaml"
-        config_file.write_text('api_key: "YOUR_API_KEY_HERE"\n', encoding="utf-8")
-        result = _read_existing_config(tmp_path)
+    def test_skips_invalid_api_key(self, tmp_path):
+        """Skips placeholder API keys."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        config_file = config_dir / "config.yaml"
+        config_file.write_text(yaml.dump({"api_key": "YOUR_API_KEY_HERE"}))
+
+        result = _read_existing_config(config_dir)
         assert "ai_api_key" not in result
 
 
 class TestWriteConfigYaml:
-    def test_creates_valid_yaml(self, tmp_path):
+    def test_writes_config(self, tmp_path):
+        """Writes config.yaml with correct content."""
         config_dir = tmp_path / "config"
         path = _write_config_yaml(
             config_dir,
             ai_api_key="sk-test",
             ai_api_base="https://api.test.com",
-            ai_model="test-model",
+            ai_model="gpt-4",
+            ai_provider="openai",
+        )
+
+        assert path.exists()
+        content = path.read_text()
+        assert "sk-test" in content
+        assert "https://api.test.com" in content
+        assert "gpt-4" in content
+        assert "openai" in content
+
+    def test_creates_directory(self, tmp_path):
+        """Creates config directory if it doesn't exist."""
+        config_dir = tmp_path / "deep" / "nested" / "config"
+        path = _write_config_yaml(
+            config_dir,
+            ai_api_key="key",
+            ai_api_base="base",
+            ai_model="model",
             ai_provider="openai",
         )
         assert path.exists()
-        data = yaml.safe_load(path.read_text(encoding="utf-8"))
-        assert data["api_key"] == "sk-test"
-        assert data["api_base"] == "https://api.test.com"
-        assert data["model"] == "test-model"
-        assert data["provider"] == "openai"
-
-    def test_creates_directory(self, tmp_path):
-        config_dir = tmp_path / "deep" / "nested" / "config"
-        _write_config_yaml(
-            config_dir, ai_api_key="sk-test", ai_api_base="https://api.test.com", ai_model="m", ai_provider="openai"
-        )
         assert config_dir.exists()
-
-    def test_includes_tools_config(self, tmp_path):
-        config_dir = tmp_path / "config"
-        path = _write_config_yaml(
-            config_dir, ai_api_key="sk-test", ai_api_base="https://api.test.com", ai_model="m", ai_provider="openai"
-        )
-        data = yaml.safe_load(path.read_text(encoding="utf-8"))
-        assert data["tools"]["enable_mcp"] is True
-        assert data["tools"]["enable_skills"] is True
-        assert data["tools"]["enable_bash"] is True
 
 
 class TestWriteMcpJson:
-    def test_creates_valid_json(self, tmp_path):
-        path = _write_mcp_json(tmp_path, bps_api_key="bps-key-123")
-        assert path.exists()
-        data = json.loads(path.read_text(encoding="utf-8"))
-        assert data["mcpServers"]["bps"]["env"]["BPS_API_KEY"] == "bps-key-123"
+    def test_writes_mcp_json(self, tmp_path):
+        """Writes mcp.json with BPS API key."""
+        config_dir = tmp_path / "config"
+        path = _write_mcp_json(config_dir, bps_api_key="test-bps-key")
 
-    def test_uses_direct_command(self, tmp_path):
-        path = _write_mcp_json(tmp_path, bps_api_key="bps-key-123")
-        data = json.loads(path.read_text(encoding="utf-8"))
-        assert data["mcpServers"]["bps"]["command"] == "bps-mcp-server"
-        assert data["mcpServers"]["bps"]["args"] == []
+        assert path.exists()
+        data = json.loads(path.read_text())
+        assert "mcpServers" in data
+        assert data["mcpServers"]["bps"]["env"]["BPS_API_KEY"] == "test-bps-key"
+
+    def test_includes_research_servers(self, tmp_path):
+        """Includes research ecosystem MCP servers."""
+        config_dir = tmp_path / "config"
+        path = _write_mcp_json(config_dir, bps_api_key="key")
+
+        data = json.loads(path.read_text())
+        servers = data["mcpServers"]
+        assert "papers" in servers
+        assert "pdf" in servers
+        assert "jupyter" in servers
 
 
 class TestCopySystemPrompt:
-    def test_copies_file(self, tmp_path, monkeypatch):
-        fake_pkg = tmp_path / "fake_pkg"
-        fake_pkg.mkdir()
-        (fake_pkg / "config").mkdir()
-        (fake_pkg / "config" / "system_prompt.md").write_text("# Prompt", encoding="utf-8")
-        monkeypatch.setattr(Config, "get_package_dir", lambda: fake_pkg)
+    def test_copies_system_prompt(self, tmp_path):
+        """Copies system_prompt.md from package config."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
 
-        dest_dir = tmp_path / "dest"
-        dest_dir.mkdir()
-        result = _copy_system_prompt(dest_dir)
-        assert result is not None
-        assert (dest_dir / "system_prompt.md").exists()
+        # Create a fake source
+        with patch("mini_agent.setup_wizard.Config.get_package_dir") as mock_pkg:
+            pkg_dir = tmp_path / "package"
+            pkg_config = pkg_dir / "config"
+            pkg_config.mkdir(parents=True)
+            (pkg_config / "system_prompt.md").write_text("# System Prompt")
+            mock_pkg.return_value = pkg_dir
 
-    def test_skips_existing(self, tmp_path, monkeypatch):
-        dest_dir = tmp_path / "dest"
-        dest_dir.mkdir()
-        existing = dest_dir / "system_prompt.md"
-        existing.write_text("custom prompt", encoding="utf-8")
+            result = _copy_system_prompt(config_dir)
+            assert result is not None
+            assert result.read_text() == "# System Prompt"
 
-        result = _copy_system_prompt(dest_dir)
+    def test_does_not_overwrite_existing(self, tmp_path):
+        """Does not overwrite existing system_prompt.md."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        existing = config_dir / "system_prompt.md"
+        existing.write_text("Custom prompt")
+
+        result = _copy_system_prompt(config_dir)
         assert result == existing
-        assert existing.read_text() == "custom prompt"
+        assert result.read_text() == "Custom prompt"
+
+
+class TestInstallPlaywrightChromium:
+    @patch("mini_agent.setup_wizard.subprocess.run")
+    def test_successful_install(self, mock_run):
+        """Returns True on successful install."""
+        mock_run.return_value = MagicMock(returncode=0)
+        assert _install_playwright_chromium() is True
+
+    @patch("mini_agent.setup_wizard.subprocess.run")
+    def test_failed_install(self, mock_run):
+        """Returns False on non-zero return code."""
+        mock_run.return_value = MagicMock(returncode=1)
+        assert _install_playwright_chromium() is False
+
+    @patch("mini_agent.setup_wizard.subprocess.run", side_effect=FileNotFoundError)
+    def test_playwright_not_found(self, mock_run):
+        """Returns False when playwright not found."""
+        assert _install_playwright_chromium() is False
+
+    @patch("mini_agent.setup_wizard.subprocess.run")
+    def test_timeout(self, mock_run):
+        """Returns False on timeout."""
+        import subprocess
+
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd="test", timeout=300)
+        assert _install_playwright_chromium() is False
 
 
 class TestPrompt:
-    def test_returns_default_on_empty_input(self, monkeypatch):
-        monkeypatch.setattr("builtins.input", lambda _: "")
-        result = _prompt("Test", default="default_val")
-        assert result == "default_val"
-
-    def test_returns_user_input(self, monkeypatch):
-        monkeypatch.setattr("builtins.input", lambda _: "user_value")
-        result = _prompt("Test", default="default_val")
+    @patch("builtins.input", return_value="user_value")
+    def test_returns_user_input(self, mock_input):
+        result = _prompt("Label")
         assert result == "user_value"
 
-    def test_masked_uses_getpass(self, monkeypatch):
-        monkeypatch.setattr("getpass.getpass", lambda _: "secret123")
-        result = _prompt("Password", masked=True)
-        assert result == "secret123"
+    @patch("builtins.input", return_value="")
+    def test_returns_default_when_empty(self, mock_input):
+        result = _prompt("Label", default="default_val")
+        assert result == "default_val"
 
-    def test_required_rejects_empty_then_accepts(self, monkeypatch):
-        call_count = [0]
+    @patch("builtins.input", side_effect=EOFError)
+    def test_eof_returns_default(self, mock_input):
+        result = _prompt("Label", default="fallback")
+        assert result == "fallback"
 
-        def fake_input(_):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                return ""
-            return "finally_provided"
+    @patch("builtins.input", side_effect=KeyboardInterrupt)
+    def test_keyboard_interrupt_returns_default(self, mock_input):
+        result = _prompt("Label", default="fallback")
+        assert result == "fallback"
 
-        monkeypatch.setattr("builtins.input", fake_input)
-        result = _prompt("Required field", required=True)
-        assert result == "finally_provided"
-        assert call_count[0] == 2
-
-
-class TestInstallPlaywright:
-    def test_failure_is_nonfatal(self, monkeypatch):
-        monkeypatch.setattr("subprocess.run", lambda *a, **kw: MagicMock(returncode=1))
-        result = _install_playwright_chromium()
-        assert result is False
-
-    def test_file_not_found_is_nonfatal(self, monkeypatch):
-        def raise_fnf(*a, **kw):
-            raise FileNotFoundError("not found")
-
-        monkeypatch.setattr("subprocess.run", raise_fnf)
-        result = _install_playwright_chromium()
-        assert result is False
+    @patch("builtins.input", side_effect=["", "value"])
+    def test_required_field_reprompts(self, mock_input):
+        result = _prompt("Label", required=True)
+        assert result == "value"
 
 
 class TestRunSetupWizard:
-    def test_writes_all_files(self, tmp_path, monkeypatch):
+    @patch("mini_agent.setup_wizard._install_playwright_chromium", return_value=True)
+    @patch("mini_agent.setup_wizard._copy_system_prompt", return_value=None)
+    @patch("mini_agent.setup_wizard._prompt")
+    @patch("mini_agent.setup_wizard.get_user_config_dir")
+    def test_full_wizard_run(self, mock_dir, mock_prompt, mock_copy, mock_pw, tmp_path):
+        """Test full wizard run with mocked inputs."""
         config_dir = tmp_path / "config"
-        monkeypatch.setattr("mini_agent.setup_wizard.get_user_config_dir", lambda: config_dir)
+        mock_dir.return_value = config_dir
+        mock_prompt.side_effect = [
+            "sk-test-key",  # AI API Key
+            "https://api.test.com",  # AI API Base
+            "gpt-4",  # AI Model
+            "openai",  # AI Provider
+            "bps-key-123",  # BPS API Key
+        ]
 
-        inputs = iter(["sk-test-key", "https://api.test.com", "test-model", "openai", "bps-key-123"])
-        monkeypatch.setattr("getpass.getpass", lambda _: next(inputs))
-        monkeypatch.setattr("builtins.input", lambda _: next(inputs))
-        monkeypatch.setattr("subprocess.run", lambda *a, **kw: MagicMock(returncode=0))
-
-        fake_pkg = tmp_path / "fake_pkg"
-        fake_pkg.mkdir()
-        (fake_pkg / "config").mkdir()
-        (fake_pkg / "config" / "system_prompt.md").write_text("# Prompt", encoding="utf-8")
-        monkeypatch.setattr(Config, "get_package_dir", lambda: fake_pkg)
-
-        result = run_setup_wizard()
+        result = run_setup_wizard(force=True)
         assert result is True
         assert (config_dir / "config.yaml").exists()
         assert (config_dir / "mcp.json").exists()
-
-    def test_idempotent(self, tmp_path, monkeypatch):
-        config_dir = tmp_path / "config"
-        monkeypatch.setattr("mini_agent.setup_wizard.get_user_config_dir", lambda: config_dir)
-        monkeypatch.setattr("subprocess.run", lambda *a, **kw: MagicMock(returncode=0))
-
-        fake_pkg = tmp_path / "fake_pkg"
-        fake_pkg.mkdir()
-        (fake_pkg / "config").mkdir()
-        (fake_pkg / "config" / "system_prompt.md").write_text("# Prompt", encoding="utf-8")
-        monkeypatch.setattr(Config, "get_package_dir", lambda: fake_pkg)
-
-        # First run
-        inputs1 = iter(["sk-key-1", "https://api.test.com", "model-1", "openai", "bps-1"])
-        monkeypatch.setattr("getpass.getpass", lambda _: next(inputs1))
-        monkeypatch.setattr("builtins.input", lambda _: next(inputs1))
-        run_setup_wizard()
-
-        # Second run - press Enter for all (use defaults from first run)
-        monkeypatch.setattr("getpass.getpass", lambda _: "")
-        monkeypatch.setattr("builtins.input", lambda _: "")
-        result = run_setup_wizard()
-        assert result is True

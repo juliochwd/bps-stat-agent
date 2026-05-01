@@ -35,6 +35,13 @@ def require_bps_key():
     return BPS_API_KEY
 
 
+@pytest.fixture(autouse=True)
+def _skip_without_bps_key():
+    """Auto-skip all tests in this module if BPS_API_KEY is not set."""
+    if not BPS_API_KEY:
+        pytest.skip("BPS_API_KEY not set — live tests require BPS API access")
+
+
 def require_minimax_key():
     if not MINIMAX_API_KEY or MINIMAX_API_KEY == "YOUR_API_KEY_HERE":
         pytest.skip("MINIMAX_API_KEY not set")

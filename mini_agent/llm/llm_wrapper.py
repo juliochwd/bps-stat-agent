@@ -68,9 +68,20 @@ class LLMClient:
         # Check if this is a MiniMax API endpoint
         is_minimax = any(domain in api_base for domain in self.MINIMAX_DOMAINS)
 
+        if provider == LLMProvider.LITELLM:
+            from .litellm_client import LiteLLMClient
+
+            self._client = LiteLLMClient(
+                api_key=api_key,
+                api_base=api_base,
+                model=self.model,
+                retry_config=retry_config,
+            )
+            self.api_base = api_base
+            logger.info("Initialized LiteLLM client with model: %s", self.model)
+            return
+
         if is_minimax:
-            # For MiniMax API, ensure correct suffix based on provider
-            # Strip any existing suffix first
             api_base = api_base.replace("/anthropic", "").replace("/v1", "")
             if provider == LLMProvider.ANTHROPIC:
                 full_api_base = f"{api_base}/anthropic"
@@ -79,12 +90,10 @@ class LLMClient:
             else:
                 raise ValueError(f"Unsupported provider: {provider}")
         else:
-            # For third-party APIs, use api_base as-is
             full_api_base = api_base
 
         self.api_base = full_api_base
 
-        # Instantiate the appropriate client
         self._client: LLMClientBase
         if provider == LLMProvider.ANTHROPIC:
             self._client = AnthropicClient(

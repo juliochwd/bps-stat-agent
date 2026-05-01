@@ -314,6 +314,28 @@ Examples:
         help="Log filename to read (optional, shows directory if omitted)",
     )
 
+    # research subcommand
+    research_parser = subparsers.add_parser("research", help="Start academic research mode (phase-gated workflow)")
+    research_parser.add_argument(
+        "--title",
+        type=str,
+        default=None,
+        help="Research paper title (creates new project if provided)",
+    )
+    research_parser.add_argument(
+        "--template",
+        type=str,
+        default="elsevier",
+        choices=["ieee", "elsevier", "springer", "springer_lncs", "mdpi", "apa7"],
+        help="Journal template (default: elsevier)",
+    )
+    research_parser.add_argument(
+        "--journal",
+        type=str,
+        default="",
+        help="Target journal name",
+    )
+
     return parser.parse_args()
 
 
@@ -443,6 +465,201 @@ def add_workspace_tools(tools: list[Tool], config: Config, workspace_dir: Path):
         )
         print(f"{Colors.GREEN}✅ Loaded file operation tools (workspace: {workspace_dir}){Colors.RESET}")
 
+    # Research tools - project management (always loaded in research mode)
+    try:
+        from mini_agent.tools.research_tools import (
+            ProjectInitTool,
+            ProjectStatusTool,
+            SwitchPhaseTool,
+        )
+
+        tools.append(ProjectInitTool(workspace_dir=str(workspace_dir)))
+        tools.append(ProjectStatusTool(workspace_dir=str(workspace_dir)))
+        tools.append(SwitchPhaseTool(workspace_dir=str(workspace_dir)))
+        print(f"{Colors.GREEN}✅ Loaded research tools (project_init, project_status, switch_phase){Colors.RESET}")
+    except ImportError:
+        pass  # Research tools not available
+
+    # Statistics & analysis tools
+    try:
+        from mini_agent.tools.statistics_tools import (
+            CreateVisualizationTool,
+            DescriptiveStatsTool,
+            HypothesisTestTool,
+            RegressionAnalysisTool,
+        )
+
+        tools.append(DescriptiveStatsTool(workspace_dir=str(workspace_dir)))
+        tools.append(RegressionAnalysisTool(workspace_dir=str(workspace_dir)))
+        tools.append(HypothesisTestTool(workspace_dir=str(workspace_dir)))
+        tools.append(CreateVisualizationTool(workspace_dir=str(workspace_dir)))
+        print(
+            f"{Colors.GREEN}✅ Loaded statistics tools (descriptive, regression, hypothesis, visualization){Colors.RESET}"
+        )
+    except ImportError:
+        pass
+
+    # Citation & literature tools
+    try:
+        from mini_agent.tools.citation_tools import (
+            CitationManagerTool,
+            LiteratureSearchTool,
+            VerifyCitationsTool,
+        )
+
+        tools.append(LiteratureSearchTool(workspace_dir=str(workspace_dir)))
+        tools.append(CitationManagerTool(workspace_dir=str(workspace_dir)))
+        tools.append(VerifyCitationsTool(workspace_dir=str(workspace_dir)))
+        print(
+            f"{Colors.GREEN}✅ Loaded citation tools (literature_search, citation_manager, verify_citations){Colors.RESET}"
+        )
+    except ImportError:
+        pass
+
+    # Writing tools
+    try:
+        from mini_agent.tools.writing_tools import (
+            CompilePaperTool,
+            ConvertFigureTikzTool,
+            GenerateDiagramTool,
+            GenerateTableTool,
+            WriteSectionTool,
+        )
+
+        ws = str(workspace_dir)
+        tools.extend(
+            [
+                WriteSectionTool(workspace_dir=ws),
+                CompilePaperTool(workspace_dir=ws),
+                GenerateTableTool(workspace_dir=ws),
+                GenerateDiagramTool(workspace_dir=ws),
+                ConvertFigureTikzTool(workspace_dir=ws),
+            ]
+        )
+        print(f"{Colors.GREEN}✅ Loaded writing tools (write_section, compile, table, diagram, tikz){Colors.RESET}")
+    except ImportError as e:
+        print(f"{Colors.YELLOW}⚠️  Writing tools unavailable: {e}{Colors.RESET}")
+
+    # Advanced analysis tools (time series, Bayesian, causal, survival, EDA)
+    try:
+        from mini_agent.tools.analysis_tools import (
+            AutomatedEDATool,
+            AutoVisualizeTool,
+            BayesianAnalysisTool,
+            CausalInferenceTool,
+            CheckStatisticalValidityTool,
+            ConversationalAnalysisTool,
+            SurvivalAnalysisTool,
+            TimeSeriesAnalysisTool,
+            ValidateDataTool,
+        )
+
+        ws = str(workspace_dir)
+        tools.extend(
+            [
+                TimeSeriesAnalysisTool(workspace_dir=ws),
+                BayesianAnalysisTool(workspace_dir=ws),
+                CausalInferenceTool(workspace_dir=ws),
+                SurvivalAnalysisTool(workspace_dir=ws),
+                ValidateDataTool(),
+                CheckStatisticalValidityTool(workspace_dir=ws),
+                ConversationalAnalysisTool(workspace_dir=ws),
+                AutomatedEDATool(workspace_dir=ws),
+                AutoVisualizeTool(workspace_dir=ws),
+            ]
+        )
+        print(
+            f"{Colors.GREEN}✅ Loaded analysis tools (time_series, bayesian, causal, survival, EDA, auto_visualize){Colors.RESET}"
+        )
+    except ImportError:
+        pass
+
+    # Quality assurance tools (grammar, style, peer review, plagiarism)
+    try:
+        from mini_agent.tools.quality_tools import (
+            AuditReproducibilityTool,
+            CheckGrammarTool,
+            CheckReadabilityTool,
+            CheckStyleTool,
+            DetectPlagiarismTool,
+            SimulatePeerReviewTool,
+        )
+
+        ws = str(workspace_dir)
+        tools.extend(
+            [
+                CheckGrammarTool(workspace_dir=ws),
+                CheckStyleTool(workspace_dir=ws),
+                CheckReadabilityTool(workspace_dir=ws),
+                SimulatePeerReviewTool(workspace_dir=ws),
+                DetectPlagiarismTool(workspace_dir=ws),
+                AuditReproducibilityTool(workspace_dir=ws),
+            ]
+        )
+        print(
+            f"{Colors.GREEN}✅ Loaded quality tools (grammar, style, readability, peer_review, plagiarism, reproducibility){Colors.RESET}"
+        )
+    except ImportError:
+        pass
+
+    # Python REPL sandbox tool
+    try:
+        from mini_agent.tools.sandbox_tools import PythonREPLTool
+
+        tools.append(PythonREPLTool(workspace_dir=str(workspace_dir)))
+        print(f"{Colors.GREEN}✅ Loaded sandbox tool (python_repl){Colors.RESET}")
+    except ImportError:
+        pass
+
+    # Document processing tools (convert, parse PDF, extract references)
+    try:
+        from mini_agent.tools.document_tools import (
+            ConvertDocumentTool,
+            ExtractReferencesTool,
+            ParseAcademicPDFTool,
+        )
+
+        ws = str(workspace_dir)
+        tools.extend(
+            [
+                ConvertDocumentTool(workspace_dir=ws),
+                ParseAcademicPDFTool(workspace_dir=ws),
+                ExtractReferencesTool(workspace_dir=ws),
+            ]
+        )
+        print(
+            f"{Colors.GREEN}✅ Loaded document tools (convert_document, parse_academic_pdf, extract_references){Colors.RESET}"
+        )
+    except ImportError:
+        pass
+
+    # Knowledge management tools (chunk, embed, knowledge graph, vector search)
+    try:
+        from mini_agent.tools.knowledge_tools import (
+            BuildKnowledgeGraphTool,
+            ChunkDocumentTool,
+            EmbedPapersTool,
+            PaperQATool,
+            QueryKnowledgeGraphTool,
+            VectorSearchTool,
+        )
+
+        ws = str(workspace_dir)
+        tools.extend(
+            [
+                ChunkDocumentTool(workspace_dir=ws),
+                EmbedPapersTool(workspace_dir=ws),
+                VectorSearchTool(workspace_dir=ws),
+                BuildKnowledgeGraphTool(workspace_dir=ws),
+                QueryKnowledgeGraphTool(workspace_dir=ws),
+                PaperQATool(workspace_dir=ws),
+            ]
+        )
+        print(
+            f"{Colors.GREEN}✅ Loaded knowledge tools (chunk, embed, vector_search, knowledge_graph, paper_qa){Colors.RESET}"
+        )
+    except ImportError:
+        pass
     # Session note tool - needs workspace to store memory file
     if config.tools.enable_note:
         tools.append(SessionNoteTool(memory_file=str(workspace_dir / ".agent_memory.json")))
@@ -514,6 +731,15 @@ async def run_agent(workspace_dir: Path, task: str = None):
             exporter=config.tracing.exporter,
             otlp_endpoint=config.tracing.otlp_endpoint,
         )
+
+    # Start health server for production/Docker deployments
+    try:
+        from mini_agent.health import start_health_server
+
+        start_health_server(port=8080)
+        print(f"{Colors.GREEN}✅ Health server started (port 8080){Colors.RESET}")
+    except Exception:
+        pass  # Non-critical, skip silently
 
     # 2. Initialize LLM client
     from mini_agent.retry import RetryConfig as RetryConfigBase
@@ -848,6 +1074,35 @@ def main():
             read_log_file(args.filename)
         else:
             show_log_directory(open_file_manager=True)
+        return
+
+    # Handle research subcommand
+    if args.command == "research":
+        from mini_agent.research.project_state import ProjectState
+        from mini_agent.research.workspace import WorkspaceScaffolder
+
+        if args.workspace:
+            workspace_dir = Path(args.workspace).expanduser().absolute()
+        else:
+            workspace_dir = Path.cwd()
+
+        # If --title provided, create new project
+        if getattr(args, "title", None):
+            state = ProjectState.create_new(
+                title=args.title,
+                template=getattr(args, "template", "elsevier"),
+                target_journal=getattr(args, "journal", ""),
+            )
+            scaffolder = WorkspaceScaffolder(str(workspace_dir))
+            scaffolder.scaffold(state)
+            print(f"{Colors.GREEN}✅ Research project created: {args.title}{Colors.RESET}")
+            print(f"{Colors.DIM}   Workspace: {workspace_dir}{Colors.RESET}")
+            print(f"{Colors.DIM}   Template: {getattr(args, 'template', 'elsevier')}{Colors.RESET}")
+            print(f"{Colors.DIM}   Phase: PLAN{Colors.RESET}")
+            print()
+
+        # Run agent in research mode (uses research system prompt)
+        asyncio.run(run_agent(workspace_dir, task=getattr(args, "task", None)))
         return
 
     # Auto-redirect to setup if not configured

@@ -82,6 +82,33 @@ class ToolsConfig(BaseModel):
     mcp: MCPConfig = Field(default_factory=MCPConfig)
 
 
+class ResearchConfig(BaseModel):
+    """Research mode configuration (optional — only used with research extras)."""
+
+    # LLM routing
+    primary_model: str = "claude-sonnet-4-20250514"
+    fallback_model: str = "gpt-4o"
+    embedding_model: str = "nomic-embed-text"
+    max_cost_per_project: float = 50.0  # USD
+
+    # Phase settings
+    max_tools_per_phase: int = 15
+    auto_phase_transition: bool = False  # Require human approval
+
+    # Workspace
+    default_workspace: str = "./research-workspace"
+    template: str = "imrad"  # imrad | thesis | report
+
+    # Sandbox
+    sandbox_backend: str = "docker"  # docker | e2b
+    sandbox_timeout: int = 120  # seconds
+    sandbox_memory_mb: int = 2048
+
+    # Quality gates
+    min_citation_confidence: float = 0.85
+    require_peer_review: bool = True
+
+
 class Config(BaseModel):
     """Main configuration class"""
 
@@ -90,6 +117,7 @@ class Config(BaseModel):
     tools: ToolsConfig
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     tracing: TracingConfig = Field(default_factory=TracingConfig)
+    research: ResearchConfig | None = None  # Only populated when research mode active
 
     INVALID_API_KEYS: ClassVar[set[str]] = {
         "",
@@ -214,12 +242,19 @@ class Config(BaseModel):
             otlp_endpoint=tracing_data.get("otlp_endpoint", None),
         )
 
+        # Parse research configuration (optional)
+        research_data = data.get("research", None)
+        research_config = None
+        if research_data:
+            research_config = ResearchConfig(**research_data)
+
         return cls(
             llm=llm_config,
             agent=agent_config,
             tools=tools_config,
             logging=logging_config,
             tracing=tracing_config,
+            research=research_config,
         )
 
     @staticmethod

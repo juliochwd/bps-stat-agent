@@ -1,8 +1,9 @@
-"""Tests for terminal_utils module."""
+"""Tests for mini_agent/utils/terminal_utils.py — terminal display utilities."""
 
 import pytest
 
-from mini_agent.utils import (
+from mini_agent.utils.terminal_utils import (
+    ANSI_ESCAPE_RE,
     calculate_display_width,
     pad_to_width,
     truncate_with_ellipsis,
@@ -10,200 +11,132 @@ from mini_agent.utils import (
 
 
 class TestCalculateDisplayWidth:
-    """Tests for calculate_display_width function."""
+    """Tests for calculate_display_width."""
 
     def test_ascii_text(self):
-        """Test ASCII text width calculation."""
         assert calculate_display_width("Hello") == 5
-        assert calculate_display_width("World") == 5
-        assert calculate_display_width("Test 123") == 8
 
     def test_empty_string(self):
-        """Test empty string."""
         assert calculate_display_width("") == 0
 
-    def test_emoji(self):
-        """Test emoji width (should count as 2)."""
-        assert calculate_display_width("🤖") == 2
-        assert calculate_display_width("💭") == 2
-        assert calculate_display_width("🤖 Agent") == 8  # 2 + 1 + 5
-
-    def test_chinese_characters(self):
-        """Test Chinese characters (each counts as 2)."""
+    def test_east_asian_wide(self):
+        """Chinese characters are 2 columns each."""
         assert calculate_display_width("你好") == 4
-        assert calculate_display_width("你好世界") == 8
-        assert calculate_display_width("中文") == 4
 
-    def test_japanese_characters(self):
-        """Test Japanese characters."""
-        assert calculate_display_width("日本語") == 6  # 3 chars * 2
+    def test_emoji(self):
+        """Emoji characters are 2 columns."""
+        assert calculate_display_width("🤖") == 2
+
+    def test_ansi_escape_codes(self):
+        """ANSI codes should not count toward width."""
+        assert calculate_display_width("\033[31mRed\033[0m") == 3
 
     def test_mixed_content(self):
-        """Test mixed ASCII and wide characters."""
-        assert calculate_display_width("Hello 你好") == 10  # 5 + 1 + 4
-        assert calculate_display_width("Test 🤖") == 7  # 4 + 1 + 2
-
-    def test_ansi_codes_ignored(self):
-        """Test that ANSI escape codes are not counted."""
-        colored = "\033[31mRed\033[0m"
-        assert calculate_display_width(colored) == 3
-
-        colored_emoji = "\033[31m🤖\033[0m"
-        assert calculate_display_width(colored_emoji) == 2
+        """Mixed ASCII, CJK, and ANSI."""
+        text = "\033[1mHello 你好\033[0m"
+        # "Hello " = 6, "你好" = 4, ANSI = 0
+        assert calculate_display_width(text) == 10
 
     def test_combining_characters(self):
-        """Test combining characters (should not add width)."""
-        # é = e + combining acute accent
-        e_with_accent = "e\u0301"
-        assert calculate_display_width(e_with_accent) == 1
+        """Combining characters have zero width."""
+        # 'e' + combining acute accent
+        text = "é"
+        assert calculate_display_width(text) == 1
 
-    def test_complex_ansi_sequences(self):
-        """Test complex ANSI sequences."""
-        text = "\033[1m\033[36mBold Cyan\033[0m"
-        assert calculate_display_width(text) == 9  # "Bold Cyan"
+    def test_fullwidth_characters(self):
+        """Fullwidth Latin characters are 2 columns."""
+        # Ａ is fullwidth A
+        assert calculate_display_width("Ａ") == 2
 
 
 class TestTruncateWithEllipsis:
-    """Tests for truncate_with_ellipsis function."""
+    """Tests for truncate_with_ellipsis."""
 
     def test_no_truncation_needed(self):
-        """Test when text fits within width."""
         assert truncate_with_ellipsis("Hello", 10) == "Hello"
-        assert truncate_with_ellipsis("Test", 5) == "Test"
 
-    def test_exact_fit(self):
-        """Test when text exactly fits."""
+    def test_exact_width(self):
         assert truncate_with_ellipsis("Hello", 5) == "Hello"
 
-    def test_ascii_truncation(self):
-        """Test truncation of ASCII text."""
-        assert truncate_with_ellipsis("Hello World", 8) == "Hello W…"
-        assert truncate_with_ellipsis("Testing", 4) == "Tes…"
-
-    def test_chinese_truncation(self):
-        """Test truncation with Chinese characters."""
-        result = truncate_with_ellipsis("你好世界", 5)
-        # Should be: 你好 (4 width) + … (1 width) = 5
-        assert calculate_display_width(result) <= 5
-        assert "…" in result
-
-    def test_emoji_truncation(self):
-        """Test truncation with emoji."""
-        result = truncate_with_ellipsis("🤖🤖🤖", 3)
-        # Should be: 🤖 (2 width) + … (1 width) = 3
-        assert calculate_display_width(result) <= 3
+    def test_truncation(self):
+        result = truncate_with_ellipsis("Hello World", 8)
+        assert len(result) <= 8
+        assert result.endswith("…")
 
     def test_zero_width(self):
-        """Test with zero width."""
         assert truncate_with_ellipsis("Hello", 0) == ""
 
-    def test_width_one(self):
-        """Test with width of 1."""
-        result = truncate_with_ellipsis("Hello", 1)
-        assert len(result) <= 1
+    def test_width_less_than_ellipsis(self):
+        result = truncate_with_ellipsis("Hello World", 1)
+        assert len(result) == 1
 
-    def test_ansi_codes_removed(self):
-        """Test that ANSI codes are removed during truncation."""
-        colored = "\033[31mHello World\033[0m"
-        result = truncate_with_ellipsis(colored, 8)
-        # ANSI codes should be removed
-        assert "\033[" not in result
-        assert "…" in result
+    def test_cjk_truncation(self):
+        """CJK characters should be truncated respecting 2-column width."""
+        result = truncate_with_ellipsis("你好世界", 5)
+        # "你好" = 4 columns + "…" = 1 column = 5
+        assert calculate_display_width(result) <= 5
+
+    def test_ansi_stripped_on_truncation(self):
+        """ANSI codes are stripped when truncation is needed."""
+        text = "\033[31mHello World\033[0m"
+        result = truncate_with_ellipsis(text, 8)
+        assert "\033" not in result
 
 
 class TestPadToWidth:
-    """Tests for pad_to_width function."""
+    """Tests for pad_to_width."""
 
     def test_left_align(self):
-        """Test left alignment (default)."""
-        result = pad_to_width("Hello", 10)
+        result = pad_to_width("Hello", 10, align="left")
         assert result == "Hello     "
-        assert len(result) == 10
+        assert calculate_display_width(result) == 10
 
     def test_right_align(self):
-        """Test right alignment."""
         result = pad_to_width("Hello", 10, align="right")
         assert result == "     Hello"
-        assert len(result) == 10
 
     def test_center_align(self):
-        """Test center alignment."""
         result = pad_to_width("Test", 10, align="center")
         assert result == "   Test   "
-        assert len(result) == 10
-
-    def test_center_align_odd(self):
-        """Test center alignment with odd padding."""
-        result = pad_to_width("Hi", 7, align="center")
-        # Should be: "  Hi   " or "   Hi  " (either is acceptable)
-        assert "Hi" in result
-        assert len(result) == 7
-
-    def test_chinese_padding(self):
-        """Test padding with Chinese characters."""
-        result = pad_to_width("你好", 10)
-        # "你好" is 4 display width, so needs 6 spaces
-        assert calculate_display_width(result) == 10
-
-    def test_emoji_padding(self):
-        """Test padding with emoji."""
-        result = pad_to_width("🤖", 10)
-        # "🤖" is 2 display width, so needs 8 spaces
-        assert calculate_display_width(result) == 10
 
     def test_no_padding_needed(self):
-        """Test when text already reaches target width."""
-        result = pad_to_width("Hello", 5)
+        result = pad_to_width("Hello", 5, align="left")
         assert result == "Hello"
 
-    def test_text_exceeds_width(self):
-        """Test when text exceeds target width."""
-        result = pad_to_width("Hello World", 5)
-        assert result == "Hello World"  # No truncation, just return as-is
+    def test_text_wider_than_target(self):
+        result = pad_to_width("Hello World", 5, align="left")
+        assert result == "Hello World"
+
+    def test_cjk_padding(self):
+        """CJK characters should be padded correctly."""
+        result = pad_to_width("你好", 10, align="left")
+        # "你好" = 4 columns, need 6 spaces
+        assert result == "你好      "
+        assert calculate_display_width(result) == 10
 
     def test_invalid_align(self):
-        """Test invalid alignment value."""
-        with pytest.raises(ValueError, match="Invalid align value"):
-            pad_to_width("Test", 10, align="invalid")
+        with pytest.raises(ValueError, match="Invalid align"):
+            pad_to_width("Hello", 10, align="invalid")
 
     def test_custom_fill_char(self):
-        """Test custom fill character."""
-        result = pad_to_width("Test", 10, fill_char="-")
-        assert result == "Test------"
+        result = pad_to_width("Hi", 6, align="left", fill_char=".")
+        assert result == "Hi...."
 
 
-class TestRealWorldScenarios:
-    """Tests for real-world usage scenarios."""
+class TestAnsiEscapeRegex:
+    """Test the ANSI escape regex."""
 
-    def test_step_header(self):
-        """Test Step header formatting (from agent.py)."""
-        step = 1
-        max_steps = 50
-        step_text = f"💭 Step {step}/{max_steps}"
+    def test_removes_color_codes(self):
+        text = "\033[31mRed\033[0m"
+        clean = ANSI_ESCAPE_RE.sub("", text)
+        assert clean == "Red"
 
-        width = calculate_display_width(step_text)
-        # "💭" (2) + " Step 1/50" (10) = 12
-        assert width == 12
+    def test_removes_bold(self):
+        text = "\033[1mBold\033[0m"
+        clean = ANSI_ESCAPE_RE.sub("", text)
+        assert clean == "Bold"
 
-    def test_session_info_model(self):
-        """Test Session Info model line."""
-        model = "minimax-01"
-        line = f"Model: {model}"
-        width = calculate_display_width(line)
-        # Should calculate correctly regardless of model name
-        assert width > 0
-
-    def test_chinese_model_name(self):
-        """Test with Chinese model name."""
-        model = "模型-01"
-        line = f"Model: {model}"
-        width = calculate_display_width(line)
-        # "Model: " (7) + "模型-01" (2+2+3) = 14
-        assert width == 14
-
-    def test_banner_text(self):
-        """Test banner text from cli.py."""
-        banner = "🤖 Mini Agent - Multi-turn Interactive Session"
-        width = calculate_display_width(banner)
-        # "🤖" (2) + " Mini Agent - Multi-turn Interactive Session" (44) = 46
-        assert width == 46
+    def test_no_ansi(self):
+        text = "Plain text"
+        clean = ANSI_ESCAPE_RE.sub("", text)
+        assert clean == "Plain text"

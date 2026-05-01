@@ -1,7 +1,7 @@
 [project]
 name = "bps-stat-agent"
-version = "0.2.0"
-description = "BPS Indonesia Statistical Data Agent - Search and query BPS data via AllStats Search Engine and WebAPI"
+version = "1.0.0"
+description = "BPS Indonesia Statistical Data Agent & Academic Research AI Agent"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -62,6 +62,74 @@ observability = [
     "opentelemetry-sdk>=1.20.0",
     "opentelemetry-exporter-otlp>=1.20.0",
 ]
+research-core = [
+    "statsmodels>=0.14.0",
+    "scipy>=1.11.0",
+    "scikit-learn>=1.3.0",
+    "matplotlib>=3.8.0",
+    "seaborn>=0.13.0",
+    "networkx>=3.2.0",
+    "bibtexparser>=1.4.0",
+]
+research-analysis = [
+    "bps-stat-agent[research-core]",
+    "linearmodels>=6.0",
+    "arch>=7.0",
+    "pingouin>=0.5.4",
+]
+research-advanced-stats = [
+    "bps-stat-agent[research-analysis]",
+    "pymc>=5.0",
+    "bambi>=0.14",
+    "arviz>=0.18",
+    "dowhy>=0.11",
+    "lifelines>=0.29",
+]
+research-document = [
+    "markitdown[all]>=0.1.5",
+    "chonkie>=0.4",
+]
+research-rag = [
+    "sentence-transformers>=3.0",
+    "lancedb>=0.9",
+    "lightrag-hku>=1.0",
+]
+research-writing = [
+    "pylatex>=1.4.2",
+    "python-docx>=1.2",
+    "bibtexparser>=1.4",
+    "habanero>=2.3",
+    "textstat>=0.7.0",
+    "proselint>=0.14.0",
+]
+research-quality = [
+    "language-tool-python>=2.8",
+    "pandera>=0.20",
+]
+research-sandbox = [
+    "docker>=7.0",
+    "RestrictedPython>=7.0",
+]
+research-nlp = [
+    "spacy>=3.7",
+    "scispacy>=0.5",
+]
+research-llm = [
+    "litellm>=1.40",
+    "dspy>=2.0",
+]
+research-all = [
+    "bps-stat-agent[research-core]",
+    "bps-stat-agent[research-analysis]",
+    "bps-stat-agent[research-advanced-stats]",
+    "bps-stat-agent[research-document]",
+    "bps-stat-agent[research-rag]",
+    "bps-stat-agent[research-writing]",
+    "bps-stat-agent[research-quality]",
+    "bps-stat-agent[research-sandbox]",
+    "bps-stat-agent[research-nlp]",
+    "bps-stat-agent[research-llm]",
+]
 
 [build-system]
 requires = ["setuptools>=61.0"]
@@ -83,6 +151,10 @@ cache_dir = "workspace/.pytest_cache"
 asyncio_mode = "auto"
 markers = [
     "live: tests that hit real upstream BPS services",
+]
+filterwarnings = [
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+    "ignore::DeprecationWarning:mcp.*",
 ]
 
 [tool.pylint.messages_control]

@@ -1,0 +1,141 @@
+{
+  "mcpServers": {
+    "bps": {
+      "description": "BPS Indonesia Statistical Data Search - AllStats Search Engine (searchengine.web.bps.go.id)",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/juliochwd/bps-stat-agent.git",
+        "bps-mcp-server"
+      ],
+      "env": {
+        "BPS_API_KEY": "",
+        "BPS_DEFAULT_DOMAIN": "5300",
+        "BPS_SEARCH_DELAY": "3"
+      },
+      "disabled": false
+    },
+    "papers": {
+      "description": "Academic Paper Search - 22 sources (arXiv, PubMed, Semantic Scholar, CrossRef, OpenAlex, CORE, Europe PMC, DBLP, DOAJ, BASE, Zenodo, HAL, SSRN, Unpaywall, bioRxiv, medRxiv, Google Scholar, OpenAIRE, CiteSeerX, IACR, IEEE, ACM)",
+      "command": "npx",
+      "args": ["-y", "@openags/paper-search-mcp"],
+      "env": {},
+      "disabled": false
+    },
+    "zotero": {
+      "description": "Zotero Citation Manager - Semantic search, Scite citation intelligence, BibTeX export, PDF annotations, duplicate detection",
+      "command": "uvx",
+      "args": ["pyzotero"],
+      "env": {
+        "ZOTERO_LIBRARY_ID": "",
+        "ZOTERO_LIBRARY_TYPE": "user",
+        "ZOTERO_API_KEY": ""
+      },
+      "disabled": false
+    },
+    "pdf": {
+      "description": "PDF Processing - 46 tools: text extraction, OCR, tables, forms, annotations, merge/split, vector graphics to SVG",
+      "command": "uvx",
+      "args": ["mcp-pdf"],
+      "env": {},
+      "disabled": false
+    },
+    "jupyter": {
+      "description": "Jupyter Code Execution - Real-time notebook control, multimodal output, multi-notebook support",
+      "command": "uvx",
+      "args": ["jupyter-mcp-server"],
+      "env": {},
+      "disabled": false
+    },
+    "overleaf": {
+      "description": "Overleaf LaTeX Editor - 18 tools: full CRUD, LaTeX structure parsing, git history/diff, PDF compile/download",
+      "command": "npx",
+      "args": ["-y", "overleaf-mcp"],
+      "env": {
+        "OVERLEAF_BASE_URL": "https://www.overleaf.com",
+        "OVERLEAF_EMAIL": "",
+        "OVERLEAF_PASSWORD": ""
+      },
+      "disabled": false
+    },
+    "qdrant": {
+      "description": "Qdrant Vector Search - Semantic memory layer for paper embeddings, FastEmbed integration",
+      "command": "uvx",
+      "args": ["mcp-server-qdrant"],
+      "env": {
+        "QDRANT_URL": "http://localhost:6333",
+        "COLLECTION_NAME": "research_papers"
+      },
+      "disabled": false
+    },
+    "memory": {
+      "description": "Knowledge Graph Memory - Persistent memory system for research context",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {},
+      "disabled": false
+    },
+    "markitdown": {
+      "description": "MarkItDown (Microsoft) - Convert any file to Markdown: PDF, DOCX, PPTX, XLSX, HTML, images, audio, video, ZIP, YouTube, EPub",
+      "command": "uvx",
+      "args": ["markitdown-mcp"],
+      "env": {},
+      "disabled": false
+    },
+    "minimax_search": {
+      "description": "MiniMax Search - Web search and intelligent browsing",
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/MiniMax-AI/minimax_search",
+        "minimax-search"
+      ],
+      "env": {
+        "JINA_API_KEY": "",
+        "SERPER_API_KEY": "",
+        "MINIMAX_API_KEY": ""
+      },
+      "disabled": true
+    },
+    "rmcp": {
+      "description": "R Statistical Computing - 52 tools, 429 R packages for econometrics, ML, time series, Bayesian analysis",
+      "command": "npx",
+      "args": ["-y", "rmcp"],
+      "env": {},
+      "disabled": false
+    },
+    "neo4j": {
+      "description": "Neo4j Knowledge Graph - Cypher queries, knowledge graph memory, data modeling",
+      "command": "npx",
+      "args": ["-y", "@neo4j/mcp-neo4j"],
+      "env": {
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USER": "neo4j",
+        "NEO4J_PASSWORD": ""
+      },
+      "disabled": false
+    },
+    "chroma": {
+      "description": "ChromaDB Vector Search - Collections, semantic search, full-text search, metadata filtering",
+      "command": "uvx",
+      "args": ["chroma-mcp"],
+      "env": {},
+      "disabled": false
+    },
+    "pubmed": {
+      "description": "PubMed Biomedical Search - 40 tools for PubMed, Europe PMC, CORE, OpenAlex",
+      "command": "uvx",
+      "args": ["pubmed-search-mcp"],
+      "env": {},
+      "disabled": false
+    },
+    "elicit": {
+      "description": "Elicit Research Reports - 138M+ papers, automated research reports, structured extraction",
+      "type": "sse",
+      "url": "https://elicit.com/api/mcp",
+      "env": {},
+      "disabled": true
+    }
+  }
+}

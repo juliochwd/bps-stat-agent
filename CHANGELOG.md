@@ -5,6 +5,104 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.0.0 — Academic Research Agent
+
+### Added
+- **Research Orchestrator** (`mini_agent/research/orchestrator.py`) — Phase-gated research pipeline wrapping the core Agent
+- **Phase Manager** — 5-phase workflow: PLAN → COLLECT → ANALYZE → WRITE → REVIEW with max 15 tools per phase
+- **Project State** — YAML-persisted project state for multi-session research continuity
+- **Workspace Scaffolder** — Auto-creates IMRaD directory structure for research projects
+- **Session Resume** — Checkpoint-based session recovery for long-running research
+- **Approval Gates** — Quality gate evaluator with configurable thresholds per phase
+- **Sub-Agent Dispatcher** — 6 specialized sub-agents (literature_reviewer, methodology_advisor, section_writer, stat_validator, citation_verifier, peer_reviewer)
+- **Tool Registry** — Phase-aware tool loading with max 15 tools per phase to prevent LLM confusion
+- **LLM Gateway** — LiteLLM integration with multi-provider routing, cost tracking, fallback chains
+- **DSPy Modules** — Stanford DSPy signatures for search queries, methodology design, evidence synthesis, section writing, results interpretation
+- **Cost Tracker** — Per-session and per-phase cost tracking with budget alerts
+- **Decision Log** — Structured logging of all research decisions with rationale
+
+#### Statistics & Analysis Tools (13 new tools)
+- `descriptive_stats` — Summary statistics, distributions, correlations
+- `regression_analysis` — Linear, logistic, polynomial, multi-variate regression
+- `hypothesis_test` — t-test, chi-square, ANOVA, Mann-Whitney, Kruskal-Wallis
+- `create_visualization` — Charts, plots, heatmaps with matplotlib/seaborn
+- `time_series_analysis` — ARIMA, seasonal decomposition, forecasting
+- `bayesian_analysis` — Bayesian inference with PyMC/Bambi
+- `causal_inference` — DoWhy causal models, ATE estimation
+- `survival_analysis` — Kaplan-Meier, Cox PH, AFT models
+- `automated_eda` — Automated exploratory data analysis
+- `auto_visualize` — Smart visualization selection based on data types
+- `validate_data` — Data quality checks, missing values, outliers
+- `check_statistical_validity` — Assumption checking, power analysis
+- `conversational_analysis` — Interactive statistical Q&A
+
+#### Citation & Literature Tools (3 new tools)
+- `literature_search` — Search 22+ academic sources (arXiv, PubMed, Semantic Scholar, CrossRef, OpenAlex, etc.)
+- `citation_manager` — BibTeX management, APA/MLA/IEEE formatting
+- `verify_citations` — DOI verification, retraction checking, citation accuracy
+
+#### Writing Tools (5 new tools)
+- `write_section` — AI-assisted academic section writing (IMRaD structure)
+- `compile_paper` — LaTeX/Typst compilation to PDF
+- `generate_table` — Academic tables with proper formatting
+- `generate_diagram` — Research diagrams and flowcharts
+- `convert_figure_tikz` — Convert figures to TikZ/PGFPlots
+
+#### Quality Assurance Tools (6 new tools)
+- `check_grammar` — Academic grammar and language checking
+- `check_style` — Academic writing style analysis
+- `check_readability` — Flesch-Kincaid, Gunning Fog, academic readability
+- `simulate_peer_review` — Multi-reviewer simulation with structured feedback
+- `detect_plagiarism` — Text similarity and originality checking
+- `audit_reproducibility` — Reproducibility checklist and verification
+
+#### Document & Knowledge Tools (10 new tools)
+- `python_repl` — Sandboxed Python execution (local/Docker/E2B)
+- `convert_document` — Universal file format conversion
+- `parse_academic_pdf` — Scientific PDF parsing with metadata extraction
+- `extract_references` — Reference extraction from any document
+- `chunk_document` — Intelligent document chunking for RAG
+- `embed_papers` — Paper embedding generation for semantic search
+- `vector_search` — Semantic similarity search across papers
+- `build_knowledge_graph` — Entity extraction and graph construction
+- `query_knowledge_graph` — Graph traversal and relationship queries
+- `paper_qa` — Question answering over paper corpus
+
+#### MCP Ecosystem (13 servers)
+- `bps` — 62 BPS Indonesia statistical data tools (enabled)
+- `papers` — 22-source academic paper search (enabled)
+- `pdf` — 46 PDF processing tools (enabled)
+- `jupyter` — Real-time code execution (enabled)
+- `markitdown` — Microsoft universal file converter (enabled)
+- `memory` — Knowledge graph memory (enabled)
+- `chroma` — ChromaDB vector search (enabled)
+- `pubmed` — PubMed biomedical search (enabled)
+- `rmcp` — R statistical computing, 52 tools (enabled)
+- `zotero` — Citation management (disabled, needs API key)
+- `overleaf` — LaTeX editor (disabled, needs credentials)
+- `qdrant` — Vector search (disabled, needs server)
+- `neo4j` — Knowledge graph (disabled, needs server)
+
+#### Research Configuration
+- `config/research_config.yaml` — Research-specific configuration
+- `config/mcp-research.json` — Full MCP ecosystem configuration
+- `config/system_prompt_research.md` — Research-mode system prompt
+- `config/system_prompts/` — 5 sub-agent system prompts
+- `skills/academic-research/` — Academic research skill with templates
+
+### Changed
+- **Version** bumped from 0.3.0 to **1.0.0**
+- **Setup wizard** now deploys 13 MCP servers (was 1)
+- **CLI** now loads 50+ tools (was 24)
+- **Test suite** expanded to **471 tests** across 34 files (was 417)
+- **Package description** updated to reflect academic research capabilities
+
+### Fixed
+- Module-level numpy imports causing crashes when optional deps not installed
+- Sub-agent test coroutine warning (mock.add_user_message now sync)
+- 220 lint errors resolved (unused imports, formatting, ambiguous variables)
+- All tools now gracefully degrade when optional dependencies missing
+
 ## v0.2.0 — Production Infrastructure
 
 ### Added

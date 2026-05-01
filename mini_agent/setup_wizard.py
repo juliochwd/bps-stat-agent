@@ -138,12 +138,12 @@ provider: "{ai_provider}"
 
 retry:
   enabled: true
-  max_retries: 3
+  max_retries: 5
   initial_delay: 1.0
   max_delay: 60.0
   exponential_base: 2.0
 
-max_steps: 50
+max_steps: 100
 workspace_dir: "./workspace"
 system_prompt_path: "system_prompt.md"
 
@@ -165,8 +165,8 @@ logging:
   json_output: false
 
 tracing:
-  enabled: false
-  exporter: "none"
+  enabled: true
+  exporter: "console"
 """
 
 
@@ -185,13 +185,18 @@ def _write_config_yaml(config_dir: Path, *, ai_api_key: str, ai_api_base: str, a
 
 
 def _write_mcp_json(config_dir: Path, *, bps_api_key: str) -> Path:
-    """Write mcp.json with BPS API key."""
+    """Write mcp.json with BPS API key and full research ecosystem servers.
+
+    Includes BPS data server plus academic research MCP servers
+    (paper search, citation management, PDF processing, code execution,
+    knowledge graph, vector search, etc.).
+    """
     config_dir.mkdir(parents=True, exist_ok=True)
     mcp_path = config_dir / "mcp.json"
     mcp_data = {
         "mcpServers": {
             "bps": {
-                "description": "BPS Indonesia Statistical Data Search",
+                "description": "BPS Indonesia Statistical Data Search - AllStats Search Engine",
                 "command": "bps-mcp-server",
                 "args": [],
                 "env": {
@@ -200,7 +205,106 @@ def _write_mcp_json(config_dir: Path, *, bps_api_key: str) -> Path:
                     "BPS_SEARCH_DELAY": "3",
                 },
                 "disabled": False,
-            }
+            },
+            "papers": {
+                "description": "Academic Paper Search - 22 sources (arXiv, PubMed, Semantic Scholar, CrossRef, OpenAlex, etc.)",
+                "command": "npx",
+                "args": ["-y", "@openags/paper-search-mcp"],
+                "env": {},
+                "disabled": False,
+            },
+            "pdf": {
+                "description": "PDF Processing - text extraction, OCR, tables, annotations, merge/split",
+                "command": "uvx",
+                "args": ["mcp-pdf"],
+                "env": {},
+                "disabled": False,
+            },
+            "jupyter": {
+                "description": "Jupyter Code Execution - real-time notebook control, multimodal output",
+                "command": "uvx",
+                "args": ["jupyter-mcp-server"],
+                "env": {},
+                "disabled": False,
+            },
+            "markitdown": {
+                "description": "MarkItDown (Microsoft) - Convert any file to Markdown: PDF, DOCX, PPTX, XLSX, HTML, images",
+                "command": "uvx",
+                "args": ["markitdown-mcp"],
+                "env": {},
+                "disabled": False,
+            },
+            "memory": {
+                "description": "Knowledge Graph Memory - persistent memory system for research context",
+                "command": "npx",
+                "args": ["-y", "@modelcontextprotocol/server-memory"],
+                "env": {},
+                "disabled": False,
+            },
+            "zotero": {
+                "description": "Zotero Citation Manager - semantic search, BibTeX export, PDF annotations",
+                "command": "uvx",
+                "args": ["pyzotero"],
+                "env": {
+                    "ZOTERO_LIBRARY_ID": "",
+                    "ZOTERO_LIBRARY_TYPE": "user",
+                    "ZOTERO_API_KEY": "",
+                },
+                "disabled": True,
+            },
+            "overleaf": {
+                "description": "Overleaf LaTeX Editor - full CRUD, LaTeX structure, git history, PDF compile",
+                "command": "npx",
+                "args": ["-y", "overleaf-mcp"],
+                "env": {
+                    "OVERLEAF_BASE_URL": "https://www.overleaf.com",
+                    "OVERLEAF_EMAIL": "",
+                    "OVERLEAF_PASSWORD": "",
+                },
+                "disabled": True,
+            },
+            "qdrant": {
+                "description": "Qdrant Vector Search - semantic memory for paper embeddings",
+                "command": "uvx",
+                "args": ["mcp-server-qdrant"],
+                "env": {
+                    "QDRANT_URL": "http://localhost:6333",
+                    "COLLECTION_NAME": "research_papers",
+                },
+                "disabled": True,
+            },
+            "neo4j": {
+                "description": "Neo4j Knowledge Graph - Cypher queries, citation network analysis",
+                "command": "npx",
+                "args": ["-y", "@neo4j/mcp-neo4j"],
+                "env": {
+                    "NEO4J_URI": "bolt://localhost:7687",
+                    "NEO4J_USER": "neo4j",
+                    "NEO4J_PASSWORD": "",
+                },
+                "disabled": True,
+            },
+            "chroma": {
+                "description": "ChromaDB Vector Search - semantic and full-text search",
+                "command": "uvx",
+                "args": ["chroma-mcp"],
+                "env": {},
+                "disabled": False,
+            },
+            "pubmed": {
+                "description": "PubMed Biomedical Search - PubMed, Europe PMC, CORE, OpenAlex",
+                "command": "uvx",
+                "args": ["pubmed-search-mcp"],
+                "env": {},
+                "disabled": False,
+            },
+            "rmcp": {
+                "description": "R Statistical Computing - 52 tools, 429 R packages",
+                "command": "npx",
+                "args": ["-y", "rmcp"],
+                "env": {},
+                "disabled": False,
+            },
         }
     }
     mcp_path.write_text(json.dumps(mcp_data, indent=4, ensure_ascii=False), encoding="utf-8")
